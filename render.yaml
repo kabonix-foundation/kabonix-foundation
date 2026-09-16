@@ -4,7 +4,7 @@ services:
     runtime: node
     region: singapore
     plan: free
-    rootDir: apps/api
+    rootDir: .
     buildCommand: npm install
     startCommand: npm start
     healthCheckPath: /health
@@ -19,30 +19,30 @@ services:
         value: https://kabonix-public.onrender.com
 
   - type: web
-    runtime: static
     name: kabonix-staff
+    runtime: static
+    rootDir: apps/web
     buildCommand: >-
       sed -i
       's|http://localhost:4000/api|https://kabonix-api.onrender.com/api|g;
       s|http://localhost:3001|https://kabonix-public.onrender.com|g'
       app.js
     staticPublishPath: .
-    rootDir: apps/web
     routes:
       - type: rewrite
         source: /*
         destination: /index.html
 
   - type: web
-    runtime: static
     name: kabonix-public
+    runtime: static
+    rootDir: apps/website
     buildCommand: >-
       sed -i
       's|http://localhost:4000/api|https://kabonix-api.onrender.com/api|g;
       s|http://localhost:3000|https://kabonix-staff.onrender.com|g'
       index.html
     staticPublishPath: .
-    rootDir: apps/website
     routes:
       - type: rewrite
         source: /*
