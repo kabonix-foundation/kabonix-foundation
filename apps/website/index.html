@@ -302,7 +302,7 @@ footer{background:var(--ink);color:#a0b0a6;padding:60px 0 28px}
         <p class="sub" id="portal-roles"></p>
       </div>
       <div style="display:flex;flex-direction:column;gap:9px">
-        <a href="${PORTAL_URL}" target="_blank" class="btn btn-leaf" style="text-align:center" data-en="Open staff portal →" data-sw="Fungua lango la wafanyakazi →">Open staff portal →</a>
+        <a id="portal-link" href="#" target="_blank" class="btn btn-leaf" style="text-align:center" data-en="Open staff portal →" data-sw="Fungua lango la wafanyakazi →">Open staff portal →</a>
         <button class="btn" style="background:var(--paper);color:var(--ink);border:1px solid var(--line)" onclick="doSignOut()" data-en="Sign out" data-sw="Toka">Sign out</button>
       </div>
     </div>
@@ -354,7 +354,9 @@ footer{background:var(--ink);color:#a0b0a6;padding:60px 0 28px}
       <button class="tab-btn"        data-f="publication" onclick="filterPosts('publication')" data-en="Publications" data-sw="Machapisho">Publications</button>
     </div>
     <div class="grid-3" id="posts-grid">
-      ${skelCards(3,'post-card','post-card-body')}
+      <div class="post-card"><div class="post-card-body"><div class="skel st"></div><div class="skel sl"></div><div class="skel sl" style="width:80%"></div></div></div>
+      <div class="post-card"><div class="post-card-body"><div class="skel st"></div><div class="skel sl"></div><div class="skel sl" style="width:80%"></div></div></div>
+      <div class="post-card"><div class="post-card-body"><div class="skel st"></div><div class="skel sl"></div><div class="skel sl" style="width:80%"></div></div></div>
     </div>
   </div>
 </section>
@@ -368,7 +370,9 @@ footer{background:var(--ink);color:#a0b0a6;padding:60px 0 28px}
       <p data-en="Real outcomes from the communities and ecosystems Kabonix works with — verified by field data and third-party auditors." data-sw="Matokeo ya kweli kutoka kwa jamii na mifumo ya ikolojia ambayo Kabonix inafanya kazi nayo.">Real outcomes from the communities and ecosystems Kabonix works with — verified by field data and third-party auditors.</p>
     </div>
     <div class="grid-3" id="impact-grid">
-      ${skelCards(3,'impact-card','')}
+      <div class="impact-card"><div class="skel st"></div><div class="skel sl"></div><div class="skel sl" style="width:80%"></div></div>
+      <div class="impact-card"><div class="skel st"></div><div class="skel sl"></div><div class="skel sl" style="width:80%"></div></div>
+      <div class="impact-card"><div class="skel st"></div><div class="skel sl"></div><div class="skel sl" style="width:80%"></div></div>
     </div>
   </div>
 </section>
@@ -381,7 +385,10 @@ footer{background:var(--ink);color:#a0b0a6;padding:60px 0 28px}
       <h2 data-en="Who We Work With" data-sw="Tunafanya Kazi na Nani">Who We Work With</h2>
     </div>
     <div class="grid-4" id="partners-grid">
-      ${skelCards(4,'partner-card','')}
+      <div class="partner-card"><div class="skel st"></div><div class="skel sl"></div></div>
+      <div class="partner-card"><div class="skel st"></div><div class="skel sl"></div></div>
+      <div class="partner-card"><div class="skel st"></div><div class="skel sl"></div></div>
+      <div class="partner-card"><div class="skel st"></div><div class="skel sl"></div></div>
     </div>
   </div>
 </section>
@@ -651,6 +658,10 @@ function updatePortalPane(){
     const roles = JSON.parse(lsGet('kbx_roles')||'[]');
     document.getElementById('portal-name').textContent = u.name||'';
     document.getElementById('portal-roles').textContent = roles.map(r=>r.name).join(' · ')||'No roles';
+    // Set the portal link href from the runtime variable (read from the
+    // <meta name="portal-url"> tag injected by serve.js at request time).
+    const link = document.getElementById('portal-link');
+    if (link) link.href = PORTAL_URL;
     updateNavLoginBtn(u);
   } catch{}
 }
@@ -822,6 +833,7 @@ loadPosts();
 loadImpactStories();
 loadPartners();
 handleUrlTokens();
+if (lsGet('kbx_access')) updatePortalPane();
 </script>
 </body>
 </html>
