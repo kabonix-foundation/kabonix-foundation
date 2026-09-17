@@ -28,19 +28,35 @@ import { can, loadPermissions, loadRoles, requirePermission } from './rbac.js';
 import { logAction }     from './audit.js';
 import { handleAdminRoute } from './admin-routes.js';
 
-const PORT       = process.env.PORT       || 4000;
-const WEB_ORIGIN = process.env.WEB_ORIGIN || 'http://localhost:3001';
+const PORT        = process.env.PORT        || 4000;
+const WEB_ORIGIN  = process.env.WEB_ORIGIN  || 'http://localhost:3001';
+// ALLOWED_ORIGINS: comma-separated list of frontend URLs allowed to call this API.
+// Set this on Render to your exact website + staff-portal URLs (no trailing slash).
+// Falls back to * in dev so local testing works without config.
+const ALLOWED_ORIGINS_RAW = process.env.ALLOWED_ORIGINS || '';
+const ALLOWED_ORIGINS = ALLOWED_ORIGINS_RAW
+  ? new Set(ALLOWED_ORIGINS_RAW.split(',').map(s => s.trim()))
+  : null; // null = allow *
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function send(res, status, body) {
-  res.writeHead(status, {
+function makeSend(req) {
+  const origin = req.headers['origin'] || '';
+  let allowOrigin = '*';
+  if (ALLOWED_ORIGINS) {
+    allowOrigin = ALLOWED_ORIGINS.has(origin) ? origin : [...ALLOWED_ORIGINS][0] || '';
+  }
+  const corsHeaders = {
     'Content-Type':                'application/json',
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': allowOrigin,
     'Access-Control-Allow-Headers':'Content-Type, Authorization',
     'Access-Control-Allow-Methods':'GET,POST,PUT,PATCH,DELETE,OPTIONS',
-  });
-  res.end(JSON.stringify(body, null, 2));
+    'Vary':                        'Origin',
+  };
+  return function send(res, status, body) {
+    res.writeHead(status, corsHeaders);
+    res.end(JSON.stringify(body, null, 2));
+  };
 }
 
 function readBody(req) {
@@ -110,9 +126,10 @@ function validatePassword(pw) {
 // ── Main handler ──────────────────────────────────────────────────────────────
 
 const server = http.createServer(async (req, res) => {
+  const send = makeSend(req);
   if (req.method === 'OPTIONS') return send(res, 204, {});
 
-  const url   = new URL(req.url, `http://localhost:${PORT}`);
+  const url   = new URL(req.url, 'http://x');  // base is a dummy — only used to parse pathname/searchParams
   const parts = url.pathname.split('/').filter(Boolean);
 
   try {
@@ -591,7 +608,7 @@ async function start() {
   await runMigrations(pool);
   console.log('[startup] migrations complete');
   await seedIfEmpty({ hashPassword });
-  server.listen(PORT, () => {
+  server.listen(PORT, '0.0.0.0', () => {
     console.log(`\nKabonix API ready → http://localhost:${PORT}`);
     console.log(`Health check     → http://localhost:${PORT}/health\n`);
   });

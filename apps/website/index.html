@@ -302,7 +302,7 @@ footer{background:var(--ink);color:#a0b0a6;padding:60px 0 28px}
         <p class="sub" id="portal-roles"></p>
       </div>
       <div style="display:flex;flex-direction:column;gap:9px">
-        <a href="http://localhost:3000" target="_blank" class="btn btn-leaf" style="text-align:center" data-en="Open staff portal →" data-sw="Fungua lango la wafanyakazi →">Open staff portal →</a>
+        <a href="${PORTAL_URL}" target="_blank" class="btn btn-leaf" style="text-align:center" data-en="Open staff portal →" data-sw="Fungua lango la wafanyakazi →">Open staff portal →</a>
         <button class="btn" style="background:var(--paper);color:var(--ink);border:1px solid var(--line)" onclick="doSignOut()" data-en="Sign out" data-sw="Toka">Sign out</button>
       </div>
     </div>
@@ -466,7 +466,10 @@ footer{background:var(--ink);color:#a0b0a6;padding:60px 0 28px}
 
 <script>
 // ─── Config ─────────────────────────────────────────────────────────────────
-const API     = 'http://localhost:4000/api';
+// API_URL is set by the serve.js server via a <meta> tag so the same
+// HTML file works both locally and on Render without a build step.
+const API = (document.querySelector('meta[name="api-url"]')?.content || 'http://localhost:4000') + '/api';
+const PORTAL_URL = document.querySelector('meta[name="portal-url"]')?.content || 'http://localhost:3000';
 let   lang    = 'en';
 let   _mfaChallenge = null;
 let   _resetToken   = null;

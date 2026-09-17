@@ -1,7 +1,8 @@
+const WEBSITE_URL = document.querySelector('meta[name="website-url"]')?.content || 'http://localhost:3001';
 // app.js — Kabonix Foundation Staff Portal (Sprint 01–03)
 // Admin & Governance control room + M&E data collection UI.
 
-const API = 'http://localhost:10000/api';
+const API = (document.querySelector('meta[name="api-url"]')?.content || 'http://localhost:4000') + '/api';
 
 const state = {
   token: lsGet('kabonix_token'),
@@ -222,7 +223,7 @@ async function renderDashboard() {
           ${can('admin','view')||can('data_collection','approve') ? `<button class="qa-btn" onclick="nav('audit')">📜 View audit log</button>` : ''}
         </div>`, 'card-inner')}
     </div>
-    <div style="margin-top:8px" class="meta">Platform: Postgres + PostGIS · Migrations applied: ${stats.migrationsApplied ?? '—'} · <a href="http://localhost:3001" target="_blank">Public website ↗</a></div>
+    <div style="margin-top:8px" class="meta">Platform: Postgres + PostGIS · Migrations applied: ${stats.migrationsApplied ?? '—'} · <a href="${WEBSITE_URL}" target="_blank">Public website ↗</a></div>
   `, 'dashboard');
 }
 
