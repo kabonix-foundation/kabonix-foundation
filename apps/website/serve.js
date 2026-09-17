@@ -6,7 +6,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const PORT = process.env.WEBSITE_PORT || 3001;
+const PORT = process.env.WEBSITE_PORT || 10000;
 const MIME = { '.html':'text/html', '.js':'text/javascript', '.css':'text/css', '.ico':'image/x-icon' };
 
 http.createServer((req, res) => {
