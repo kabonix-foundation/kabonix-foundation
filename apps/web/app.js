@@ -1,7 +1,7 @@
 // app.js — Kabonix Foundation Staff Portal (Sprint 01–03)
 // Admin & Governance control room + M&E data collection UI.
 
-const API = 'http://localhost:4000/api';
+const API = 'http://localhost:10000/api';
 
 const state = {
   token: lsGet('kabonix_token'),
