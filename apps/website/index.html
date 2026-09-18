@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Kabonix Foundation</title>
-<link rel="stylesheet" href="styles/design-system.css">
+  <link rel="stylesheet" href="styles/design-system.css">
+  <link rel="stylesheet" href="styles/premium-home.css">
 </head>
 <body>
 
@@ -123,33 +124,78 @@
 </div>
 
 <!-- ───────────────────────────── HERO ──────────────────────────────────── -->
-<section class="hero" id="home">
+<section class="ph-hero" id="home">
   <div class="container">
-    <div class="hero-eyebrow" data-en="People · Planet · Prosperity" data-sw="Watu · Sayari · Ustawi">People · Planet · Prosperity</div>
-    <h1 data-en="Protecting Ecosystems, Empowering Communities" data-sw="Kulinda Mifumo ya Ikolojia, Kuwezesha Jamii">Protecting Ecosystems, Empowering Communities</h1>
-    <p class="hero-lead" data-en="Kabonix Foundation works across terrestrial conservation, blue carbon, sustainable aquaculture, climate-smart agriculture and green entrepreneurship for youth and women in Tanzania." data-sw="Kabonix Foundation inafanya kazi katika uhifadhi wa ardhi, kaboni ya bluu, ufugaji endelevu, kilimo kinachostahimili hali ya hewa na ujasiriamali wa kijani kwa vijana na wanawake Tanzania.">Kabonix Foundation works across terrestrial conservation, blue carbon, sustainable aquaculture, climate-smart agriculture and green entrepreneurship for youth and women in Tanzania.</p>
-    <div class="hero-actions">
-      <a href="#programmes" class="btn btn-primary" data-en="Our Programmes" data-sw="Programu Zetu">Our Programmes</a>
-      <a href="#contact"    class="btn btn-outline"  data-en="Work With Us"   data-sw="Fanya Kazi Nasi">Work With Us</a>
-    </div>
-    <div class="hero-stats">
-      <div class="stat"><div class="number">1,200+</div><div class="desc sans" data-en="Ha of mangrove restored" data-sw="Ha za mikoko zilizorejelewa">Ha of mangrove restored</div></div>
-      <div class="stat"><div class="number">8,400+</div><div class="desc sans" data-en="Beneficiaries reached"   data-sw="Wanufaika waliofikiwa">Beneficiaries reached</div></div>
-      <div class="stat"><div class="number">48,000t</div><div class="desc sans" data-en="CO₂-eq sequestered"    data-sw="CO₂-sawa kilichohifadhiwa">CO₂-eq sequestered</div></div>
-      <div class="stat hide-mob"><div class="number">12</div><div class="desc sans" data-en="Programme sites" data-sw="Maeneo ya programu">Programme sites</div></div>
+    <div class="grid">
+      <div>
+        <div class="ph-badge">🌿 Saving Our Planet</div>
+        <h1 style="margin-top:18px">Protecting our oceans and planting forests for a sustainable tomorrow.</h1>
+        <p class="lead">We work with coastal communities, farmers and youth-led enterprises to protect ecosystems, create livelihoods, and measure impact for climate resilience.</p>
+        <div class="ph-actions">
+          <button class="btn btn-primary" style="background:var(--primary);border-radius:12px;padding:12px 18px;color:#fff">Get Involved</button>
+          <button class="btn btn-ghost ph-vid" style="border-radius:12px">▶ Watch Video</button>
+        </div>
+        <div class="ph-ribbon">
+          <div class="ph-metrics">
+            <div class="ph-metric"><div class="num">15M+</div><div class="lbl">Trees Planted</div></div>
+            <div class="ph-metric"><div class="num">$4.5M+</div><div class="lbl">Funds Raised</div></div>
+            <div class="ph-metric"><div class="num">20k+</div><div class="lbl">Active Volunteers</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="ph-media">
+        <img src="/assets/hero-nature.jpg" alt="Community restoring mangroves and planting trees">
+      </div>
     </div>
   </div>
 </section>
 
 <!-- ──────────────────────── PROGRAMMES ─────────────────────────────────── -->
-<section class="section" id="programmes">
+<section class="ph-causes" id="causes">
   <div class="container">
     <div class="section-head">
-      <div class="label" data-en="About Kabonix" data-sw="Kuhusu Kabonix">About Kabonix</div>
-      <h2 data-en="Our Programme Areas" data-sw="Maeneo Yetu ya Programu">Our Programme Areas</h2>
-      <p data-en="Every programme generates field data — beneficiaries reached, plots registered, indicators tracked, carbon sequestered. Our integrated digital platform turns that data into evidence that staff, partners, donors and government can act on." data-sw="Kila programu inazalisha data ya shamba. Mfumo wetu wa dijitali unageuza data hiyo kuwa ushahidi ambao wafanyakazi, washirika, wafadhili na serikali wanaweza kutenda.">Every programme generates field data — beneficiaries reached, plots registered, indicators tracked, carbon sequestered. Our integrated digital platform turns that data into evidence that staff, partners, donors and government can act on.</p>
+      <div class="label">The causes we fight for</div>
+      <h2>Our Core Causes</h2>
+      <p>Focused initiatives that protect biodiversity, restore landscapes, and build resilient livelihoods.</p>
     </div>
-    <div class="grid-3" id="prog-grid"></div>
+    <div class="grid" style="grid-template-columns:repeat(3,1fr);gap:22px">
+      <div class="cause-card">
+        <div class="cause-icon" style="background:linear-gradient(135deg,#E4F4F6,#D2FFF0)">🌊</div>
+        <div class="cause-title">Ocean & Coasts</div>
+        <p>Protecting coastal habitats, sustainable fisheries and blue carbon projects.</p>
+        <div class="progress" aria-hidden><i style="width:72%"></i></div>
+        <div style="margin-top:8px;font-size:13px;color:rgba(28,37,33,0.6)">72% Raised of $120,000</div>
+      </div>
+      <div class="cause-card">
+        <div class="cause-icon" style="background:linear-gradient(135deg,#FFF3E6,#FFEFD8)">🌲</div>
+        <div class="cause-title">Forest Restoration</div>
+        <p>Large-scale reforestation and agroforestry programs supporting community nurseries.</p>
+        <div class="progress"><i style="width:48%"></i></div>
+        <div style="margin-top:8px;font-size:13px;color:rgba(28,37,33,0.6)">48% Raised of $50,000</div>
+      </div>
+      <div class="cause-card">
+        <div class="cause-icon" style="background:linear-gradient(135deg,#FCE8F0,#FFF0F6)">👩‍🌾</div>
+        <div class="cause-title">Sustainable Livelihoods</div>
+        <p>Skills, market access and enterprise development for youth and women.</p>
+        <div class="progress"><i style="width:88%"></i></div>
+        <div style="margin-top:8px;font-size:13px;color:rgba(28,37,33,0.6)">88% Raised of $30,000</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="container">
+  <div class="ph-split">
+    <div class="a">
+      <h3>Join our field teams</h3>
+      <p>Volunteer with restoration crews, community trainers and data collectors across project sites.</p>
+      <div style="margin-top:18px"><button class="btn">Become a Volunteer</button></div>
+    </div>
+    <div class="b">
+      <h3>Support recurring impact</h3>
+      <p>Help sustain long-term projects by sponsoring a community or a restoration site.</p>
+      <div style="margin-top:18px"><a href="#" class="muted" style="font-weight:700">Sponsor a Project →</a></div>
+    </div>
   </div>
 </section>
 
