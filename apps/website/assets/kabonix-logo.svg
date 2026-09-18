@@ -1,50 +1,34 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 1200" role="img" aria-labelledby="logoTitle logoDesc">
   <title id="logoTitle">Kabonix Foundation logo</title>
-  <desc id="logoDesc">Circular green and blue emblem with a stylized tree and white K, with the name Kabonix Foundation underneath.</desc>
+  <desc id="logoDesc">Circular Kabonix Foundation emblem with a stylized white K, tree canopy, sun, and blue-green landscape above the Kabonix Foundation wordmark.</desc>
   <defs>
-    <linearGradient id="leafGreen" x1="0" x2="1">
-      <stop offset="0%" stop-color="#7DBE4A"/>
-      <stop offset="100%" stop-color="#2E7B39"/>
-    </linearGradient>
-    <linearGradient id="hillBlue" x1="0" x2="1">
-      <stop offset="0%" stop-color="#0B6C7A"/>
-      <stop offset="100%" stop-color="#0A3E50"/>
-    </linearGradient>
+    <linearGradient id="greenCanopy" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#91C93F"/><stop offset="1" stop-color="#4B9A3E"/></linearGradient>
+    <linearGradient id="blueCanopy" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#146C77"/><stop offset="1" stop-color="#07515E"/></linearGradient>
   </defs>
 
-  <g transform="translate(0, 12)">
-    <circle cx="700" cy="360" r="335" fill="none" stroke="#0D4D38" stroke-width="14"/>
-
-    <g transform="translate(200, 20)">
-      <path d="M140 240C120 170 90 125 30 90c25 16 52 28 85 33 36 6 70 2 106-14-24 48-52 78-81 131H140z" fill="#1D8F54"/>
-      <path d="M160 240c18-75 76-150 188-185-56 31-95 78-113 140-15 51-9 115 30 170-62-12-101-42-105-125z" fill="url(#leafGreen)"/>
-      <path d="M325 130c69 8 125 42 174 96-50-12-104-4-152 22-76 41-129 123-132 217 77-94 126-151 110-335z" fill="#0A6B72"/>
-      <path d="M395 145c105 31 165 104 180 215-64-7-112-2-171 32-92 53-126 126-112 228 12-118 31-184 103-475z" fill="url(#hillBlue)"/>
-      <path d="M220 270c64-15 120-10 172 16-42 26-77 81-85 159-18 154 24 219 121 301-118-7-236-72-276-201-29-95 2-205 68-275z" fill="#2B9B52"/>
-      <path d="M310 480c30-64 66-101 126-112-50 28-83 65-94 121-19 101 12 167 82 219-90-28-138-103-114-228z" fill="#0B5A61"/>
-      <path d="M140 420c28-21 51-34 89-42-26 22-45 47-53 81-14 58 7 91 49 126-54-8-95-38-85-165z" fill="#A6D756" opacity="0.92"/>
-    </g>
-
-    <g transform="translate(465, 10)">
-      <path d="M150 70h94v470h-94z" fill="#F5F7F4"/>
-      <path d="M170 70h96L110 280H18z" fill="#F5F7F4"/>
-      <path d="M170 365h96L110 560H18z" fill="#F5F7F4"/>
-      <path d="M260 205h94v335h-94z" fill="#F5F7F4" opacity="0.92"/>
-    </g>
-
-    <g transform="translate(855, 125)">
-      <circle cx="0" cy="0" r="62" fill="#F5C94B"/>
-      <path d="M0 -90v36M0 90v36M-90 0h36M90 0h36" stroke="#F5C94B" stroke-width="10" stroke-linecap="round"/>
-      <path d="M-60 -60l28 28M60 -60l-28 28M-60 60l28 -28M60 60l-28 -28" stroke="#F5C94B" stroke-width="8" stroke-linecap="round"/>
-    </g>
-
-    <g opacity="0.2">
-      <path d="M75 286c40-44 80-64 132-72-29 35-39 72-21 115 20 47 53 67 114 62-53 41-117 50-193 16-54-25-84-68-32-121z" fill="#F5F7F4"/>
+  <!-- Reference-matched emblem: centered, compact, and balanced inside the ring -->
+  <circle cx="700" cy="370" r="314" fill="#fff" stroke="#087040" stroke-width="14"/>
+  <clipPath id="badgeClip"><circle cx="700" cy="370" r="300"/></clipPath>
+  <g clip-path="url(#badgeClip)">
+    <!-- left green canopy -->
+    <path fill="#006B3B" d="M375 510c-37-39-51-92-35-143 13-41 43-74 82-92 0-65 40-113 96-127 36-9 72-4 102 12 35-55 101-82 163-61 41 14 72 45 86 84 70-7 133 36 151 101 38 15 65 50 66 91 2 35-15 69-44 89 4 60-37 113-94 128-42 11-87 1-120-27-39 41-102 57-156 38-47-16-82-52-97-98-44 44-113 53-168 22-11-6-21-14-30-25z"/>
+    <!-- lime upper canopy -->
+    <path fill="url(#greenCanopy)" d="M434 246c40-64 108-96 176-83 51 10 92 43 112 88 27-6 56 3 75 25 20 23 25 54 14 82-54-6-102 7-142 37-49 37-78 93-82 158-68-18-125-65-154-129-27-59-26-124 1-178z"/>
+    <!-- blue right landscape -->
+    <path fill="url(#blueCanopy)" d="M741 276c52-38 121-44 180-13 49 26 79 74 82 128 42 21 70 65 69 113-1 54-37 102-88 117-54 16-108-3-141-43-35 16-76 16-112-2-34-17-59-48-67-86 6-86 34-158 77-214z"/>
+    <!-- ground and trunk -->
+    <path fill="#006B3B" d="M330 665c91-44 188-68 287-69 112-2 222 24 321 78v46H330z"/>
+    <path fill="#0A5C56" d="M629 476c-36 69-40 137-12 205 14 34 36 62 68 84-70-21-119-71-134-135-15-65 9-126 78-154z"/>
+    <!-- white K/tree silhouette, optically centered -->
+    <path fill="#fff" d="M526 214h70v291l115-291h91L664 453l143 225h-95L596 509v169h-70V214z"/>
+    <!-- sun -->
+    <g transform="translate(760 358)" fill="#FFC51B" stroke="#FFC51B" stroke-linecap="round">
+      <circle r="48" stroke="none"/>
+      <path d="M0-82V-52M0 52V82M-82 0H-52M52 0H82M-58-58l21 21M58-58L37-37M-58 58l21-21M58 58L37 37" stroke-width="9"/>
     </g>
   </g>
 
-  <g transform="translate(0, 720)">
-    <text x="700" y="0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="800" font-size="148" letter-spacing="8" fill="#0D4D38">KABONIX</text>
-    <text x="700" y="120" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="92" letter-spacing="3" fill="#5CA75B">FOUNDATION</text>
-  </g>
+  <!-- Reduced tracking and centered wordmark -->
+  <text x="700" y="846" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="132" font-weight="800" letter-spacing="2" fill="#075867">KABONIX</text>
+  <text x="700" y="950" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="76" font-weight="500" letter-spacing="1" fill="#3D9147">FOUNDATION</text>
 </svg>
