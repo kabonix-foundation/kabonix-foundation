@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1200" role="img" aria-labelledby="logoTitle logoDesc">
+  <title id="logoTitle">Kabonix Foundation logo</title>
+  <desc id="logoDesc">Circular Kabonix Foundation logo with a stylized tree, sun, and white K.</desc>
+  <defs>
+    <linearGradient id="leafGrad" x1="0" x2="1">
+      <stop offset="0%" stop-color="#7dbf4a"/>
+      <stop offset="100%" stop-color="#2f7d39"/>
+    </linearGradient>
+    <linearGradient id="waterGrad" x1="0" x2="1">
+      <stop offset="0%" stop-color="#1d4f6b"/>
+      <stop offset="100%" stop-color="#0d2f3b"/>
+    </linearGradient>
+  </defs>
+
+  <g transform="translate(0 40)">
+    <circle cx="600" cy="450" r="420" fill="none" stroke="#0d4d38" stroke-width="16"/>
+
+    <g opacity="0.9">
+      <path d="M260 390c30-95 95-160 192-182-82 42-118 100-118 145 0 34 18 78 55 101-58 2-95-13-129-64z" fill="#1f7a4a"/>
+      <path d="M370 300c74-95 172-120 252-98-64 30-105 86-115 152-10 64 17 147 79 198-105 17-211-71-216-252z" fill="#6dbd52"/>
+      <path d="M725 300c75 8 160 59 195 138-62-25-126-24-177 7-75 46-123 142-120 258 96-93 127-173 102-403z" fill="#0f6573"/>
+      <path d="M738 280c76 30 131 86 152 165-63-16-108-14-159 22-65 45-98 125-93 197 77-80 108-133 100-384z" fill="#1a7d87"/>
+      <path d="M395 398c103-46 194-58 270-29-35 22-62 56-81 104-53 129-38 231 67 284-137-10-239-76-302-196-22-43-28-110 46-163z" fill="#2b9b52"/>
+      <path d="M505 600c32-67 63-93 156-110-69 26-110 63-124 116-29 108 17 199 104 256-104-25-179-113-136-262z" fill="#0c5c59"/>
+    </g>
+
+    <g>
+      <path d="M433 260h76v470h-76z" fill="#f4f6f4"/>
+      <path d="M620 260h71l-225 244h-72z" fill="#f4f6f4"/>
+      <path d="M620 516h71l-220 214h-72z" fill="#f4f6f4"/>
+      <path d="M562 223c50 0 96 12 126 32-22-17-52-28-77-33-31-6-64 0-94 10 10-5 23-9 45-9z" fill="#f4f6f4" opacity="0.6"/>
+      <path d="M685 456c48-11 73-42 82-81 18 7 42 19 59 38-21 15-45 26-79 30-28 3-50 1-62-17 0 12 0 23 0 30z" fill="#f4f6f4" opacity="0.8"/>
+      <path d="M825 432c51 8 87 35 108 72-46 1-79 8-109 33-26 22-42 58-40 96-15-43-2-92 41-141z" fill="#f4f6f4" opacity="0.18"/>
+    </g>
+
+    <g transform="translate(740 220)">
+      <circle cx="0" cy="0" r="58" fill="#f6c64a"/>
+      <path d="M0 -78v36M0 78v36M-78 0h36M78 0h36" stroke="#f6c64a" stroke-width="10" stroke-linecap="round"/>
+      <path d="M-55 -55l24 24M55 -55l-24 24M-55 55l24 -24M55 55l-24 -24" stroke="#f6c64a" stroke-width="8" stroke-linecap="round"/>
+    </g>
+
+    <g>
+      <path d="M218 252c22-52 70-93 122-113-13 48-8 85 21 124-51-10-95-8-143-11z" fill="#a7d84f" opacity="0.9"/>
+      <path d="M232 273c-26 49-34 92-15 136 29-20 55-33 96-38-15-38-35-69-81-98z" fill="#efefef" opacity="0.2"/>
+    </g>
+  </g>
+</svg>
