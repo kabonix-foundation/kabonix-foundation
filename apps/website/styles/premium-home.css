@@ -11,6 +11,11 @@
 .skip-link{position:absolute;left:12px;top:12px;background:#fff;color:var(--primary);padding:8px 12px;border-radius:8px;z-index:999;transform:translateY(-120%);transition:transform .18s ease;box-shadow:0 6px 20px rgba(12,60,38,0.06)}
 .skip-link:focus{transform:translateY(0);outline:none}
 
+/* Top announcement / contact strip */
+.top-bar{background:linear-gradient(90deg,#0b5b3f,#0c6b48);}
+.top-bar .container{padding:8px 16px}
+.top-bar .top-cta{background:#fff;color:var(--primary);padding:8px 12px;border-radius:8px;font-weight:700;text-decoration:none}
+
 /* Base overrides */
 body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial; background:var(--bg); color:var(--ink);}
 h1,h2,h3{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;margin:0;color:var(--ink)}
@@ -24,7 +29,7 @@ h3{font-size:18px}
 /* Nav tweaks */
 .nav-inner{align-items:center;gap:24px}
 .nav-links{gap:28px}
-.nav-links a{position:relative;padding:8px 4px;color:rgba(255,255,255,0.95);font-weight:600}
+.nav-links a{position:relative;padding:8px 4px;color:var(--ink);font-weight:600}
 .nav-links a::after{content:'';position:absolute;left:0;right:0;height:3px;border-radius:8px;background:transparent;bottom:-6px;transform:translateY(6px);transition:all .22s}
 .nav-links a:hover::after{background:var(--accent);transform:translateY(0)}
 
@@ -32,10 +37,11 @@ h3{font-size:18px}
 .nav-cta .donate-btn:hover{filter:brightness(.96)}
 
 /* Hero */
-.ph-hero{padding:80px 0}
+.ph-hero{padding:100px 0;background:linear-gradient(180deg,rgba(7,40,27,0.84),rgba(7,40,27,0.64));color:#fff}
 .ph-hero .grid{display:grid;grid-template-columns:1fr 520px;gap:40px;align-items:center}
 .ph-badge{display:inline-flex;align-items:center;gap:10px;background:rgba(52,224,161,0.12);color:var(--accent);padding:8px 12px;border-radius:999px;font-weight:700;font-size:13px}
-.ph-hero .lead{margin-top:18px;font-size:17px;max-width:54ch;color:rgba(28,37,33,0.82)}
+.ph-hero .lead{margin-top:18px;font-size:17px;max-width:54ch;color:rgba(255,255,255,0.9)}
+.ph-hero h1{color:#fff}
 .ph-actions{display:flex;gap:12px;margin-top:22px}
 .ph-actions .btn-ghost{background:transparent;border:2px solid rgba(28,37,33,0.08);padding:10px 14px;border-radius:12px;color:var(--primary);font-weight:700}
 .ph-phone{display:inline-flex;align-items:center;padding:6px 8px}
@@ -44,6 +50,13 @@ h3{font-size:18px}
 .ph-actions .btn-ghost:hover{background:rgba(28,37,33,0.02)}
 .ph-media{background:linear-gradient(180deg,rgba(0,0,0,0.02),transparent);border-radius:var(--radius);overflow:hidden;box-shadow:0 18px 40px rgba(12,60,38,0.08)}
 .ph-media img{width:100%;height:100%;object-fit:cover;display:block}
+
+/* Card thumbnail helpers */
+.card-img{height:160px;background-size:cover;background-position:center}
+.post-card .post-card-body{padding:16px 18px}
+.post-card.card-with-thumb{display:flex;flex-direction:column}
+.post-badge{position:relative;padding:6px 10px;border-radius:999px;font-size:11px}
+.post-card.card-with-thumb .post-badge{position:absolute;top:12px;left:12px;background:rgba(255,255,255,0.95);color:var(--primary);font-weight:700}
 
 /* Micro-interactions */
 .nav-links a{transition:color .18s ease}

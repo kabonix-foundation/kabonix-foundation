@@ -11,9 +11,25 @@
 
   <a class="skip-link" href="#main-content">Skip to content</a>
 
+  <!-- Top announcement / contact strip -->
+  <div class="top-bar">
+    <div class="container" style="display:flex;align-items:center;justify-content:space-between;padding:8px 16px">
+      <div style="font-size:13px;color:#eaf9f0">Together for a Greener Tomorrow</div>
+      <div style="display:flex;gap:14px;align-items:center">
+        <div style="font-size:13px;color:#eaf9f0">+255 123 456 789</div>
+        <a href="#contact" class="top-cta">Free Consultation</a>
+      </div>
+    </div>
+  </div>
+
 <!-- ───────────────────────────── NAV ───────────────────────────────────── -->
 <nav>
   <div class="nav-inner">
+    <style>
+      /* make nav white for premium look */
+      nav{background:#fff;color:var(--ink);box-shadow:0 6px 24px rgba(12,60,38,0.06)}
+      .nav-logo-img{filter:none}
+    </style>
     <button id="menu-toggle" class="menu-btn" aria-label="Menu" aria-expanded="false" style="background:transparent;border:none;color:#fff;font-size:20px;padding:6px;margin-right:8px;">☰</button>
     <a class="nav-brand" href="#home">
       <div class="nav-logo"><img src="/assets/logo.png" class="nav-logo-img" alt="Kabonix logo"></div>
@@ -373,6 +389,19 @@ document.addEventListener('DOMContentLoaded', function(){
 
 <!-- ───────────────────────────── FOOTER ────────────────────────────────── -->
 </main>
+<!-- CTA strip before footer -->
+<div class="cta-strip">
+  <div class="container">
+    <div style="max-width:780px">
+      <h3 style="margin:0;color:#fff">Together, We Can Build a Sustainable Future</h3>
+      <p style="margin:6px 0 0;color:rgba(255,255,255,0.9)">Let's discuss your environmental project and how Kabonix can help.</p>
+    </div>
+    <div>
+      <a class="btn" href="#contact">Get a Free Consultation</a>
+    </div>
+  </div>
+</div>
+
 <footer role="contentinfo">
   <div class="container">
     <div class="footer-grid">
