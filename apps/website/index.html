@@ -63,6 +63,20 @@ nav{position:sticky;top:0;z-index:100;background:var(--forest);color:#fff}
   body.menu-open .nav-links{display:flex}
   .nav-inner{height:64px}
 }
+/* Menu modes */
+.nav-links.menu-left{left:12px;right:auto;top:72px;height:calc(100% - 84px);width:260px;padding:18px;display:flex;flex-direction:column;transform:translateX(-100%);transition:transform .28s ease;box-shadow:0 18px 60px rgba(0,0,0,.28)}
+.nav-links.menu-left a{white-space:normal}
+.menu-open .nav-links.menu-left{transform:translateX(0);}
+.nav-links.menu-fullscreen{position:fixed;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;padding:32px}
+.menu-open .nav-links.menu-fullscreen{display:flex}
+
+/* Section transition helpers */
+.section-wrap{position:relative}
+.section-transition{position:relative;overflow:hidden}
+.section-enter{animation:sectionIn .36s ease both}
+.section-exit{animation:sectionOut .28s ease both}
+@keyframes sectionIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes sectionOut{from{opacity:1;transform:none}to{opacity:0;transform:translateY(-8px)}}
 .nav-cta{display:flex;align-items:center;gap:12px;margin-left:20px}
 .btn-nav-login{font-family:-apple-system,"Segoe UI",sans-serif;font-size:13px;font-weight:600;color:#fff;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);padding:7px 16px;border-radius:20px;cursor:pointer;transition:all .15s;border:none}
 .btn-nav-login:hover{background:rgba(255,255,255,.22)}
@@ -838,31 +852,63 @@ async function submitContact(){
 }
 
 // ─── Boot ─────────────────────────────────────────────────────────────────────
-// Single-page menu behaviour: show only the active section when a nav link is used.
+// Menu and navigation behaviour: supports SPA sections or regular page navigation.
 ;(function(){
+  // Set NAV_MODE to 'spa' for single-page behaviour or 'pages' for normal anchor navigation
+  const NAV_MODE = window.__NAV_MODE || 'spa';
+  const MENU_STYLE = window.__MENU_STYLE || 'left'; // 'left' or 'fullscreen'
   const sections = Array.from(document.querySelectorAll('section[id]'));
-  function showSection(id, push=true){
-    sections.forEach(s=>{ s.style.display = (s.id===id) ? '' : 'none'; });
+
+  function getById(id){ return document.getElementById(id); }
+
+  function enterSection(el){ el.classList.remove('section-exit'); el.classList.add('section-enter'); el.style.display=''; el.addEventListener('animationend', function t(){ el.classList.remove('section-enter'); el.removeEventListener('animationend',t); }); }
+  function exitSection(el){ return new Promise(res=>{ if(!el || el.style.display==='none'){ return res(); } el.classList.remove('section-enter'); el.classList.add('section-exit'); el.addEventListener('animationend', function t(){ el.style.display='none'; el.classList.remove('section-exit'); el.removeEventListener('animationend',t); res(); }); }); }
+
+  async function showSection(id, push=true){
+    const target = getById(id) || getById('home');
+    if(!target) return;
+    // animate out all visible sections, then animate in the target
+    const visible = sections.filter(s=> s.style.display!== 'none');
+    await Promise.all(visible.map(s=> exitSection(s)));
+    enterSection(target);
     document.querySelectorAll('.nav-links a').forEach(a=> a.classList.toggle('active', a.getAttribute('href') === '#'+id));
     if(push) history.pushState(null,'', '#'+id);
     window.scrollTo({top:0,behavior:'smooth'});
   }
-  document.querySelectorAll('.nav-links a').forEach(a=> a.addEventListener('click', e=>{
-    e.preventDefault(); const id = (a.getAttribute('href')||'#home').replace('#','')||'home'; showSection(id);
-    document.body.classList.remove('menu-open');
-  }));
+
+  // Attach menu mode classes
+  const navLinks = document.querySelector('.nav-links');
+  if(navLinks){
+    navLinks.classList.remove('menu-fullscreen','menu-left');
+    navLinks.classList.add(MENU_STYLE==='fullscreen' ? 'menu-fullscreen' : 'menu-left');
+  }
+
+  // Wire up link clicks
+  document.querySelectorAll('.nav-links a').forEach(a=>{
+    a.addEventListener('click', async e=>{
+      if(NAV_MODE === 'pages') return; // allow normal navigation
+      e.preventDefault();
+      const id = (a.getAttribute('href')||'#home').replace('#','')||'home';
+      await showSection(id);
+      document.body.classList.remove('menu-open');
+    });
+  });
+
   const mt = document.getElementById('menu-toggle'); if(mt) mt.addEventListener('click', ()=> document.body.classList.toggle('menu-open'));
   window.addEventListener('popstate', ()=>{ const id = location.hash.replace('#','')||'home'; showSection(id,false); });
-  // Show initial section based on hash or default to home after other initialisers run
-  const initial = location.hash.replace('#','')||'home';
+
+  // Boot sequence
   renderProgrammes();
   loadPosts();
   loadImpactStories();
   loadPartners();
   handleUrlTokens();
   if (lsGet('kbx_access')) updatePortalPane();
-  // Delay showing initial section until content loads
-  setTimeout(()=> showSection(initial,false), 120);
+
+  // Prepare initial state: hide all sections then show initial with animation
+  sections.forEach(s=> s.style.display = 'none');
+  const initial = location.hash.replace('#','')||'home';
+  setTimeout(()=> showSection(initial,false), 100);
 })();
 </script>
 </body>
