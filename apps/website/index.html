@@ -27,6 +27,7 @@
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
+html,body{min-width:0;overflow-x:hidden}
 body{font-family:Georgia,"Times New Roman",serif;font-size:16px;color:var(--ink);background:var(--paper);line-height:1.65}
 a{color:var(--forest-lt);text-decoration:none}
 a:hover{text-decoration:underline}
@@ -35,7 +36,7 @@ h1,h2,h3,h4{font-weight:500;line-height:1.2}
 .label{font-family:-apple-system,"Segoe UI",sans-serif;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--leaf)}
 
 /* ─── Layout ─────────────────────────────────────────────────────────────── */
-.container{max-width:1100px;margin:0 auto;padding:0 28px}
+.container{width:100%;max-width:1100px;margin:0 auto;padding:0 16px}
 .section{padding:88px 0}
 .section-alt{background:#f3f5f1}
 .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:40px}
@@ -44,9 +45,18 @@ h1,h2,h3,h4{font-weight:500;line-height:1.2}
 @media(max-width:900px){.grid-3,.grid-4{grid-template-columns:1fr 1fr}}
 @media(max-width:640px){.grid-2,.grid-3,.grid-4{grid-template-columns:1fr}.hide-mob{display:none!important}}
 
+/* Ensure media scales to container and tighten paddings on small screens */
+img, video, svg { max-width:100%; height:auto; display:block; }
+@media(max-width:900px){
+  .container{padding:0 12px}
+  .hero{padding:44px 0 36px}
+  .nav-logo, .nav-logo-img{width:44px;height:44px}
+  .nav-inner{height:64px}
+}
+
 /* ─── Nav ─────────────────────────────────────────────────────────────────── */
 nav{position:sticky;top:0;z-index:100;background:var(--forest);color:#fff}
-.nav-inner{display:flex;align-items:center;padding:0 28px;max-width:1100px;margin:0 auto;height:80px;gap:0}
+.nav-inner{display:flex;align-items:center;padding:0 16px;max-width:1100px;margin:0 auto;height:80px;gap:0}
 .nav-brand{display:flex;align-items:center;gap:16px;flex:1;text-decoration:none}
   .nav-logo{width:56px;height:56px;background:transparent;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;font-family:-apple-system,"Segoe UI",sans-serif;font-size:15px;font-weight:800;color:#fff;flex-shrink:0}
   .nav-logo-img{width:56px;height:56px;object-fit:cover;border-radius:50%;display:block}
@@ -110,7 +120,7 @@ nav{position:sticky;top:0;z-index:100;background:var(--forest);color:#fff}
 .btn-leaf{background:var(--forest);color:#fff;width:100%;display:block;text-align:center}.btn-leaf:hover{background:var(--forest-mid)}
 
 /* ─── Hero ─────────────────────────────────────────────────────────────────── */
-.hero{background:linear-gradient(160deg,var(--forest) 0%,var(--forest-mid) 50%,var(--lagoon) 100%);color:#fff;padding:110px 0 90px}
+.hero{background:linear-gradient(160deg,var(--forest) 0%,var(--forest-mid) 50%,var(--lagoon) 100%);color:#fff;padding:88px 0 60px}
 .hero-eyebrow{font-family:-apple-system,"Segoe UI",sans-serif;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--sand);margin-bottom:18px}
 .hero h1{font-size:clamp(30px,4.5vw,54px);max-width:680px;margin-bottom:22px;color:#fff}
 .hero-lead{font-size:17px;color:#cde0d5;max-width:520px;line-height:1.7;margin-bottom:36px}
