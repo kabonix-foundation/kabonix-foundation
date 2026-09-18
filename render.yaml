@@ -1,0 +1,108 @@
+# render.yaml — Kabonix Foundation Digital Platform
+# Render Blueprint: deploys three services from one repo.
+#
+# Services:
+#   kabonix-api      — Node.js API (port 4000), backed by PostgreSQL + PostGIS
+#   kabonix-website  — Public foundation website (port 3001)
+#   kabonix-portal   — Staff & field officer portal (port 3000)
+#
+# HOW TO USE
+# ----------
+# 1. Push this repo to GitHub (or GitLab).
+# 2. In Render Dashboard → New → Blueprint → connect your repo.
+# 3. Render reads this file and creates all three services + the database.
+# 4. Fill in the environment variables marked as `sync: false` (secrets)
+#    in the Render Dashboard after the first deploy — see the list below.
+# 5. Trigger a manual deploy of kabonix-api after setting env vars.
+#
+# REQUIRED SECRET ENV VARS (set in Dashboard, never commit to git)
+# ----------------------------------------------------------------
+#   kabonix-api:
+#     KABONIX_JWT_SECRET   — run `openssl rand -hex 32` and paste the result
+#
+# OPTIONAL BUT RECOMMENDED
+#   kabonix-api:
+#     SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM
+#       — when set, mailer.js switches from console-log to real email
+#         (add those fields to mailer.js — the stub is ready for it)
+
+databases:
+  - name: kabonix-db
+    databaseName: kabonix_db
+    user: kabonix
+    plan: free          # upgrade to starter ($7/mo) for production; free pauses after 90 days
+    postgresMajorVersion: 16
+    # PostGIS extension — Render's managed Postgres supports it; enabled by migration 0001.
+    # No extra config needed here; CREATE EXTENSION IF NOT EXISTS postgis runs in 0001.
+
+services:
+
+  # ── 1. API ──────────────────────────────────────────────────────────────────
+  - type: web
+    name: kabonix-api
+    runtime: node
+    plan: free           # upgrade to starter ($7/mo) for persistent instances
+    rootDir: apps/api
+    buildCommand: npm install
+    startCommand: node src/server.js
+    healthCheckPath: /health
+    envVars:
+      # Render injects DATABASE_URL automatically from the linked database.
+      - key: DATABASE_URL
+        fromDatabase:
+          name: kabonix-db
+          property: connectionString
+
+      # The public website URL — used in password-reset and verify-email links.
+      # Replace with your actual Render URL once kabonix-website is deployed.
+      - key: WEB_ORIGIN
+        value: https://kabonix-website.onrender.com   # ← update after first deploy
+
+      # Comma-separated list of frontend origins allowed to call this API.
+      # Add both the website and the staff portal URL (no trailing slashes).
+      - key: ALLOWED_ORIGINS
+        value: https://kabonix-website.onrender.com,https://kabonix-portal.onrender.com
+
+      # JWT signing secret — MUST be set as a secret in the Dashboard.
+      # Generate with: openssl rand -hex 32
+      - key: KABONIX_JWT_SECRET
+        sync: false      # marks this as a secret; Render will prompt you to fill it in
+
+      # Node environment
+      - key: NODE_ENV
+        value: production
+
+  # ── 2. Public website ────────────────────────────────────────────────────────
+  - type: web
+    name: kabonix-website
+    runtime: node
+    plan: free
+    rootDir: apps/website
+    buildCommand: npm install
+    startCommand: node serve.js
+    envVars:
+      # Render always injects PORT — our serve.js reads it first.
+      # Set API_URL and PORTAL_URL to the actual Render service URLs after first deploy.
+      - key: API_URL
+        value: https://kabonix-api.onrender.com       # ← update after first deploy
+      - key: PORTAL_URL
+        value: https://kabonix-portal.onrender.com    # ← update after first deploy
+      - key: NODE_ENV
+        value: production
+
+  # ── 3. Staff portal ──────────────────────────────────────────────────────────
+  - type: web
+    name: kabonix-portal
+    runtime: node
+    plan: free
+    rootDir: apps/web
+    buildCommand: npm install
+    startCommand: node serve.js
+    envVars:
+      # Set API_URL and WEBSITE_URL to the actual Render service URLs after first deploy.
+      - key: API_URL
+        value: https://kabonix-api.onrender.com       # ← update after first deploy
+      - key: WEBSITE_URL
+        value: https://kabonix-website.onrender.com   # ← update after first deploy
+      - key: NODE_ENV
+        value: production

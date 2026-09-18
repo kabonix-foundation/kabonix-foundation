@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en" id="html-root">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kabonix Foundation</title>
+<style>
+/* ─── Design tokens ─────────────────────────────────────────────────────── */
+:root {
+  --forest:      #0b3d2e;
+  --forest-mid:  #14553d;
+  --forest-lt:   #1a7a55;
+  --leaf:        #22a06b;
+  --leaf-tint:   #e8f5ee;
+  --lagoon:      #0e7a8a;
+  --lagoon-tint: #e4f4f6;
+  --sand:        #c8922a;
+  --sand-tint:   #fdf3e3;
+  --ink:         #171f1a;
+  --ink-soft:    #3d4d44;
+  --ink-faint:   #758270;
+  --paper:       #fafaf7;
+  --card:        #ffffff;
+  --line:        #dde5de;
+  --danger:      #a4372c;
+  --modal-bg:    rgba(11,61,46,.55);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:Georgia,"Times New Roman",serif;font-size:16px;color:var(--ink);background:var(--paper);line-height:1.65}
+a{color:var(--forest-lt);text-decoration:none}
+a:hover{text-decoration:underline}
+.sans{font-family:-apple-system,"Segoe UI",Helvetica,Arial,sans-serif}
+h1,h2,h3,h4{font-weight:500;line-height:1.2}
+.label{font-family:-apple-system,"Segoe UI",sans-serif;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--leaf)}
+
+/* ─── Layout ─────────────────────────────────────────────────────────────── */
+.container{max-width:1100px;margin:0 auto;padding:0 28px}
+.section{padding:88px 0}
+.section-alt{background:#f3f5f1}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:40px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:28px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:24px}
+@media(max-width:900px){.grid-3,.grid-4{grid-template-columns:1fr 1fr}}
+@media(max-width:640px){.grid-2,.grid-3,.grid-4{grid-template-columns:1fr}.hide-mob{display:none!important}}
+
+/* ─── Nav ─────────────────────────────────────────────────────────────────── */
+nav{position:sticky;top:0;z-index:100;background:var(--forest);color:#fff}
+.nav-inner{display:flex;align-items:center;padding:0 28px;max-width:1100px;margin:0 auto;height:64px;gap:0}
+.nav-brand{display:flex;align-items:center;gap:12px;flex:1;text-decoration:none}
+.nav-logo{width:36px;height:36px;background:var(--sand);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:-apple-system,"Segoe UI",sans-serif;font-size:15px;font-weight:800;color:#fff;flex-shrink:0}
+.nav-name{font-family:-apple-system,"Segoe UI",sans-serif;font-weight:700;font-size:14px;letter-spacing:.06em;color:#fff}
+.nav-tag{font-family:-apple-system,"Segoe UI",sans-serif;font-size:10.5px;color:#a9cbb8;letter-spacing:.03em}
+.nav-links{display:flex;gap:24px;align-items:center}
+.nav-links a{font-family:-apple-system,"Segoe UI",sans-serif;font-size:13.5px;color:#cde0d5;transition:color .15s}
+.nav-links a:hover{color:#fff;text-decoration:none}
+.nav-cta{display:flex;align-items:center;gap:12px;margin-left:20px}
+.btn-nav-login{font-family:-apple-system,"Segoe UI",sans-serif;font-size:13px;font-weight:600;color:#fff;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);padding:7px 16px;border-radius:20px;cursor:pointer;transition:all .15s;border:none}
+.btn-nav-login:hover{background:rgba(255,255,255,.22)}
+.lang-toggle{display:flex;background:rgba(255,255,255,.1);border-radius:20px;overflow:hidden}
+.lang-btn{padding:5px 12px;font-family:-apple-system,"Segoe UI",sans-serif;font-size:12px;font-weight:600;border:none;background:transparent;color:#a9cbb8;cursor:pointer;transition:background .15s,color .15s}
+.lang-btn.active{background:var(--sand);color:#fff}
+
+/* ─── Buttons ─────────────────────────────────────────────────────────────── */
+.btn{display:inline-block;padding:12px 24px;border-radius:6px;font-family:-apple-system,"Segoe UI",sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;border:none;text-decoration:none}
+.btn-primary{background:var(--sand);color:#fff}.btn-primary:hover{background:#b07c1e;text-decoration:none}
+.btn-outline{background:transparent;color:#fff;border:2px solid rgba(255,255,255,.5)}.btn-outline:hover{background:rgba(255,255,255,.1);text-decoration:none}
+.btn-leaf{background:var(--forest);color:#fff;width:100%;display:block;text-align:center}.btn-leaf:hover{background:var(--forest-mid)}
+
+/* ─── Hero ─────────────────────────────────────────────────────────────────── */
+.hero{background:linear-gradient(160deg,var(--forest) 0%,var(--forest-mid) 50%,var(--lagoon) 100%);color:#fff;padding:110px 0 90px}
+.hero-eyebrow{font-family:-apple-system,"Segoe UI",sans-serif;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--sand);margin-bottom:18px}
+.hero h1{font-size:clamp(30px,4.5vw,54px);max-width:680px;margin-bottom:22px;color:#fff}
+.hero-lead{font-size:17px;color:#cde0d5;max-width:520px;line-height:1.7;margin-bottom:36px}
+.hero-actions{display:flex;gap:12px;flex-wrap:wrap}
+.hero-stats{display:flex;gap:44px;margin-top:60px;padding-top:44px;border-top:1px solid rgba(255,255,255,.15)}
+.stat .number{font-size:34px;font-weight:500;color:#fff;line-height:1}
+.stat .desc{font-family:-apple-system,"Segoe UI",sans-serif;font-size:13px;color:#a9cbb8;margin-top:6px}
+
+/* ─── Section head ─────────────────────────────────────────────────────────── */
+.section-head{margin-bottom:52px}
+.section-head h2{font-size:clamp(24px,3.2vw,36px);color:var(--forest);margin-top:10px}
+.section-head p{font-family:-apple-system,"Segoe UI",sans-serif;color:var(--ink-soft);font-size:15.5px;max-width:580px;margin-top:12px;line-height:1.7}
+
+/* ─── Programme cards ───────────────────────────────────────────────────────── */
+.prog-card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:26px;transition:box-shadow .2s,transform .2s}
+.prog-card:hover{box-shadow:0 8px 28px rgba(11,61,46,.09);transform:translateY(-2px)}
+.prog-icon{width:42px;height:42px;border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:14px;font-size:20px}
+.prog-card h3{font-size:16px;color:var(--forest);margin-bottom:7px}
+.prog-card p{font-family:-apple-system,"Segoe UI",sans-serif;font-size:13px;color:var(--ink-soft);line-height:1.65}
+
+/* ─── Post / news cards ─────────────────────────────────────────────────────── */
+.post-card{background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;transition:box-shadow .2s}
+.post-card:hover{box-shadow:0 6px 24px rgba(11,61,46,.08)}
+.post-card-body{padding:20px 22px;flex:1;display:flex;flex-direction:column}
+.post-badge{display:inline-block;font-family:-apple-system,"Segoe UI",sans-serif;font-size:10.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:3px 9px;border-radius:20px;margin-bottom:11px}
+.b-news{background:var(--leaf-tint);color:var(--forest-mid)}
+.b-event{background:var(--lagoon-tint);color:var(--lagoon)}
+.b-pub{background:var(--sand-tint);color:#7a5610}
+.post-card h3{font-size:16px;color:var(--ink);margin-bottom:7px;line-height:1.3}
+.post-card p{font-family:-apple-system,"Segoe UI",sans-serif;font-size:13px;color:var(--ink-soft);flex:1;line-height:1.6}
+.post-meta{font-family:-apple-system,"Segoe UI",sans-serif;font-size:12px;color:var(--ink-faint);margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}
+.tab-bar{display:flex;gap:6px;margin-bottom:36px;flex-wrap:wrap}
+.tab-btn{padding:7px 16px;border-radius:20px;border:1px solid var(--line);background:transparent;font-family:-apple-system,"Segoe UI",sans-serif;font-size:13px;cursor:pointer;color:var(--ink-soft);transition:all .15s}
+.tab-btn.active{background:var(--forest);color:#fff;border-color:var(--forest)}
+
+/* ─── Impact cards ──────────────────────────────────────────────────────────── */
+.impact-card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:26px;border-left:4px solid var(--leaf)}
+.impact-metric{display:flex;gap:12px;align-items:flex-end;margin-bottom:14px}
+.metric-val{font-size:38px;font-weight:500;color:var(--forest);line-height:1}
+.metric-lbl{font-family:-apple-system,"Segoe UI",sans-serif;font-size:12.5px;color:var(--ink-faint);padding-bottom:4px}
+.impact-card h3{font-size:16px;color:var(--ink);margin-bottom:7px}
+.impact-card p{font-family:-apple-system,"Segoe UI",sans-serif;font-size:13px;color:var(--ink-soft);line-height:1.65}
+.prog-tag{display:inline-block;font-family:-apple-system,"Segoe UI",sans-serif;font-size:11px;font-weight:700;background:var(--leaf-tint);color:var(--forest-mid);padding:3px 9px;border-radius:20px;margin-top:12px;margin-right:4px}
+
+/* ─── Partners ──────────────────────────────────────────────────────────────── */
+.partner-card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px;display:flex;flex-direction:column;gap:9px}
+.partner-type{font-family:-apple-system,"Segoe UI",sans-serif;font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint)}
+.partner-card h3{font-size:15px;color:var(--forest)}
+.partner-card p{font-family:-apple-system,"Segoe UI",sans-serif;font-size:12.5px;color:var(--ink-soft);line-height:1.6}
+
+/* ─── Contact form ──────────────────────────────────────────────────────────── */
+.contact-wrap{display:grid;grid-template-columns:1fr 1.4fr;gap:60px;align-items:start}
+@media(max-width:780px){.contact-wrap{grid-template-columns:1fr}}
+.contact-info h2{font-size:clamp(22px,2.8vw,32px);color:var(--forest);margin:10px 0 18px}
+.contact-info p{font-family:-apple-system,"Segoe UI",sans-serif;color:var(--ink-soft);font-size:14.5px;line-height:1.7;margin-bottom:24px}
+.c-detail{display:flex;align-items:flex-start;gap:11px;margin-bottom:14px}
+.c-icon{width:34px;height:34px;background:var(--leaf-tint);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.c-detail div{font-family:-apple-system,"Segoe UI",sans-serif;font-size:13px;color:var(--ink-soft)}
+.c-detail strong{display:block;font-size:12.5px;color:var(--ink);margin-bottom:1px}
+.form-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:32px}
+.field{margin-bottom:16px}
+.field label{display:block;font-family:-apple-system,"Segoe UI",sans-serif;font-size:13px;font-weight:600;color:var(--ink-soft);margin-bottom:6px}
+.field input,.field select,.field textarea{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:6px;font-family:-apple-system,"Segoe UI",sans-serif;font-size:14px;color:var(--ink);background:#fff;transition:border .15s,box-shadow .15s}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--leaf);box-shadow:0 0 0 3px rgba(34,160,107,.14)}
+.field textarea{min-height:96px;resize:vertical}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:500px){.field-row{grid-template-columns:1fr}}
+.submit-btn{width:100%;padding:12px;background:var(--forest);color:#fff;border:none;border-radius:6px;font-family:-apple-system,"Segoe UI",sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:background .15s}
+.submit-btn:hover{background:var(--forest-mid)}
+.submit-btn:disabled{opacity:.55;cursor:default}
+.form-success{text-align:center;padding:36px 16px}
+.form-success .ck{font-size:44px;margin-bottom:14px}
+.form-success h3{font-size:19px;color:var(--forest);margin-bottom:7px}
+.form-success p{font-family:-apple-system,"Segoe UI",sans-serif;color:var(--ink-soft);font-size:13.5px}
+.form-err{background:#fdecea;border:1px solid #f5c2be;border-radius:6px;padding:10px 13px;font-family:-apple-system,"Segoe UI",sans-serif;font-size:13px;color:var(--danger);margin-bottom:13px;display:none}
+
+/* ─── Footer ────────────────────────────────────────────────────────────────── */
+footer{background:var(--ink);color:#a0b0a6;padding:60px 0 28px}
+.footer-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:36px;margin-bottom:44px}
+@media(max-width:800px){.footer-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:500px){.footer-grid{grid-template-columns:1fr}}
+.footer-brand .fn{font-family:-apple-system,"Segoe UI",sans-serif;font-weight:700;font-size:13.5px;letter-spacing:.06em;color:#fff;margin-bottom:4px}
+.footer-brand .ft{font-family:-apple-system,"Segoe UI",sans-serif;font-size:11.5px;color:#6b8a77;margin-bottom:14px}
+.footer-brand p{font-family:-apple-system,"Segoe UI",sans-serif;font-size:12.5px;line-height:1.7;max-width:230px}
+.footer-col h4{font-family:-apple-system,"Segoe UI",sans-serif;font-size:11.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#6b8a77;margin-bottom:14px}
+.footer-col a{display:block;font-family:-apple-system,"Segoe UI",sans-serif;font-size:12.5px;color:#a0b0a6;margin-bottom:8px;transition:color .15s}
+.footer-col a:hover{color:#fff;text-decoration:none}
+.footer-bottom{border-top:1px solid rgba(255,255,255,.07);padding-top:22px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.footer-bottom p{font-family:-apple-system,"Segoe UI",sans-serif;font-size:12px}
+
+/* ─── Skeleton loading ──────────────────────────────────────────────────────── */
+.skel{background:linear-gradient(90deg,#e8ede8 25%,#d8e0d8 50%,#e8ede8 75%);background-size:200%;animation:shim 1.4s infinite;border-radius:5px}
+@keyframes shim{0%{background-position:200%}100%{background-position:-200%}}
+.sl{height:13px;margin-bottom:9px}.st{height:20px;width:70%;margin-bottom:11px}
+
+/* ─── MODAL: Staff Login / Auth ─────────────────────────────────────────────── */
+.modal-overlay{display:none;position:fixed;inset:0;background:var(--modal-bg);z-index:500;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal{background:var(--card);border-radius:14px;width:100%;max-width:420px;padding:36px;position:relative;box-shadow:0 24px 60px rgba(0,0,0,.25);animation:modalIn .22s ease}
+@keyframes modalIn{from{transform:scale(.96) translateY(8px);opacity:0}to{transform:none;opacity:1}}
+.modal-close{position:absolute;top:16px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-faint);line-height:1;padding:4px 8px;border-radius:5px}
+.modal-close:hover{background:var(--leaf-tint);color:var(--forest)}
+.modal h2{font-family:-apple-system,"Segoe UI",sans-serif;font-size:21px;font-weight:600;margin-bottom:4px}
+.modal .sub{font-family:-apple-system,"Segoe UI",sans-serif;font-size:13px;color:var(--ink-faint);margin-bottom:22px}
+.modal-tabs{display:flex;gap:0;margin-bottom:24px;border-bottom:2px solid var(--line)}
+.modal-tab{flex:1;padding:9px;text-align:center;font-family:-apple-system,"Segoe UI",sans-serif;font-size:13.5px;font-weight:600;cursor:pointer;color:var(--ink-faint);border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s}
+.modal-tab.active{color:var(--forest);border-bottom-color:var(--forest)}
+.modal-hint{font-family:-apple-system,"Segoe UI",sans-serif;font-size:11.5px;color:var(--ink-faint);margin-top:14px;padding-top:12px;border-top:1px solid var(--line);line-height:1.6}
+.modal-hint a{color:var(--forest-lt);cursor:pointer}
+.err-msg{font-family:-apple-system,"Segoe UI",sans-serif;font-size:12.5px;color:var(--danger);margin-top:7px;min-height:17px}
+.ok-msg{font-family:-apple-system,"Segoe UI",sans-serif;font-size:12.5px;color:var(--ok, #1a7a55);background:var(--leaf-tint);border-radius:5px;padding:9px 12px;margin-top:7px;display:none}
+.divider{text-align:center;font-family:-apple-system,"Segoe UI",sans-serif;font-size:12px;color:var(--ink-faint);margin:16px 0;position:relative}
+.divider::before,.divider::after{content:'';position:absolute;top:50%;width:42%;height:1px;background:var(--line)}
+.divider::before{left:0}.divider::after{right:0}
+.staff-note{background:var(--leaf-tint);border-radius:7px;padding:12px 14px;font-family:-apple-system,"Segoe UI",sans-serif;font-size:12.5px;color:var(--forest);margin-bottom:18px;line-height:1.55}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--forest);color:#fff;padding:12px 18px;border-radius:8px;font-family:-apple-system,"Segoe UI",sans-serif;font-size:13px;box-shadow:0 6px 20px rgba(0,0,0,.18);z-index:600;animation:tin .2s ease}
+.toast.err{background:var(--danger)}
+@keyframes tin{from{transform:translateY(8px);opacity:0}to{transform:none;opacity:1}}
+
+/* content fade-in */
+.fade{animation:fi .25s ease}
+@keyframes fi{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+
+<!-- ───────────────────────────── NAV ───────────────────────────────────── -->
+<nav>
+  <div class="nav-inner">
+    <a class="nav-brand" href="#home">
+      <div class="nav-logo">K</div>
+      <div><div class="nav-name">KABONIX FOUNDATION</div>
+           <div class="nav-tag" data-en="People · Planet · Prosperity" data-sw="Watu · Sayari · Ustawi">People · Planet · Prosperity</div></div>
+    </a>
+    <div class="nav-links hide-mob">
+      <a href="#programmes" data-en="Programmes"   data-sw="Programu">Programmes</a>
+      <a href="#news"       data-en="News & Events" data-sw="Habari">News & Events</a>
+      <a href="#impact"     data-en="Impact"        data-sw="Athari">Impact</a>
+      <a href="#partners"   data-en="Partners"      data-sw="Washirika">Partners</a>
+      <a href="#contact"    data-en="Contact"       data-sw="Wasiliana">Contact</a>
+    </div>
+    <div class="nav-cta">
+      <div class="lang-toggle">
+        <button class="lang-btn active" data-lang="en" onclick="setLang('en')">EN</button>
+        <button class="lang-btn"        data-lang="sw" onclick="setLang('sw')">SW</button>
+      </div>
+      <button class="btn-nav-login" onclick="openModal('login')" data-en="Staff login" data-sw="Ingia">Staff login</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ───────────────────────── MODAL: AUTH ───────────────────────────────── -->
+<div class="modal-overlay" id="auth-modal" onclick="maybeCloseModal(event)">
+  <div class="modal" role="dialog" aria-modal="true">
+    <button class="modal-close" onclick="closeModal()" aria-label="Close">✕</button>
+
+    <!-- ── tab bar (hidden when showing single-purpose screens) ── -->
+    <div class="modal-tabs" id="modal-tabs">
+      <button class="modal-tab active" id="tab-login"  onclick="switchTab('login')"  data-en="Sign in"       data-sw="Ingia">Sign in</button>
+      <button class="modal-tab"        id="tab-forgot" onclick="switchTab('forgot')" data-en="Reset password" data-sw="Weka upya">Reset password</button>
+    </div>
+
+    <!-- ── SIGN IN ── -->
+    <div id="pane-login">
+      <div class="staff-note" data-en="This portal is for Kabonix Foundation staff and field officers." data-sw="Lango hili ni kwa wafanyakazi wa Kabonix Foundation na maafisa wa shamba.">This portal is for Kabonix Foundation staff and field officers.</div>
+      <div class="field"><label data-en="Email address" data-sw="Barua pepe">Email address</label>
+        <input id="li-email" type="email" autocomplete="email" placeholder="you@kabonix.org"></div>
+      <div class="field"><label data-en="Password" data-sw="Nywila">Password</label>
+        <input id="li-pw" type="password" autocomplete="current-password" placeholder="••••••••"></div>
+      <button class="btn btn-leaf" id="li-btn" onclick="doLogin()">
+        <span data-en="Sign in" data-sw="Ingia">Sign in</span>
+      </button>
+      <div class="err-msg" id="li-err"></div>
+      <div class="modal-hint">
+        <a onclick="switchTab('forgot')" data-en="Forgot your password?" data-sw="Umesahau nywila yako?">Forgot your password?</a>
+        <br><span data-en="Don't have an account? Ask your Foundation Admin to invite you." data-sw="Huna akaunti? Omba Msimamizi wako wa Mfuko akualike.">Don't have an account? Ask your Foundation Admin to invite you.</span>
+      </div>
+    </div>
+
+    <!-- ── MFA CHALLENGE ── -->
+    <div id="pane-mfa" style="display:none">
+      <h2 data-en="Two-factor authentication" data-sw="Uthibitisho wa hatua mbili">Two-factor authentication</h2>
+      <p class="sub" data-en="Enter the 6-digit code from your authenticator app." data-sw="Ingiza nambari 6 kutoka programu yako ya uthibitisho.">Enter the 6-digit code from your authenticator app.</p>
+      <div class="field"><label data-en="Authentication code" data-sw="Nambari ya uthibitisho">Authentication code</label>
+        <input id="mfa-code" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="000000"></div>
+      <button class="btn btn-leaf" onclick="doMfa()" data-en="Verify" data-sw="Thibitisha">Verify</button>
+      <div class="err-msg" id="mfa-err"></div>
+      <div class="modal-hint"><a onclick="showPane('login')" data-en="← Back to sign in" data-sw="← Rudi kuingia">← Back to sign in</a></div>
+    </div>
+
+    <!-- ── FORGOT PASSWORD ── -->
+    <div id="pane-forgot" style="display:none">
+      <div class="field"><label data-en="Your email address" data-sw="Anwani yako ya barua pepe">Your email address</label>
+        <input id="fp-email" type="email" autocomplete="email" placeholder="you@kabonix.org"></div>
+      <button class="btn btn-leaf" onclick="doForgot()" data-en="Send reset link" data-sw="Tuma kiungo cha kuweka upya">Send reset link</button>
+      <div class="err-msg"  id="fp-err"></div>
+      <div class="ok-msg"   id="fp-ok"  data-en="If that email exists, a reset link has been sent. Check your inbox (and the API console in dev mode)." data-sw="Ikiwa barua pepe hiyo ipo, kiungo cha kuweka upya kimetumwa.">If that email exists, a reset link has been sent.</div>
+      <div class="modal-hint"><a onclick="switchTab('login')" data-en="← Back to sign in" data-sw="← Rudi kuingia">← Back to sign in</a></div>
+    </div>
+
+    <!-- ── RESET PASSWORD (token from URL) ── -->
+    <div id="pane-reset" style="display:none">
+      <h2 data-en="Set a new password" data-sw="Weka nywila mpya">Set a new password</h2>
+      <p class="sub" data-en="Choose a strong password of at least 8 characters." data-sw="Chagua nywila imara ya angalau herufi 8.">Choose a strong password of at least 8 characters.</p>
+      <div class="field"><label data-en="New password" data-sw="Nywila mpya">New password</label>
+        <input id="rp-pw" type="password" autocomplete="new-password" placeholder="New password"></div>
+      <div class="field"><label data-en="Confirm password" data-sw="Thibitisha nywila">Confirm password</label>
+        <input id="rp-pw2" type="password" autocomplete="new-password" placeholder="Repeat password"></div>
+      <button class="btn btn-leaf" onclick="doReset()" data-en="Set password" data-sw="Weka nywila">Set password</button>
+      <div class="err-msg" id="rp-err"></div>
+      <div class="ok-msg"  id="rp-ok"  data-en="Password updated. You can now sign in." data-sw="Nywila imesasishwa. Sasa unaweza kuingia.">Password updated. You can now sign in.</div>
+    </div>
+
+    <!-- ── EMAIL VERIFIED landing ── -->
+    <div id="pane-verified" style="display:none">
+      <div style="text-align:center;padding:10px 0 20px">
+        <div style="font-size:44px;margin-bottom:14px">✅</div>
+        <h2 data-en="Email verified!" data-sw="Barua pepe imethibitishwa!">Email verified!</h2>
+        <p class="sub" data-en="Your email has been confirmed. Sign in to get started." data-sw="Barua pepe yako imethibitishwa. Ingia kuanza.">Your email has been confirmed. Sign in to get started.</p>
+        <button class="btn btn-leaf" onclick="switchTab('login')" style="margin-top:12px" data-en="Go to sign in" data-sw="Nenda kuingia">Go to sign in</button>
+      </div>
+    </div>
+
+    <!-- ── SIGNED IN: portal links ── -->
+    <div id="pane-portal" style="display:none">
+      <div style="text-align:center;margin-bottom:22px">
+        <div style="font-size:40px;margin-bottom:10px">👤</div>
+        <h2 id="portal-name" style="margin-bottom:4px"></h2>
+        <p class="sub" id="portal-roles"></p>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:9px">
+        <a id="portal-link" href="#" target="_blank" class="btn btn-leaf" style="text-align:center" data-en="Open staff portal →" data-sw="Fungua lango la wafanyakazi →">Open staff portal →</a>
+        <button class="btn" style="background:var(--paper);color:var(--ink);border:1px solid var(--line)" onclick="doSignOut()" data-en="Sign out" data-sw="Toka">Sign out</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ───────────────────────────── HERO ──────────────────────────────────── -->
+<section class="hero" id="home">
+  <div class="container">
+    <div class="hero-eyebrow" data-en="People · Planet · Prosperity" data-sw="Watu · Sayari · Ustawi">People · Planet · Prosperity</div>
+    <h1 data-en="Protecting Ecosystems, Empowering Communities" data-sw="Kulinda Mifumo ya Ikolojia, Kuwezesha Jamii">Protecting Ecosystems, Empowering Communities</h1>
+    <p class="hero-lead" data-en="Kabonix Foundation works across terrestrial conservation, blue carbon, sustainable aquaculture, climate-smart agriculture and green entrepreneurship for youth and women in Tanzania." data-sw="Kabonix Foundation inafanya kazi katika uhifadhi wa ardhi, kaboni ya bluu, ufugaji endelevu, kilimo kinachostahimili hali ya hewa na ujasiriamali wa kijani kwa vijana na wanawake Tanzania.">Kabonix Foundation works across terrestrial conservation, blue carbon, sustainable aquaculture, climate-smart agriculture and green entrepreneurship for youth and women in Tanzania.</p>
+    <div class="hero-actions">
+      <a href="#programmes" class="btn btn-primary" data-en="Our Programmes" data-sw="Programu Zetu">Our Programmes</a>
+      <a href="#contact"    class="btn btn-outline"  data-en="Work With Us"   data-sw="Fanya Kazi Nasi">Work With Us</a>
+    </div>
+    <div class="hero-stats">
+      <div class="stat"><div class="number">1,200+</div><div class="desc sans" data-en="Ha of mangrove restored" data-sw="Ha za mikoko zilizorejelewa">Ha of mangrove restored</div></div>
+      <div class="stat"><div class="number">8,400+</div><div class="desc sans" data-en="Beneficiaries reached"   data-sw="Wanufaika waliofikiwa">Beneficiaries reached</div></div>
+      <div class="stat"><div class="number">48,000t</div><div class="desc sans" data-en="CO₂-eq sequestered"    data-sw="CO₂-sawa kilichohifadhiwa">CO₂-eq sequestered</div></div>
+      <div class="stat hide-mob"><div class="number">12</div><div class="desc sans" data-en="Programme sites" data-sw="Maeneo ya programu">Programme sites</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ──────────────────────── PROGRAMMES ─────────────────────────────────── -->
+<section class="section" id="programmes">
+  <div class="container">
+    <div class="section-head">
+      <div class="label" data-en="About Kabonix" data-sw="Kuhusu Kabonix">About Kabonix</div>
+      <h2 data-en="Our Programme Areas" data-sw="Maeneo Yetu ya Programu">Our Programme Areas</h2>
+      <p data-en="Every programme generates field data — beneficiaries reached, plots registered, indicators tracked, carbon sequestered. Our integrated digital platform turns that data into evidence that staff, partners, donors and government can act on." data-sw="Kila programu inazalisha data ya shamba. Mfumo wetu wa dijitali unageuza data hiyo kuwa ushahidi ambao wafanyakazi, washirika, wafadhili na serikali wanaweza kutenda.">Every programme generates field data — beneficiaries reached, plots registered, indicators tracked, carbon sequestered. Our integrated digital platform turns that data into evidence that staff, partners, donors and government can act on.</p>
+    </div>
+    <div class="grid-3" id="prog-grid"></div>
+  </div>
+</section>
+
+<!-- ───────────────────────── NEWS / EVENTS ──────────────────────────────── -->
+<section class="section section-alt" id="news">
+  <div class="container">
+    <div class="section-head">
+      <div class="label" data-en="News, Events & Publications" data-sw="Habari, Matukio & Machapisho">News, Events & Publications</div>
+      <h2 data-en="What's Happening" data-sw="Kinachoendelea">What's Happening</h2>
+    </div>
+    <div class="tab-bar">
+      <button class="tab-btn active" data-f="all"         onclick="filterPosts('all')"         data-en="All"          data-sw="Yote">All</button>
+      <button class="tab-btn"        data-f="news"        onclick="filterPosts('news')"        data-en="News"         data-sw="Habari">News</button>
+      <button class="tab-btn"        data-f="event"       onclick="filterPosts('event')"       data-en="Events"       data-sw="Matukio">Events</button>
+      <button class="tab-btn"        data-f="publication" onclick="filterPosts('publication')" data-en="Publications" data-sw="Machapisho">Publications</button>
+    </div>
+    <div class="grid-3" id="posts-grid">
+      <div class="post-card"><div class="post-card-body"><div class="skel st"></div><div class="skel sl"></div><div class="skel sl" style="width:80%"></div></div></div>
+      <div class="post-card"><div class="post-card-body"><div class="skel st"></div><div class="skel sl"></div><div class="skel sl" style="width:80%"></div></div></div>
+      <div class="post-card"><div class="post-card-body"><div class="skel st"></div><div class="skel sl"></div><div class="skel sl" style="width:80%"></div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────────────────────────── IMPACT ────────────────────────────────── -->
+<section class="section" id="impact">
+  <div class="container">
+    <div class="section-head">
+      <div class="label" data-en="Results & Impact" data-sw="Matokeo & Athari">Results & Impact</div>
+      <h2 data-en="Stories From the Field" data-sw="Hadithi Kutoka Shambani">Stories From the Field</h2>
+      <p data-en="Real outcomes from the communities and ecosystems Kabonix works with — verified by field data and third-party auditors." data-sw="Matokeo ya kweli kutoka kwa jamii na mifumo ya ikolojia ambayo Kabonix inafanya kazi nayo.">Real outcomes from the communities and ecosystems Kabonix works with — verified by field data and third-party auditors.</p>
+    </div>
+    <div class="grid-3" id="impact-grid">
+      <div class="impact-card"><div class="skel st"></div><div class="skel sl"></div><div class="skel sl" style="width:80%"></div></div>
+      <div class="impact-card"><div class="skel st"></div><div class="skel sl"></div><div class="skel sl" style="width:80%"></div></div>
+      <div class="impact-card"><div class="skel st"></div><div class="skel sl"></div><div class="skel sl" style="width:80%"></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ──────────────────────────── PARTNERS ───────────────────────────────── -->
+<section class="section section-alt" id="partners">
+  <div class="container">
+    <div class="section-head">
+      <div class="label" data-en="Partners & Donors" data-sw="Washirika & Wafadhili">Partners & Donors</div>
+      <h2 data-en="Who We Work With" data-sw="Tunafanya Kazi na Nani">Who We Work With</h2>
+    </div>
+    <div class="grid-4" id="partners-grid">
+      <div class="partner-card"><div class="skel st"></div><div class="skel sl"></div></div>
+      <div class="partner-card"><div class="skel st"></div><div class="skel sl"></div></div>
+      <div class="partner-card"><div class="skel st"></div><div class="skel sl"></div></div>
+      <div class="partner-card"><div class="skel st"></div><div class="skel sl"></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ──────────────────────────── CONTACT ────────────────────────────────── -->
+<section class="section" id="contact">
+  <div class="container">
+    <div class="contact-wrap">
+      <div class="contact-info">
+        <div class="label" data-en="Get in Touch" data-sw="Wasiliana Nasi">Get in Touch</div>
+        <h2 data-en="Partner With Us" data-sw="Shiriki Nasi">Partner With Us</h2>
+        <p data-en="Whether you're a donor, government agency, NGO, researcher or community leader — we'd like to hear from you." data-sw="Iwe wewe ni mfadhili, shirika la serikali, NGO, mtafiti au kiongozi wa jamii — tungependa kusikia kutoka kwako.">Whether you're a donor, government agency, NGO, researcher or community leader — we'd like to hear from you.</p>
+        <div class="c-detail"><div class="c-icon">📍</div><div><strong data-en="Address" data-sw="Anwani">Address</strong>Dar es Salaam, Tanzania</div></div>
+        <div class="c-detail"><div class="c-icon">✉️</div><div><strong>Email</strong>info@kabonix.org</div></div>
+        <div class="c-detail"><div class="c-icon">🌐</div><div><strong data-en="Focus areas" data-sw="Maeneo ya kuzingatia">Focus areas</strong><span data-en="Blue Economy · Carbon · Agriculture · Energy · Youth & Women" data-sw="Uchumi wa Bluu · Kaboni · Kilimo · Nishati · Vijana na Wanawake">Blue Economy · Carbon · Agriculture · Energy · Youth & Women</span></div></div>
+      </div>
+      <div class="form-card">
+        <div id="contact-form-area">
+          <div class="form-err" id="cf-err"></div>
+          <div class="field-row">
+            <div class="field"><label data-en="Full name *" data-sw="Jina kamili *">Full name *</label><input id="cf-name" type="text"></div>
+            <div class="field"><label data-en="Email *"     data-sw="Barua pepe *">Email *</label><input id="cf-email" type="email"></div>
+          </div>
+          <div class="field"><label data-en="Organisation" data-sw="Shirika">Organisation</label><input id="cf-org" type="text"></div>
+          <div class="field"><label data-en="Subject *" data-sw="Mada *">Subject *</label>
+            <select id="cf-sub">
+              <option value="" data-en="Select…" data-sw="Chagua…">Select…</option>
+              <option data-en="Partnership enquiry"   data-sw="Ombi la ushirikiano">Partnership enquiry</option>
+              <option data-en="Funding / donation"    data-sw="Ufadhili / mchango">Funding / donation</option>
+              <option data-en="Carbon / MRV data"     data-sw="Data ya kaboni / MRV">Carbon / MRV data</option>
+              <option data-en="Research collaboration" data-sw="Ushirikiano wa utafiti">Research collaboration</option>
+              <option data-en="Community programme"   data-sw="Programu ya jamii">Community programme</option>
+              <option data-en="Media enquiry"         data-sw="Ombi la vyombo vya habari">Media enquiry</option>
+              <option data-en="Other"                 data-sw="Nyingine">Other</option>
+            </select>
+          </div>
+          <div class="field"><label data-en="Message *" data-sw="Ujumbe *">Message *</label><textarea id="cf-msg"></textarea></div>
+          <button class="submit-btn" id="cf-btn" onclick="submitContact()" data-en="Send Message" data-sw="Tuma Ujumbe">Send Message</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────────────────────────── FOOTER ────────────────────────────────── -->
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="fn">KABONIX FOUNDATION</div>
+        <div class="ft" data-en="People · Planet · Prosperity" data-sw="Watu · Sayari · Ustawi">People · Planet · Prosperity</div>
+        <p data-en="A unified platform to collect, manage and act on climate, blue-economy and community-development data." data-sw="Mfumo mmoja wa kukusanya, kusimamia na kutenda kwa data ya hali ya hewa, uchumi wa bluu na maendeleo ya jamii.">A unified platform to collect, manage and act on climate, blue-economy and community-development data.</p>
+      </div>
+      <div class="footer-col">
+        <h4 data-en="Programmes" data-sw="Programu">Programmes</h4>
+        <a href="#programmes" data-en="Blue Economy & Climate"        data-sw="Uchumi wa Bluu na Hali ya Hewa">Blue Economy & Climate</a>
+        <a href="#programmes" data-en="Carbon & MRV"                  data-sw="Kaboni na MRV">Carbon & MRV</a>
+        <a href="#programmes" data-en="Climate-smart Agriculture"      data-sw="Kilimo Kinachostahimili Hali ya Hewa">Climate-smart Agriculture</a>
+        <a href="#programmes" data-en="Youth & Women Entrepreneurship" data-sw="Ujasiriamali wa Vijana na Wanawake">Youth & Women</a>
+        <a href="#programmes" data-en="Renewable Energy"              data-sw="Nishati Jadidifu">Renewable Energy</a>
+      </div>
+      <div class="footer-col">
+        <h4 data-en="Resources" data-sw="Rasilimali">Resources</h4>
+        <a href="#news" data-en="News"         data-sw="Habari">News</a>
+        <a href="#news" data-en="Events"        data-sw="Matukio">Events</a>
+        <a href="#news" data-en="Publications"  data-sw="Machapisho">Publications</a>
+        <a href="#impact" data-en="Impact Stories" data-sw="Hadithi za Athari">Impact Stories</a>
+      </div>
+      <div class="footer-col">
+        <h4 data-en="Organisation" data-sw="Shirika">Organisation</h4>
+        <a href="#partners" data-en="Partners & Donors" data-sw="Washirika na Wafadhili">Partners & Donors</a>
+        <a href="#contact"  data-en="Contact Us"         data-sw="Wasiliana Nasi">Contact Us</a>
+        <a href="#" onclick="openModal('login');return false" data-en="Staff Portal" data-sw="Lango la Wafanyakazi">Staff Portal</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 Kabonix Foundation. <span data-en="All rights reserved." data-sw="Haki zote zimehifadhiwa.">All rights reserved.</span></p>
+      <p data-en="Tanzania | Dar es Salaam" data-sw="Tanzania | Dar es Salaam">Tanzania | Dar es Salaam</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+// ─── Config ─────────────────────────────────────────────────────────────────
+// API_URL is set by the serve.js server via a <meta> tag so the same
+// HTML file works both locally and on Render without a build step.
+const API = (document.querySelector('meta[name="api-url"]')?.content || 'http://localhost:4000') + '/api';
+const PORTAL_URL = document.querySelector('meta[name="portal-url"]')?.content || 'http://localhost:3000';
+let   lang    = 'en';
+let   _mfaChallenge = null;
+let   _resetToken   = null;
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+function esc(s){ if(!s) return ''; return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function lsGet(k)   { try{return localStorage.getItem(k);}catch{return(window.__m||{})[k]||null;} }
+function lsSet(k,v) { try{localStorage.setItem(k,v);}catch{window.__m=window.__m||{};window.__m[k]=v;} }
+function lsDel(k)   { try{localStorage.removeItem(k);}catch{if(window.__m)delete window.__m[k];} }
+
+function toast(msg, isErr){
+  const el=Object.assign(document.createElement('div'),{className:'toast'+(isErr?' err':''),textContent:msg});
+  document.body.appendChild(el); setTimeout(()=>el.remove(),3400);
+}
+
+async function apiCall(path, opts={}){
+  const token = lsGet('kbx_access');
+  const res = await fetch(API+path,{
+    ...opts,
+    headers:{'Content-Type':'application/json',...(token?{Authorization:`Bearer ${token}`}:{}),...(opts.headers||{})},
+    body: opts.body ? JSON.stringify(opts.body) : undefined,
+  });
+  const data = await res.json().catch(()=>({}));
+  if (!res.ok) throw new Error(data.error||`Error ${res.status}`);
+  return data;
+}
+
+function skelCards(n, outer, inner){
+  return Array(n).fill(0).map(()=>`<div class="${outer}"><div class="${inner}" style="padding:22px"><div class="skel st"></div><div class="skel sl"></div><div class="skel sl" style="width:80%"></div></div></div>`).join('');
+}
+
+// ─── Language ─────────────────────────────────────────────────────────────────
+function setLang(l){
+  lang = l;
+  document.getElementById('html-root').lang = l;
+  document.querySelectorAll('[data-en]').forEach(el=>{
+    const t = l==='sw' ? el.dataset.sw : el.dataset.en;
+    if(t) el.textContent = t;
+  });
+  document.querySelectorAll('select option[data-en]').forEach(opt=>{
+    opt.textContent = l==='sw' ? opt.dataset.sw : opt.dataset.en;
+    opt.value = l==='sw' ? (opt.dataset.sw||opt.dataset.en) : opt.dataset.en;
+  });
+  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('active',b.dataset.lang===l));
+  loadPosts();
+  loadImpactStories();
+  loadPartners();
+}
+
+// ─── Modal control ────────────────────────────────────────────────────────────
+function openModal(intent){
+  const modal = document.getElementById('auth-modal');
+  modal.classList.add('open');
+  document.body.style.overflow='hidden';
+
+  // If already signed in, jump straight to portal pane
+  if (lsGet('kbx_access')) { showPane('portal'); updatePortalPane(); return; }
+
+  if (intent==='login')  switchTab('login');
+  if (intent==='forgot') switchTab('forgot');
+}
+function closeModal(){
+  document.getElementById('auth-modal').classList.remove('open');
+  document.body.style.overflow='';
+}
+function maybeCloseModal(e){ if(e.target===document.getElementById('auth-modal')) closeModal(); }
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
+
+function showPane(name){
+  ['login','mfa','forgot','reset','verified','portal'].forEach(n=>{
+    const el=document.getElementById('pane-'+n);
+    if(el) el.style.display = n===name?'':'none';
+  });
+  // Show/hide tabs: only for login and forgot
+  document.getElementById('modal-tabs').style.display = ['login','forgot'].includes(name) ? 'flex' : 'none';
+  // Update active tab
+  if(name==='login')  { document.getElementById('tab-login').classList.add('active');    document.getElementById('tab-forgot').classList.remove('active'); }
+  if(name==='forgot') { document.getElementById('tab-forgot').classList.add('active');   document.getElementById('tab-login').classList.remove('active'); }
+}
+
+function switchTab(tab){ showPane(tab); clearErrors(); }
+
+function clearErrors(){
+  ['li-err','mfa-err','fp-err','rp-err'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent=''; });
+  ['fp-ok','rp-ok'].forEach(id=>{ const el=document.getElementById(id); if(el) el.style.display='none'; });
+}
+
+// ─── Auth flows ───────────────────────────────────────────────────────────────
+
+// Sign in (step 1 — password)
+async function doLogin(){
+  const email = document.getElementById('li-email').value.trim();
+  const pw    = document.getElementById('li-pw').value;
+  const err   = document.getElementById('li-err');
+  err.textContent='';
+  if(!email||!pw){ err.textContent='Please enter your email and password.'; return; }
+  document.getElementById('li-btn').disabled=true;
+  try{
+    const d = await apiCall('/auth/login',{method:'POST',body:{email,password:pw}});
+    if(d.mfaRequired){
+      _mfaChallenge = d.challengeToken;
+      showPane('mfa');
+      document.getElementById('mfa-code').focus();
+    } else {
+      lsSet('kbx_access',  d.accessToken);
+      lsSet('kbx_refresh', d.refreshToken);
+      lsSet('kbx_user',    JSON.stringify(d.user));
+      lsSet('kbx_roles',   JSON.stringify(d.roles));
+      showPane('portal');
+      updatePortalPane();
+    }
+  } catch(e){ err.textContent=e.message; }
+  finally{ document.getElementById('li-btn').disabled=false; }
+}
+
+// Sign in (step 2 — MFA code)
+async function doMfa(){
+  const code = document.getElementById('mfa-code').value.trim();
+  const err  = document.getElementById('mfa-err');
+  err.textContent='';
+  if(!/^\d{6}$/.test(code)){ err.textContent='Please enter the 6-digit code from your authenticator app.'; return; }
+  try{
+    const d = await apiCall('/auth/mfa/challenge',{method:'POST',body:{challengeToken:_mfaChallenge, code}});
+    lsSet('kbx_access',  d.accessToken);
+    lsSet('kbx_refresh', d.refreshToken);
+    lsSet('kbx_user',    JSON.stringify(d.user));
+    lsSet('kbx_roles',   JSON.stringify(d.roles));
+    _mfaChallenge=null;
+    showPane('portal');
+    updatePortalPane();
+  } catch(e){ err.textContent=e.message; }
+}
+
+// Forgot password
+async function doForgot(){
+  const email = document.getElementById('fp-email').value.trim();
+  const err   = document.getElementById('fp-err');
+  const ok    = document.getElementById('fp-ok');
+  err.textContent=''; ok.style.display='none';
+  if(!email){ err.textContent='Please enter your email address.'; return; }
+  try{
+    await apiCall('/auth/password/forgot',{method:'POST',body:{email}});
+    ok.style.display='block';
+    ok.textContent = lang==='sw'
+      ? 'Ikiwa barua pepe hiyo ipo, kiungo cha kuweka upya kimetumwa. Angalia API console (dev mode).'
+      : 'If that email exists, a reset link has been sent. Check the API console (dev mode) for the link.';
+  } catch(e){ err.textContent=e.message; }
+}
+
+// Reset password (token came from URL → _resetToken)
+async function doReset(){
+  const pw   = document.getElementById('rp-pw').value;
+  const pw2  = document.getElementById('rp-pw2').value;
+  const err  = document.getElementById('rp-err');
+  const ok   = document.getElementById('rp-ok');
+  err.textContent=''; ok.style.display='none';
+  if(pw.length<8){ err.textContent='Password must be at least 8 characters.'; return; }
+  if(pw!==pw2)   { err.textContent='Passwords do not match.'; return; }
+  try{
+    await apiCall('/auth/password/reset',{method:'POST',body:{token:_resetToken, newPassword:pw}});
+    ok.style.display='block';
+    ok.textContent = lang==='sw' ? 'Nywila imesasishwa. Sasa unaweza kuingia.' : 'Password updated! You can now sign in with your new password.';
+    setTimeout(()=>switchTab('login'), 2200);
+  } catch(e){ err.textContent=e.message; }
+}
+
+// Sign out
+async function doSignOut(){
+  const refreshToken = lsGet('kbx_refresh');
+  if(refreshToken){ apiCall('/auth/logout',{method:'POST',body:{refreshToken}}).catch(()=>{}); }
+  ['kbx_access','kbx_refresh','kbx_user','kbx_roles'].forEach(lsDel);
+  switchTab('login');
+  updateNavLoginBtn();
+}
+
+function updatePortalPane(){
+  try{
+    const u = JSON.parse(lsGet('kbx_user')||'{}');
+    const roles = JSON.parse(lsGet('kbx_roles')||'[]');
+    document.getElementById('portal-name').textContent = u.name||'';
+    document.getElementById('portal-roles').textContent = roles.map(r=>r.name).join(' · ')||'No roles';
+    // Set the portal link href from the runtime variable (read from the
+    // <meta name="portal-url"> tag injected by serve.js at request time).
+    const link = document.getElementById('portal-link');
+    if (link) link.href = PORTAL_URL;
+    updateNavLoginBtn(u);
+  } catch{}
+}
+
+function updateNavLoginBtn(user){
+  const btn = document.querySelector('.btn-nav-login');
+  if(!btn) return;
+  if(user){
+    btn.textContent = user.name?.split(' ')[0] || 'Portal';
+  } else {
+    btn.textContent = lang==='sw' ? 'Ingia' : 'Staff login';
+  }
+}
+
+// ─── URL token handling (email links) ────────────────────────────────────────
+function handleUrlTokens(){
+  const params = new URLSearchParams(window.location.search);
+
+  if(params.has('resetToken')){
+    _resetToken = params.get('resetToken');
+    history.replaceState({},'',window.location.pathname); // clean URL
+    document.getElementById('modal-tabs').style.display='none';
+    openModal('login');
+    showPane('reset');
+    return;
+  }
+
+  if(params.has('verifyToken')){
+    const token = params.get('verifyToken');
+    history.replaceState({},'',window.location.pathname);
+    // Call the verify endpoint then show the confirmed pane
+    apiCall('/auth/email/verify',{method:'POST',body:{token}})
+      .then(()=>{
+        openModal('login');
+        showPane('verified');
+      })
+      .catch(e=>{
+        openModal('login');
+        switchTab('login');
+        document.getElementById('li-err').textContent = 'Email verification failed: '+e.message;
+      });
+    return;
+  }
+
+  // If already signed in (page reload), update the nav button
+  const user = lsGet('kbx_user');
+  if(user){ try{ updateNavLoginBtn(JSON.parse(user)); }catch{} }
+}
+
+// ─── Programmes (static) ─────────────────────────────────────────────────────
+const PROGS=[
+  {icon:'🌊',bg:'#e4f4f6',en:['Blue Economy & Climate','Blue carbon and mangrove restoration, sustainable fisheries and aquaculture, coastal community projects and marine conservation site management.'],sw:['Uchumi wa Bluu na Hali ya Hewa','Urejeshaji wa kaboni ya bluu na mikoko, uvuvi endelevu, miradi ya jamii za pwani na usimamizi wa maeneo ya uhifadhi wa bahari.']},
+  {icon:'🌱',bg:'#e8f5ee',en:['Carbon & Environmental Data','Carbon project and landholder registry, GIS plot mapping, MRV workflows, carbon credit records and Article 6 alignment.'],sw:['Data ya Kaboni na Mazingira','Usajili wa mradi wa kaboni, uwekaji ramani wa GIS, mtiririko wa MRV, rekodi za mikopo ya kaboni na mwelekeo wa Kifungu 6.']},
+  {icon:'🌾',bg:'#fdf3e3',en:['Climate-smart Agriculture','Supporting smallholder farmers with climate-adaptive practices, soil health monitoring and green agricultural market linkages.'],sw:['Kilimo Kinachostahimili Hali ya Hewa','Kusaidia wakulima wadogo kwa mazoea yanayostahimili hali ya hewa, ufuatiliaji wa udongo na miunganiko ya masoko ya kilimo ya kijani.']},
+  {icon:'⚡',bg:'#f0f0ff',en:['Renewable Energy','Solar and clean-energy access for rural and coastal communities, trained through the Foundation\'s green entrepreneurship programme.'],sw:['Nishati Jadidifu','Ufikiaji wa nishati ya jua kwa jamii za vijijini na pwani, zilizofunzwa kupitia programu ya ujasiriamali wa kijani wa Mfuko.']},
+  {icon:'👩‍💼',bg:'#fce8f0',en:['Youth & Women Entrepreneurship','Business-skills training, cooperative formation, market linkages and mentorship for youth and women across coastal and rural Tanzania.'],sw:['Ujasiriamali wa Vijana na Wanawake','Mafunzo ya ujuzi wa biashara, uundaji wa ushirika, miunganiko ya masoko na ushauri kwa vijana na wanawake Tanzania.']},
+  {icon:'📋',bg:'#e8f5ee',en:['Data Collection & M&E','Configurable field surveys, beneficiary registration, GPS-stamped submissions online or offline, and SDG results-framework tracking.'],sw:['Ukusanyaji wa Data na MEAL','Uchunguzi wa shamba unaoweza kusanidiwa, usajili wa wanufaika, mawasilisho yenye alama ya GPS, na ufuatiliaji wa mfumo wa matokeo wa SDG.']},
+];
+function renderProgrammes(){
+  document.getElementById('prog-grid').innerHTML=PROGS.map(p=>`
+    <div class="prog-card">
+      <div class="prog-icon" style="background:${p.bg}">${p.icon}</div>
+      <h3>${esc(lang==='sw'?p.sw[0]:p.en[0])}</h3>
+      <p class="sans">${esc(lang==='sw'?p.sw[1]:p.en[1])}</p>
+    </div>`).join('');
+}
+
+// ─── Posts ────────────────────────────────────────────────────────────────────
+async function loadPosts(type=''){
+  try{
+    const qs = new URLSearchParams({lang});
+    if(type && type!=='all') qs.set('type',type);
+    const posts = await apiCall(`/website/posts?${qs}`);
+    renderPosts(posts);
+  } catch{ document.getElementById('posts-grid').innerHTML='<p class="sans" style="color:var(--ink-faint);padding:20px 0">Content unavailable — start the API server.</p>'; }
+}
+
+function renderPosts(posts){
+  if(!posts.length){ document.getElementById('posts-grid').innerHTML='<p class="sans" style="color:var(--ink-faint)">No items found.</p>'; return; }
+  const BADGE={news:'b-news',event:'b-event',publication:'b-pub'};
+  const BADGE_LBL={news:{en:'News',sw:'Habari'},event:{en:'Event',sw:'Tukio'},publication:{en:'Publication',sw:'Chapisho'}};
+  document.getElementById('posts-grid').innerHTML=posts.map(p=>{
+    const meta=p.event_date
+      ? '📅 '+new Date(p.event_date).toLocaleDateString(lang==='sw'?'sw-TZ':'en-GB',{year:'numeric',month:'long',day:'numeric'})+(p.event_venue?' · '+p.event_venue:'')
+      : p.published_at ? new Date(p.published_at).toLocaleDateString(lang==='sw'?'sw-TZ':'en-GB',{year:'numeric',month:'long',day:'numeric'}) : '';
+    return `<div class="post-card fade">
+      <div class="post-card-body">
+        <span class="post-badge ${BADGE[p.type]||'b-news'}">${esc(lang==='sw'?BADGE_LBL[p.type]?.sw:BADGE_LBL[p.type]?.en)}</span>
+        <h3>${esc(p.title)}</h3>
+        <p class="sans">${esc(p.summary)}</p>
+        ${meta?`<div class="post-meta sans">${esc(meta)}</div>`:''}
+        ${p.doc_url&&p.doc_url!=='#'?`<a class="sans" style="font-size:13px;font-weight:600;color:var(--forest-lt);margin-top:10px;display:block" href="${p.doc_url}" target="_blank">${lang==='sw'?'Soma Zaidi →':'Read More →'}</a>`:''}
+      </div></div>`;
+  }).join('');
+}
+
+function filterPosts(type){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.f===type));
+  loadPosts(type);
+}
+
+// ─── Impact stories ───────────────────────────────────────────────────────────
+async function loadImpactStories(){
+  try{
+    const stories = await apiCall(`/website/impact-stories?lang=${lang}`);
+    document.getElementById('impact-grid').innerHTML=stories.map(s=>`
+      <div class="impact-card fade">
+        <div class="impact-metric">
+          <div class="metric-val">${esc(s.metric_value)}</div>
+          <div class="metric-lbl sans">${esc(s.metric_label)}</div>
+        </div>
+        <h3>${esc(s.title)}</h3>
+        <p class="sans">${esc(s.body.slice(0,210))}${s.body.length>210?'…':''}</p>
+        <div>${s.programme?`<span class="prog-tag">${esc(s.programme)}</span>`:''}${s.location?`<span class="prog-tag" style="background:var(--sand-tint);color:#7a5610">${esc(s.location)}</span>`:''}</div>
+      </div>`).join('')||'<p class="sans" style="color:var(--ink-faint)">No impact stories yet.</p>';
+  } catch{ document.getElementById('impact-grid').innerHTML='<p class="sans" style="color:var(--ink-faint)">Content unavailable.</p>'; }
+}
+
+// ─── Partners ─────────────────────────────────────────────────────────────────
+async function loadPartners(){
+  const TYPE={partner:{en:'Partner',sw:'Mshirika'},donor:{en:'Donor',sw:'Mfadhili'},government:{en:'Government',sw:'Serikali'}};
+  try{
+    const ps = await apiCall(`/website/partners?lang=${lang}`);
+    document.getElementById('partners-grid').innerHTML=ps.map(p=>`
+      <div class="partner-card fade">
+        <div class="partner-type">${esc(lang==='sw'?TYPE[p.type]?.sw:TYPE[p.type]?.en)||p.type}</div>
+        <h3>${esc(p.name)}</h3>
+        <p class="sans">${esc(p.description||'')}</p>
+        ${p.website_url?`<a href="${esc(p.website_url)}" target="_blank" class="sans" style="font-size:12.5px">${lang==='sw'?'Tembelea Tovuti →':'Visit Website →'}</a>`:''}
+      </div>`).join('');
+  } catch{ document.getElementById('partners-grid').innerHTML='<p class="sans" style="color:var(--ink-faint)">Content unavailable.</p>'; }
+}
+
+// ─── Contact form ─────────────────────────────────────────────────────────────
+async function submitContact(){
+  const btn=document.getElementById('cf-btn');
+  const err=document.getElementById('cf-err');
+  err.style.display='none';
+  const body={
+    full_name:    document.getElementById('cf-name').value.trim(),
+    email:        document.getElementById('cf-email').value.trim(),
+    organisation: document.getElementById('cf-org').value.trim(),
+    subject:      document.getElementById('cf-sub').value,
+    message:      document.getElementById('cf-msg').value.trim(),
+    lang,
+  };
+  const checks=[
+    [!body.full_name, lang==='sw'?'Tafadhali ingiza jina lako kamili.':'Please enter your full name.'],
+    [!body.email,     lang==='sw'?'Tafadhali ingiza anwani yako ya barua pepe.':'Please enter your email address.'],
+    [!body.subject,   lang==='sw'?'Tafadhali chagua mada.':'Please select a subject.'],
+    [!body.message,   lang==='sw'?'Tafadhali ingiza ujumbe.':'Please enter a message.'],
+  ];
+  for(const [fail,msg] of checks){ if(fail){ err.textContent=msg; err.style.display='block'; return; } }
+  btn.disabled=true;
+  try{
+    await apiCall('/website/contact',{method:'POST',body});
+    document.getElementById('contact-form-area').innerHTML=`
+      <div class="form-success">
+        <div class="ck">✅</div>
+        <h3>${lang==='sw'?'Asante!':'Thank you!'}</h3>
+        <p class="sans">${lang==='sw'?'Tumepokelewa ujumbe wako. Tutawasiliana nawe hivi karibuni.':'We\'ve received your message and will be in touch shortly.'}</p>
+      </div>`;
+  } catch(e){ err.textContent=e.message; err.style.display='block'; btn.disabled=false; }
+}
+
+// ─── Boot ─────────────────────────────────────────────────────────────────────
+renderProgrammes();
+loadPosts();
+loadImpactStories();
+loadPartners();
+handleUrlTokens();
+if (lsGet('kbx_access')) updatePortalPane();
+</script>
+</body>
+</html>

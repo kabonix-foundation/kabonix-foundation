@@ -1,0 +1,12 @@
+{
+  "name": "kabonix-platform",
+  "version": "1.0.0",
+  "description": "Kabonix Foundation Digital Ecosystem Platform — monorepo",
+  "private": true,
+  "workspaces": [
+    "apps/api",
+    "apps/web",
+    "apps/website"
+  ],
+  "engines": { "node": ">=18" }
+}

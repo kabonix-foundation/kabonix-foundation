@@ -1,0 +1,11 @@
+{
+  "name": "@kabonix/web",
+  "version": "1.0.0",
+  "description": "Kabonix Foundation staff portal",
+  "type": "module",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "start": "node serve.js"
+  },
+  "dependencies": {}
+}

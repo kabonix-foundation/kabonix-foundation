@@ -1,0 +1,11 @@
+{
+  "name": "@kabonix/website",
+  "version": "1.0.0",
+  "description": "Kabonix Foundation public website",
+  "type": "module",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "start": "node serve.js"
+  },
+  "dependencies": {}
+}
