@@ -119,7 +119,8 @@ code { font-family: "Menlo","Consolas","Courier New",monospace; font-size: 12px;
 .sidebar.collapsed { width: 72px; }
 .sidebar.collapsed .sb-brand { padding: 12px; }
 .sidebar.collapsed .sb-name, .sidebar.collapsed .sb-sub { display: none; }
-.sidebar.collapsed .nav-item { font-size: 0; padding: 8px; justify-content: center; }
+.sidebar.collapsed .nav-item { padding: 8px; justify-content: center; }
+.sidebar.collapsed .nav-item .nav-label { display: none; }
 .sidebar.collapsed .nav-item .nav-icon { font-size: 16px; }
 
 /* Mobile overlay behaviour: hide by default and slide in when open */
@@ -132,9 +133,8 @@ code { font-family: "Menlo","Consolas","Courier New",monospace; font-size: 12px;
   .sb-logo-img { width:40px; height:40px; }
 }
 
-/* Hamburger toggle button */
-#sb-toggle { display: none; background: transparent; border: none; color: #fff; font-size: 20px; padding: 6px; cursor: pointer; }
-@media (max-width: 900px) { #sb-toggle { display: inline-flex; align-items:center; justify-content:center; } }
+/* Hamburger toggle button (visible on desktop and mobile) */
+#sb-toggle { display: inline-flex; align-items:center; justify-content:center; background: transparent; border: none; color: #fff; font-size: 20px; padding: 6px; cursor: pointer; margin-right:8px; }
 
 .main-area { flex: 1 1 auto; padding: 36px 44px 60px; min-width: 0; }
 @media (max-width: 900px) { .main-area { padding: 24px 20px; } }

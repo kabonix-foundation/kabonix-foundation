@@ -175,8 +175,8 @@ function shell(contentHtml, activeRoute) {
       <div><div class="sb-name">KABONIX</div><div class="sb-sub">FOUNDATION</div></div>
     </div>
     <nav class="sb-nav">
-      ${items.map(i=>`<a class="nav-item${state.route===i.key?' active':''}" data-route="${i.key}">
-        <span class="nav-icon">${i.icon}</span>${esc(i.label)}</a>`).join('')}
+        ${items.map(i=>`<a class="nav-item${state.route===i.key?' active':''}" data-route="${i.key}">
+          <span class="nav-icon">${i.icon}</span><span class="nav-label">${esc(i.label)}</span></a>`).join('')}
     </nav>
     <div class="sb-foot">
       <a class="nav-item" data-route="profile"><span class="nav-icon">👤</span>${esc(state.user.name.split(' ')[0])}</a>
