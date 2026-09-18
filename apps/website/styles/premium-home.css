@@ -121,3 +121,10 @@ footer{background:var(--card);border-top:1px solid rgba(28,37,33,0.04);padding:4
   .ph-actions{flex-direction:column;gap:10px}
   .ph-actions .ph-phone{margin-left:0}
 }
+
+/* Post and content card refinements for premium look */
+.post-card{border-radius:14px;overflow:hidden;transition:transform .22s,box-shadow .22s}
+.post-card:hover{transform:translateY(-6px);box-shadow:0 22px 60px rgba(12,60,38,0.08)}
+.post-card .read-more{display:inline-block;margin-top:12px;font-weight:700;color:var(--primary)}
+.impact-card{border-radius:14px;padding:22px;box-shadow:0 18px 40px rgba(12,60,38,0.04)}
+.partner-card{border-radius:14px;padding:20px;box-shadow:0 10px 30px rgba(12,60,38,0.04)}
