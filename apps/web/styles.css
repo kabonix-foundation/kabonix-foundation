@@ -93,8 +93,8 @@ code { font-family: "Menlo","Consolas","Courier New",monospace; font-size: 12px;
   display: flex; flex-direction: column; padding: 0; position: sticky; top: 0; height: 100vh; overflow-y: auto;
 }
 .sb-brand { display: flex; align-items: center; gap: 10px; padding: 20px 18px 18px; border-bottom: 1px solid rgba(255,255,255,.08); }
-.sb-logo { width: 64px; height: 64px; background: transparent; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: -apple-system,"Segoe UI",sans-serif; font-size: 16px; font-weight: 800; color: #fff; flex-shrink: 0; }
-.sb-logo-img { width: 64px; height: 64px; border-radius: 6px; object-fit: contain; display: block; }
+.sb-logo { width: 96px; height: 96px; background: transparent; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: -apple-system,"Segoe UI",sans-serif; font-size: 16px; font-weight: 800; color: #fff; flex-shrink: 0; }
+.sb-logo-img { width: 88px; height: 88px; border-radius: 8px; object-fit: contain; display: block; }
 .sb-logo-letter { display: none; }
 .sb-name { font-family: -apple-system,"Segoe UI",sans-serif; font-size: 13px; font-weight: 700; letter-spacing: .06em; color: #fff; line-height: 1.1; }
 .sb-sub  { font-family: -apple-system,"Segoe UI",sans-serif; font-size: 9.5px; color: #7aaa8e; letter-spacing: .06em; }
