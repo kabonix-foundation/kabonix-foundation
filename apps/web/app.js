@@ -168,6 +168,7 @@ function shell(contentHtml, activeRoute) {
 <div class="app-shell">
   <aside class="sidebar">
     <div class="sb-brand">
+      <button id="sb-toggle" aria-label="Toggle menu">☰</button>
       <a class="sb-brand-link" href="${WEBSITE_URL}" target="_blank" rel="noopener">
         <div class="sb-logo"><img src="/assets/logo.png" class="sb-logo-img" onerror="this.style.display='none'" alt="Kabonix logo"></div>
       </a>
@@ -186,6 +187,20 @@ function shell(contentHtml, activeRoute) {
 </div>`;
   root.querySelectorAll('.nav-item[data-route]').forEach(el => el.onclick = e => { e.preventDefault(); nav(el.dataset.route); });
   document.getElementById('logout-btn').onclick = logout;
+  const sbToggle = document.getElementById('sb-toggle');
+  const appShell = document.querySelector('.app-shell');
+  const sidebarEl = document.querySelector('.sidebar');
+  if (sbToggle) {
+    sbToggle.onclick = () => {
+      if (window.innerWidth <= 800) {
+        appShell.classList.toggle('sidebar-open');
+      } else {
+        sidebarEl.classList.toggle('collapsed');
+      }
+    };
+  }
+  const mainArea = document.querySelector('.main-area');
+  if (mainArea) mainArea.onclick = () => { if (appShell.classList.contains('sidebar-open')) appShell.classList.remove('sidebar-open'); };
 }
 
 function pageHead(title, sub='') {

@@ -93,8 +93,8 @@ code { font-family: "Menlo","Consolas","Courier New",monospace; font-size: 12px;
   display: flex; flex-direction: column; padding: 0; position: sticky; top: 0; height: 100vh; overflow-y: auto;
 }
 .sb-brand { display: flex; align-items: center; gap: 10px; padding: 20px 18px 18px; border-bottom: 1px solid rgba(255,255,255,.08); }
-.sb-logo { width: 96px; height: 96px; background: transparent; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: -apple-system,"Segoe UI",sans-serif; font-size: 16px; font-weight: 800; color: #fff; flex-shrink: 0; }
-.sb-logo-img { width: 88px; height: 88px; border-radius: 8px; object-fit: contain; display: block; }
+.sb-logo { width: 96px; height: 96px; background: transparent; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: -apple-system,"Segoe UI",sans-serif; font-size: 16px; font-weight: 800; color: #fff; flex-shrink: 0; }
+.sb-logo-img { width: 88px; height: 88px; border-radius: 50%; object-fit: cover; display: block; }
 .sb-logo-letter { display: none; }
 .sb-name { font-family: -apple-system,"Segoe UI",sans-serif; font-size: 13px; font-weight: 700; letter-spacing: .06em; color: #fff; line-height: 1.1; }
 .sb-sub  { font-family: -apple-system,"Segoe UI",sans-serif; font-size: 9.5px; color: #7aaa8e; letter-spacing: .06em; }
@@ -114,6 +114,27 @@ code { font-family: "Menlo","Consolas","Courier New",monospace; font-size: 12px;
   font-size: 12px; cursor: pointer; margin-top: 6px; transition: all .15s;
 }
 .sb-logout:hover { background: rgba(255,255,255,.07); color: #fff; }
+
+/* Collapsed sidebar (icons-only) */
+.sidebar.collapsed { width: 72px; }
+.sidebar.collapsed .sb-brand { padding: 12px; }
+.sidebar.collapsed .sb-name, .sidebar.collapsed .sb-sub { display: none; }
+.sidebar.collapsed .nav-item { font-size: 0; padding: 8px; justify-content: center; }
+.sidebar.collapsed .nav-item .nav-icon { font-size: 16px; }
+
+/* Mobile overlay behaviour: hide by default and slide in when open */
+@media (max-width: 800px) {
+  .sidebar { position: fixed; left: -100%; top: 0; height: 100vh; width: var(--sidebar-w); transition: transform .22s ease; transform: translateX(-100%); z-index: 1000; }
+  .app-shell.sidebar-open .sidebar { transform: translateX(0); left: 0; }
+  .app-shell.sidebar-open::after { content: ''; position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 900; }
+  .sb-brand { padding: 8px 10px; }
+  .sb-logo { width:48px; height:48px; }
+  .sb-logo-img { width:40px; height:40px; }
+}
+
+/* Hamburger toggle button */
+#sb-toggle { display: none; background: transparent; border: none; color: #fff; font-size: 20px; padding: 6px; cursor: pointer; }
+@media (max-width: 900px) { #sb-toggle { display: inline-flex; align-items:center; justify-content:center; } }
 
 .main-area { flex: 1 1 auto; padding: 36px 44px 60px; min-width: 0; }
 @media (max-width: 900px) { .main-area { padding: 24px 20px; } }
