@@ -7,6 +7,10 @@
   --card:    #FFFFFF;
   --radius:  16px;
 }
+/* Skip link */
+.skip-link{position:absolute;left:12px;top:12px;background:#fff;color:var(--primary);padding:8px 12px;border-radius:8px;z-index:999;transform:translateY(-120%);transition:transform .18s ease;box-shadow:0 6px 20px rgba(12,60,38,0.06)}
+.skip-link:focus{transform:translateY(0);outline:none}
+
 /* Base overrides */
 body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial; background:var(--bg); color:var(--ink);}
 h1,h2,h3{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;margin:0;color:var(--ink)}
@@ -79,7 +83,16 @@ h3{font-size:18px}
 .ph-split .a .btn{background:var(--accent);color:var(--primary);padding:10px 14px;border-radius:12px;border:none}
 
 /* Footer adjustments */
-footer{background:transparent;color:var(--ink)}
+/* Footer refinements for premium layout */
+footer{background:var(--card);border-top:1px solid rgba(28,37,33,0.04);padding:48px 0;color:var(--ink)}
+.footer-grid{gap:28px}
+@media(max-width:800px){
+  .footer-grid{grid-template-columns:1fr 1fr;gap:18px}
+}
+@media(max-width:480px){
+  .footer-grid{grid-template-columns:1fr;gap:12px}
+  footer{padding:28px 12px}
+}
 
 @media(max-width:900px){
   .ph-hero .grid{grid-template-columns:1fr}

@@ -9,6 +9,8 @@
 </head>
 <body>
 
+  <a class="skip-link" href="#main-content">Skip to content</a>
+
 <!-- ───────────────────────────── NAV ───────────────────────────────────── -->
 <nav>
   <div class="nav-inner">
@@ -124,12 +126,13 @@
 </div>
 
 <!-- ───────────────────────────── HERO ──────────────────────────────────── -->
-<section class="ph-hero" id="home">
+<main id="main-content" role="main">
+<section class="ph-hero" id="home" aria-labelledby="hero-title">
   <div class="container">
     <div class="grid">
       <div class="reveal">
         <div class="ph-badge">🌿 Saving Our Planet</div>
-        <h1 style="margin-top:18px">Protecting our oceans and planting forests for a sustainable tomorrow.</h1>
+        <h1 id="hero-title" style="margin-top:18px">Protecting our oceans and planting forests for a sustainable tomorrow.</h1>
         <p class="lead">We work with coastal communities, farmers and youth-led enterprises to protect ecosystems, create livelihoods, and measure impact for climate resilience.</p>
         <div class="ph-actions">
           <button class="btn btn-primary" style="background:var(--primary);border-radius:12px;padding:12px 18px;color:#fff" aria-label="Get involved">Get Involved</button>
@@ -143,8 +146,12 @@
           </div>
         </div>
       </div>
-      <div class="ph-media reveal">
-        <img src="/assets/hero-nature.jpg" alt="Community restoring mangroves and planting trees">
+      <div class="ph-media reveal" aria-hidden="false">
+        <picture>
+          <source type="image/webp" srcset="/assets/hero-nature-1600.webp 1600w, /assets/hero-nature-1200.webp 1200w, /assets/hero-nature-800.webp 800w" sizes="(min-width:1100px) 520px, 100vw">
+          <source type="image/jpeg" srcset="/assets/hero-nature-1600.jpg 1600w, /assets/hero-nature-1200.jpg 1200w, /assets/hero-nature-800.jpg 800w" sizes="(min-width:1100px) 520px, 100vw">
+          <img src="/assets/hero-nature-1200.jpg" alt="Community restoring mangroves and planting trees" loading="lazy" decoding="async">
+        </picture>
       </div>
     </div>
   </div>
@@ -155,7 +162,7 @@
   <div class="container">
     <div class="section-head">
       <div class="label">The causes we fight for</div>
-      <h2>Our Core Causes</h2>
+      <h2 id="causes-title">Our Core Causes</h2>
       <p>Focused initiatives that protect biodiversity, restore landscapes, and build resilient livelihoods.</p>
     </div>
     <div class="grid" style="grid-template-columns:repeat(3,1fr);gap:22px">
@@ -307,7 +314,8 @@ document.addEventListener('DOMContentLoaded', function(){
 </section>
 
 <!-- ───────────────────────────── FOOTER ────────────────────────────────── -->
-<footer>
+</main>
+<footer role="contentinfo">
   <div class="container">
     <div class="footer-grid">
       <div class="footer-brand">
