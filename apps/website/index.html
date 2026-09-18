@@ -16,52 +16,40 @@
   <link rel="icon" href="https://eu-central.storage.cloudconvert.com/tasks/bc256320-0b38-4a10-ad9f-b7d6b83da673/logo.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=cloudconvert-production%2F20260918%2Ffra%2Fs3%2Faws4_request&X-Amz-Date=20260918T233139Z&X-Amz-Expires=86400&X-Amz-Signature=e911c9b437c8222587b7922ac15b4e8145bbd32bf68108d1b0bf63cec7236032&X-Amz-SignedHeaders=host&response-content-disposition=attachment%3B%20filename%3D%22logo.png%22&response-content-type=image%2Fpng&x-amz-checksum-mode=ENABLED&x-id=GetObject" type="image/png">
   <style>
     :root {
-      --forest: #0e4a3f;
-      --forest-deep: #0a352d;
-      --green: #6aa83e;
-      --green-soft: #dfeecb;
-      --sea: #0d6f7d;
-      --sand: #f7f5f2;
-      --ink: #1a2d2a;
-      --muted: #5c6f68;
-      --white: #ffffff;
+      --page-bg: #f2f1ef;
+      --panel-bg: #f8f7f4;
+      --shadow: rgba(16, 44, 38, 0.08);
     }
     * { box-sizing: border-box; }
     html, body { margin: 0; padding: 0; }
-    body { font-family: Arial, Helvetica, sans-serif; background: var(--sand); color: var(--ink); }
-    .brand-shell {
+    body {
       min-height: 100vh;
       display: grid;
       place-items: center;
-      padding: 40px 20px;
-      background: #f4f3f1;
+      background: var(--page-bg);
+      font-family: Arial, Helvetica, sans-serif;
     }
-    .brand-wrap {
-      width: min(980px, 100%);
+    .brand-stage {
+      width: min(760px, 88vw);
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 24px;
-    }
-    .brand-logo {
-      width: min(690px, 80vw);
-      display: block;
+      padding: 28px;
+      background: rgba(255,255,255,0.25);
     }
     .brand-mark {
       display: block;
-      max-width: 100%;
+      width: min(680px, 100%);
       height: auto;
+      max-height: 80vh;
+      object-fit: contain;
+      filter: drop-shadow(0 14px 30px var(--shadow));
     }
   </style>
 </head>
 <body>
-  <div class="brand-shell">
-    <div class="brand-wrap">
-      <div class="brand-logo">
-        <img src="https://eu-central.storage.cloudconvert.com/tasks/bc256320-0b38-4a10-ad9f-b7d6b83da673/logo.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=cloudconvert-production%2F20260918%2Ffra%2Fs3%2Faws4_request&X-Amz-Date=20260918T233139Z&X-Amz-Expires=86400&X-Amz-Signature=e911c9b437c8222587b7922ac15b4e8145bbd32bf68108d1b0bf63cec7236032&X-Amz-SignedHeaders=host&response-content-disposition=attachment%3B%20filename%3D%22logo.png%22&response-content-type=image%2Fpng&x-amz-checksum-mode=ENABLED&x-id=GetObject" alt="Kabonix Foundation logo" class="brand-mark" />
-      </div>
-    </div>
+  <div class="brand-stage">
+    <img class="brand-mark" src="https://eu-central.storage.cloudconvert.com/tasks/bc256320-0b38-4a10-ad9f-b7d6b83da673/logo.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=cloudconvert-production%2F20260918%2Ffra%2Fs3%2Faws4_request&X-Amz-Date=20260918T233139Z&X-Amz-Expires=86400&X-Amz-Signature=e911c9b437c8222587b7922ac15b4e8145bbd32bf68108d1b0bf63cec7236032&X-Amz-SignedHeaders=host&response-content-disposition=attachment%3B%20filename%3D%22logo.png%22&response-content-type=image%2Fpng&x-amz-checksum-mode=ENABLED&x-id=GetObject" alt="Kabonix Foundation logo">
   </div>
 </body>
 </html>
