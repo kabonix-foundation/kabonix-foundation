@@ -1,47 +1,50 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1200" role="img" aria-labelledby="logoTitle logoDesc">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 1200" role="img" aria-labelledby="logoTitle logoDesc">
   <title id="logoTitle">Kabonix Foundation logo</title>
-  <desc id="logoDesc">Circular Kabonix Foundation logo with a stylized tree, sun, and white K.</desc>
+  <desc id="logoDesc">Circular green and blue emblem with a stylized tree and white K, with the name Kabonix Foundation underneath.</desc>
   <defs>
-    <linearGradient id="leafGrad" x1="0" x2="1">
-      <stop offset="0%" stop-color="#7dbf4a"/>
-      <stop offset="100%" stop-color="#2f7d39"/>
+    <linearGradient id="leafGreen" x1="0" x2="1">
+      <stop offset="0%" stop-color="#7DBE4A"/>
+      <stop offset="100%" stop-color="#2E7B39"/>
     </linearGradient>
-    <linearGradient id="waterGrad" x1="0" x2="1">
-      <stop offset="0%" stop-color="#1d4f6b"/>
-      <stop offset="100%" stop-color="#0d2f3b"/>
+    <linearGradient id="hillBlue" x1="0" x2="1">
+      <stop offset="0%" stop-color="#0B6C7A"/>
+      <stop offset="100%" stop-color="#0A3E50"/>
     </linearGradient>
   </defs>
 
-  <g transform="translate(0 40)">
-    <circle cx="600" cy="450" r="420" fill="none" stroke="#0d4d38" stroke-width="16"/>
+  <g transform="translate(0, 12)">
+    <circle cx="700" cy="360" r="335" fill="none" stroke="#0D4D38" stroke-width="14"/>
 
-    <g opacity="0.9">
-      <path d="M260 390c30-95 95-160 192-182-82 42-118 100-118 145 0 34 18 78 55 101-58 2-95-13-129-64z" fill="#1f7a4a"/>
-      <path d="M370 300c74-95 172-120 252-98-64 30-105 86-115 152-10 64 17 147 79 198-105 17-211-71-216-252z" fill="#6dbd52"/>
-      <path d="M725 300c75 8 160 59 195 138-62-25-126-24-177 7-75 46-123 142-120 258 96-93 127-173 102-403z" fill="#0f6573"/>
-      <path d="M738 280c76 30 131 86 152 165-63-16-108-14-159 22-65 45-98 125-93 197 77-80 108-133 100-384z" fill="#1a7d87"/>
-      <path d="M395 398c103-46 194-58 270-29-35 22-62 56-81 104-53 129-38 231 67 284-137-10-239-76-302-196-22-43-28-110 46-163z" fill="#2b9b52"/>
-      <path d="M505 600c32-67 63-93 156-110-69 26-110 63-124 116-29 108 17 199 104 256-104-25-179-113-136-262z" fill="#0c5c59"/>
+    <g transform="translate(200, 20)">
+      <path d="M140 240C120 170 90 125 30 90c25 16 52 28 85 33 36 6 70 2 106-14-24 48-52 78-81 131H140z" fill="#1D8F54"/>
+      <path d="M160 240c18-75 76-150 188-185-56 31-95 78-113 140-15 51-9 115 30 170-62-12-101-42-105-125z" fill="url(#leafGreen)"/>
+      <path d="M325 130c69 8 125 42 174 96-50-12-104-4-152 22-76 41-129 123-132 217 77-94 126-151 110-335z" fill="#0A6B72"/>
+      <path d="M395 145c105 31 165 104 180 215-64-7-112-2-171 32-92 53-126 126-112 228 12-118 31-184 103-475z" fill="url(#hillBlue)"/>
+      <path d="M220 270c64-15 120-10 172 16-42 26-77 81-85 159-18 154 24 219 121 301-118-7-236-72-276-201-29-95 2-205 68-275z" fill="#2B9B52"/>
+      <path d="M310 480c30-64 66-101 126-112-50 28-83 65-94 121-19 101 12 167 82 219-90-28-138-103-114-228z" fill="#0B5A61"/>
+      <path d="M140 420c28-21 51-34 89-42-26 22-45 47-53 81-14 58 7 91 49 126-54-8-95-38-85-165z" fill="#A6D756" opacity="0.92"/>
     </g>
 
-    <g>
-      <path d="M433 260h76v470h-76z" fill="#f4f6f4"/>
-      <path d="M620 260h71l-225 244h-72z" fill="#f4f6f4"/>
-      <path d="M620 516h71l-220 214h-72z" fill="#f4f6f4"/>
-      <path d="M562 223c50 0 96 12 126 32-22-17-52-28-77-33-31-6-64 0-94 10 10-5 23-9 45-9z" fill="#f4f6f4" opacity="0.6"/>
-      <path d="M685 456c48-11 73-42 82-81 18 7 42 19 59 38-21 15-45 26-79 30-28 3-50 1-62-17 0 12 0 23 0 30z" fill="#f4f6f4" opacity="0.8"/>
-      <path d="M825 432c51 8 87 35 108 72-46 1-79 8-109 33-26 22-42 58-40 96-15-43-2-92 41-141z" fill="#f4f6f4" opacity="0.18"/>
+    <g transform="translate(465, 10)">
+      <path d="M150 70h94v470h-94z" fill="#F5F7F4"/>
+      <path d="M170 70h96L110 280H18z" fill="#F5F7F4"/>
+      <path d="M170 365h96L110 560H18z" fill="#F5F7F4"/>
+      <path d="M260 205h94v335h-94z" fill="#F5F7F4" opacity="0.92"/>
     </g>
 
-    <g transform="translate(740 220)">
-      <circle cx="0" cy="0" r="58" fill="#f6c64a"/>
-      <path d="M0 -78v36M0 78v36M-78 0h36M78 0h36" stroke="#f6c64a" stroke-width="10" stroke-linecap="round"/>
-      <path d="M-55 -55l24 24M55 -55l-24 24M-55 55l24 -24M55 55l-24 -24" stroke="#f6c64a" stroke-width="8" stroke-linecap="round"/>
+    <g transform="translate(855, 125)">
+      <circle cx="0" cy="0" r="62" fill="#F5C94B"/>
+      <path d="M0 -90v36M0 90v36M-90 0h36M90 0h36" stroke="#F5C94B" stroke-width="10" stroke-linecap="round"/>
+      <path d="M-60 -60l28 28M60 -60l-28 28M-60 60l28 -28M60 60l-28 -28" stroke="#F5C94B" stroke-width="8" stroke-linecap="round"/>
     </g>
 
-    <g>
-      <path d="M218 252c22-52 70-93 122-113-13 48-8 85 21 124-51-10-95-8-143-11z" fill="#a7d84f" opacity="0.9"/>
-      <path d="M232 273c-26 49-34 92-15 136 29-20 55-33 96-38-15-38-35-69-81-98z" fill="#efefef" opacity="0.2"/>
+    <g opacity="0.2">
+      <path d="M75 286c40-44 80-64 132-72-29 35-39 72-21 115 20 47 53 67 114 62-53 41-117 50-193 16-54-25-84-68-32-121z" fill="#F5F7F4"/>
     </g>
+  </g>
+
+  <g transform="translate(0, 720)">
+    <text x="700" y="0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="800" font-size="148" letter-spacing="8" fill="#0D4D38">KABONIX</text>
+    <text x="700" y="120" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="92" letter-spacing="3" fill="#5CA75B">FOUNDATION</text>
   </g>
 </svg>
