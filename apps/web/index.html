@@ -1,21 +1,72 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-  <!-- Site metadata for previews and portal integration -->
-  <meta name="website-url" content="/">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Staff & field officer portal for programme data collection and administration.">
   <meta property="og:title" content="Kabonix Foundation — Digital Platform">
   <meta property="og:description" content="Staff & field officer portal for programme data collection and administration.">
-  <meta property="og:image" content="/assets/logo.png">
+  <meta property="og:image" content="/assets/kabonix-logo.svg">
+  <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:image" content="/assets/logo.png">
-  <link rel="icon" href="/assets/logo.png">
-<title>Kabonix Foundation — Digital Platform</title>
-<link rel="stylesheet" href="styles.css">
+  <meta name="twitter:title" content="Kabonix Foundation — Digital Platform">
+  <meta name="twitter:description" content="Staff & field officer portal for programme data collection and administration.">
+  <meta name="twitter:image" content="/assets/kabonix-logo.svg">
+  <link rel="icon" href="/assets/kabonix-logo.svg" type="image/svg+xml">
+  <title>Kabonix Foundation — Digital Platform</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Inter, Arial, sans-serif;
+      background: linear-gradient(180deg, #f5faf5 0%, #edf7ef 100%);
+      color: #183a2f;
+      display: grid;
+      place-items: center;
+      min-height: 100vh;
+    }
+
+    .wrap {
+      width: min(760px, calc(100% - 48px));
+      background: rgba(255,255,255,0.72);
+      border: 1px solid rgba(21,58,47,0.08);
+      border-radius: 28px;
+      box-shadow: 0 28px 60px rgba(12, 36, 31, 0.08);
+      padding: 38px 28px;
+      text-align: center;
+    }
+
+    .logo {
+      display: block;
+      width: min(480px, 78vw);
+      max-width: 480px;
+      margin: 0 auto 12px;
+    }
+
+    .title {
+      margin: 0;
+      font-size: clamp(2.1rem, 5vw, 4.2rem);
+      line-height: 0.92;
+      letter-spacing: -0.06em;
+      font-weight: 800;
+      color: #0b3c35;
+    }
+
+    .subtitle {
+      display: block;
+      margin-top: 10px;
+      color: #4e7b63;
+      font-size: clamp(1rem, 2vw, 1.7rem);
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+  </style>
 </head>
 <body>
-  <div id="root"></div>
-  <script src="app.js"></script>
+  <div class="wrap">
+    <img class="logo" src="/assets/kabonix-logo.svg" alt="Kabonix Foundation logo">
+    <h1 class="title">KABONIX</h1>
+    <span class="subtitle">Foundation</span>
+  </div>
 </body>
 </html>
