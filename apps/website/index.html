@@ -1,322 +1,67 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Kabonix Foundation Digital Ecosystem Platform for community programmes, field delivery, and measurable impact." />
-  <meta property="og:title" content="Kabonix Foundation" />
-  <meta property="og:description" content="Digital ecosystem platform for programme teams, field officers, and communities." />
-  <meta property="og:image" content="./assets/kabonix-logo.svg" />
-  <meta property="og:type" content="website" />
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Kabonix Foundation" />
-  <meta name="twitter:description" content="Digital ecosystem platform for programme teams, field officers, and communities." />
-  <meta name="twitter:image" content="./assets/kabonix-logo.svg" />
-  <link rel="icon" href="./assets/kabonix-logo.svg" type="image/svg+xml" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kabonix Foundation</title>
+  <meta name="description" content="Kabonix Foundation Digital Ecosystem Platform for community programmes, field delivery, and measurable impact.">
+  <meta property="og:title" content="Kabonix Foundation">
+  <meta property="og:description" content="Digital ecosystem platform for programme teams, field officers, and communities.">
+  <meta property="og:image" content="https://eu-central.storage.cloudconvert.com/tasks/bc256320-0b38-4a10-ad9f-b7d6b83da673/logo.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=cloudconvert-production%2F20260918%2Ffra%2Fs3%2Faws4_request&X-Amz-Date=20260918T233139Z&X-Amz-Expires=86400&X-Amz-Signature=e911c9b437c8222587b7922ac15b4e8145bbd32bf68108d1b0bf63cec7236032&X-Amz-SignedHeaders=host&response-content-disposition=attachment%3B%20filename%3D%22logo.png%22&response-content-type=image%2Fpng&x-amz-checksum-mode=ENABLED&x-id=GetObject">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Kabonix Foundation">
+  <meta name="twitter:description" content="Digital ecosystem platform for programme teams, field officers, and communities.">
+  <meta name="twitter:image" content="https://eu-central.storage.cloudconvert.com/tasks/bc256320-0b38-4a10-ad9f-b7d6b83da673/logo.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=cloudconvert-production%2F20260918%2Ffra%2Fs3%2Faws4_request&X-Amz-Date=20260918T233139Z&X-Amz-Expires=86400&X-Amz-Signature=e911c9b437c8222587b7922ac15b4e8145bbd32bf68108d1b0bf63cec7236032&X-Amz-SignedHeaders=host&response-content-disposition=attachment%3B%20filename%3D%22logo.png%22&response-content-type=image%2Fpng&x-amz-checksum-mode=ENABLED&x-id=GetObject">
+  <link rel="icon" href="https://eu-central.storage.cloudconvert.com/tasks/bc256320-0b38-4a10-ad9f-b7d6b83da673/logo.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=cloudconvert-production%2F20260918%2Ffra%2Fs3%2Faws4_request&X-Amz-Date=20260918T233139Z&X-Amz-Expires=86400&X-Amz-Signature=e911c9b437c8222587b7922ac15b4e8145bbd32bf68108d1b0bf63cec7236032&X-Amz-SignedHeaders=host&response-content-disposition=attachment%3B%20filename%3D%22logo.png%22&response-content-type=image%2Fpng&x-amz-checksum-mode=ENABLED&x-id=GetObject" type="image/png">
   <style>
-    :root{
-      --forest:#0e4a3f;
-      --forest-deep:#0a352d;
-      --green:#6aa83e;
-      --green-soft:#dfeecb;
-      --sea:#0d6f7d;
-      --sand:#f7f5f2;
-      --ink:#1a2d2a;
-      --muted:#5c6f68;
-      --white:#ffffff;
-      --line: rgba(14,74,63,0.10);
-      --shadow: 0 22px 60px rgba(12, 39, 34, 0.10);
+    :root {
+      --forest: #0e4a3f;
+      --forest-deep: #0a352d;
+      --green: #6aa83e;
+      --green-soft: #dfeecb;
+      --sea: #0d6f7d;
+      --sand: #f7f5f2;
+      --ink: #1a2d2a;
+      --muted: #5c6f68;
+      --white: #ffffff;
     }
-    *{box-sizing:border-box} html{scroll-behavior:smooth} body{margin:0;font-family:Segoe UI,Arial,sans-serif;background:var(--sand);color:var(--ink);line-height:1.6}
-    img{max-width:100%;display:block} a{text-decoration:none;color:inherit} ul{list-style:none;padding:0;margin:0}
-    .container{width:min(1180px,calc(100% - 32px));margin-inline:auto}
-    .topbar{background:#0c2f2a;color:rgba(255,255,255,0.8);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;padding:10px 0}
-    .topbar .container{display:flex;justify-content:space-between;align-items:center;gap:20px}
-    header{background:rgba(255,255,255,0.92);position:sticky;top:0;border-bottom:1px solid var(--line);backdrop-filter:blur(8px);z-index:20}
-    .nav{display:flex;align-items:center;justify-content:space-between;min-height:86px;gap:20px}
-    .brand{display:flex;align-items:center;gap:18px;color:var(--forest);text-transform:uppercase;font-weight:800;letter-spacing:.08em}
-    .brand img{width:78px;height:78px;display:block}
-    .brand-text{display:flex;flex-direction:column;line-height:1}
-    .brand-text .main{font-size:1.45rem;letter-spacing:.12em}
-    .brand-text .sub{font-size:.62rem;letter-spacing:.22em;opacity:.72;margin-top:5px}
-    .nav-links{display:flex;align-items:center;gap:28px;font-size:.9rem;font-weight:700;color:var(--forest)}
-    .nav-links a{opacity:.9}
-    .nav-links a:hover{opacity:1;color:var(--green)}
-    .btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;border-radius:999px;padding:14px 24px;border:1px solid transparent;font-weight:700;transition:.2s ease}
-    .btn-primary{background:linear-gradient(135deg,var(--green),#6d8d3c);color:var(--white);box-shadow:0 16px 26px rgba(106,168,62,.22)}
-    .btn-outline{border-color:rgba(14,74,63,.14);background:rgba(255,255,255,.7);color:var(--forest)}
-    .btn-primary:hover{transform:translateY(-1px)}
-    .btn-outline:hover{background:var(--forest);color:var(--white)}
-    .hero{position:relative;background:linear-gradient(180deg,rgba(12,37,31,.18),rgba(12,37,31,.08)),url('https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?auto=format&fit=crop&w=1400&q=80') center/cover no-repeat;padding:88px 0 70px;overflow:hidden}
-    .hero::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(12,34,30,.74) 0%,rgba(12,34,30,.46) 28%,rgba(12,34,30,.18) 100%)}
-    .hero .container{position:relative;z-index:1}
-    .hero-grid{display:grid;grid-template-columns:1.12fr .88fr;gap:42px;align-items:center}
-    .eyebrow{display:inline-block;padding:8px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:#ebf7f0;font-size:.72rem;font-weight:800;letter-spacing:.18em;text-transform:uppercase}
-    .hero-copy{max-width:630px;color:var(--white)}
-    .hero-copy h1{margin:18px 0 16px;font-size:clamp(2.7rem,5vw,5rem);line-height:.96;letter-spacing:-.06em;font-weight:800}
-    .hero-copy p{font-size:1.08rem;max-width:560px;color:rgba(255,255,255,.9);margin:0}
-    .cta-row{display:flex;flex-wrap:wrap;gap:16px;margin-top:28px}
-    .hero-panel{position:relative;padding:18px;border-radius:28px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);box-shadow:var(--shadow)}
-    .hero-panel-inner{border-radius:20px;overflow:hidden;background:#fff}
-    .hero-panel img{height:420px;width:100%;object-fit:cover}
-    .mini-card{position:absolute;left:-18px;bottom:24px;max-width:220px;background:#fff;border-radius:18px;padding:16px 18px;box-shadow:var(--shadow);color:var(--forest)}
-    .mini-card strong{display:block;font-size:1.3rem;line-height:1;margin-bottom:4px}
-    .mini-card span{font-size:.82rem;color:var(--muted)}
-    .stats-bar{background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:22px 0}
-    .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:22px}
-    .stat{text-align:center;padding:8px 6px}
-    .stat strong{display:block;font-size:clamp(1.7rem,2vw,2.35rem);color:var(--forest);line-height:1;letter-spacing:-.04em}
-    .stat span{font-size:.8rem;color:var(--muted);letter-spacing:.12em;text-transform:uppercase}
-    section{padding:88px 0}
-    .section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:30px;margin-bottom:36px}
-    .section-kicker{display:inline-block;margin-bottom:10px;color:var(--green);font-size:.75rem;letter-spacing:.16em;text-transform:uppercase;font-weight:800}
-    .section-head h2{margin:0;color:var(--forest);font-size:clamp(2.2rem,4vw,3.1rem);line-height:1.06;letter-spacing:-.06em}
-    .section-head p{margin:0;max-width:520px;color:var(--muted);font-size:1.04rem}
-    .services-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}
-    .service-card{background:#fff;border:1px solid var(--line);padding:28px 22px;border-radius:22px;box-shadow:0 12px 28px rgba(14,74,63,.03)}
-    .service-icon{width:60px;height:60px;border-radius:18px;display:grid;place-items:center;background:linear-gradient(135deg,var(--green-soft),#edf7e7);font-size:1.4rem;color:var(--forest);margin-bottom:24px}
-    .service-card h3{margin:0 0 10px;color:var(--forest);font-size:1.35rem}
-    .service-card p{margin:0;color:var(--muted)}
-    .feature-band{background:linear-gradient(135deg,#effaf0,#e6f3e7);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
-    .feature-layout{display:grid;grid-template-columns:1fr 1.06fr;gap:36px;align-items:center}
-    .feature-image{overflow:hidden;border-radius:28px;box-shadow:var(--shadow)}
-    .feature-image img{width:100%;height:560px;object-fit:cover}
-    .feature-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
-    .feature-item{background:rgba(255,255,255,.72);border:1px solid rgba(14,74,63,.08);border-radius:18px;padding:22px 18px}
-    .feature-item strong{display:block;color:var(--forest);font-size:1rem;margin-bottom:8px}
-    .feature-item span{color:var(--muted);font-size:.96rem}
-    .projects-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}
-    .project-card{background:#fff;border:1px solid var(--line);border-radius:24px;overflow:hidden;box-shadow:0 14px 30px rgba(9,25,22,.04)}
-    .project-card img{width:100%;height:260px;object-fit:cover}
-    .project-body{padding:22px 20px 26px}
-    .project-badge{display:inline-block;background:var(--green-soft);color:var(--forest);padding:6px 10px;border-radius:999px;font-size:.7rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
-    .project-card h3{margin:14px 0 10px;color:var(--forest);font-size:1.38rem}
-    .project-card p{margin:0;color:var(--muted)}
-    .cta-banner{background:linear-gradient(135deg,var(--forest),#164d42);padding:48px 36px;border-radius:28px;color:#fff;box-shadow:var(--shadow)}
-    .cta-banner .container{display:flex;align-items:center;justify-content:space-between;gap:30px}
-    .cta-banner h2{margin:0 0 8px;font-size:clamp(2rem,3vw,3rem);line-height:1.02;letter-spacing:-.06em}
-    .cta-banner p{margin:0;color:rgba(255,255,255,.8)}
-    footer{background:#122b25;color:rgba(255,255,255,.76);padding:26px 0 28px}
-    .footer-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr 1.1fr;gap:24px;padding-bottom:24px;border-bottom:1px solid rgba(255,255,255,.08)}
-    .brand-footer{display:flex;align-items:center;gap:12px;color:#fff;text-transform:uppercase;font-weight:800;letter-spacing:.08em}
-    .brand-footer img{width:38px;height:38px}
-    .footer-col h4{margin:0 0 12px;color:#fff;text-transform:uppercase;letter-spacing:.08em;font-size:.9rem}
-    .footer-col ul{display:grid;gap:8px;color:rgba(255,255,255,.75)}
-    .footer-bottom{display:flex;align-items:center;justify-content:space-between;gap:20px;padding-top:18px;font-size:.85rem}
-    @media (max-width:980px){.hero-grid,.feature-layout,.projects-grid,.services-grid,.footer-grid{grid-template-columns:1fr}.stats-grid{grid-template-columns:repeat(2,1fr)}.section-head{flex-direction:column;align-items:flex-start}.nav-links{display:none}}
-    @media (max-width:640px){.topbar .container,.cta-banner .container,.footer-bottom{flex-direction:column;align-items:flex-start}.hero-panel img{height:300px}.mini-card{position:static;margin-top:14px;max-width:100%}.feature-list,.stats-grid{grid-template-columns:1fr}.btn{width:100%}.cta-row{flex-direction:column}}
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body { font-family: Arial, Helvetica, sans-serif; background: var(--sand); color: var(--ink); }
+    .brand-shell {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 40px 20px;
+      background: #f4f3f1;
+    }
+    .brand-wrap {
+      width: min(980px, 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+    }
+    .brand-logo {
+      width: min(690px, 80vw);
+      display: block;
+    }
+    .brand-mark {
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
   </style>
 </head>
 <body>
-  <div class="topbar">
-    <div class="container">
-      <span>Growing stronger communities</span>
-      <span>Kabonix Foundation Digital Ecosystem Platform</span>
+  <div class="brand-shell">
+    <div class="brand-wrap">
+      <div class="brand-logo">
+        <img src="https://eu-central.storage.cloudconvert.com/tasks/bc256320-0b38-4a10-ad9f-b7d6b83da673/logo.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=cloudconvert-production%2F20260918%2Ffra%2Fs3%2Faws4_request&X-Amz-Date=20260918T233139Z&X-Amz-Expires=86400&X-Amz-Signature=e911c9b437c8222587b7922ac15b4e8145bbd32bf68108d1b0bf63cec7236032&X-Amz-SignedHeaders=host&response-content-disposition=attachment%3B%20filename%3D%22logo.png%22&response-content-type=image%2Fpng&x-amz-checksum-mode=ENABLED&x-id=GetObject" alt="Kabonix Foundation logo" class="brand-mark" />
+      </div>
     </div>
   </div>
-
-  <header>
-    <div class="container nav">
-      <a href="#" class="brand" aria-label="Kabonix Foundation home">
-        <img src="./assets/kabonix-logo.svg" alt="Kabonix Foundation logo" />
-        <span class="brand-text">
-          <span class="main">Kabonix</span>
-          <span class="sub">Foundation</span>
-        </span>
-      </a>
-      <nav class="nav-links" aria-label="Main navigation">
-        <a href="#about">About</a>
-        <a href="#solutions">Solutions</a>
-        <a href="#impact">Impact</a>
-        <a href="#projects">Projects</a>
-        <a href="#contact">Contact</a>
-      </nav>
-      <a class="btn btn-primary" href="#contact">Get Started</a>
-    </div>
-  </header>
-
-  <main>
-    <section class="hero">
-      <div class="container hero-grid">
-        <div class="hero-copy">
-          <span class="eyebrow">Kabonix Foundation</span>
-          <h1>Building a greener future through empowered communities.</h1>
-          <p>We help programme teams, field officers, and partners turn data, coordination, and accountability into measurable action for people and places.</p>
-          <div class="cta-row">
-            <a href="#contact" class="btn btn-primary">Discover our platform</a>
-            <a href="#about" class="btn btn-outline">Learn more</a>
-          </div>
-        </div>
-        <div class="hero-panel">
-          <div class="hero-panel-inner">
-            <img src="https://images.unsplash.com/photo-1523741543316-beb7fc7023d8?auto=format&fit=crop&w=900&q=80" alt="Community project and agricultural growth" />
-          </div>
-          <div class="mini-card">
-            <strong>32K+</strong>
-            <span>People reached through coordinated local action</span>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <div class="stats-bar">
-      <div class="container stats-grid">
-        <div class="stat"><strong>240+</strong><span>Programmes tracked</span></div>
-        <div class="stat"><strong>75%</strong><span>Action visibility</span></div>
-        <div class="stat"><strong>18</strong><span>Regions supported</span></div>
-        <div class="stat"><strong>24/7</strong><span>Operational insight</span></div>
-      </div>
-    </div>
-
-    <section id="about">
-      <div class="container">
-        <div class="section-head">
-          <div>
-            <span class="section-kicker">About us</span>
-            <h2>Digital infrastructure for sustainable progress.</h2>
-          </div>
-          <p>Kabonix Foundation connects field work, programme administration, and real-world results in a single ecosystem designed for stronger delivery and public trust.</p>
-        </div>
-
-        <div class="services-grid">
-          <article class="service-card">
-            <div class="service-icon">🌱</div>
-            <h3>Community-first design</h3>
-            <p>Built around the needs of local teams, field staff, and stakeholders who are driving action on the ground.</p>
-          </article>
-          <article class="service-card">
-            <div class="service-icon">📊</div>
-            <h3>Visible programme tracking</h3>
-            <p>Monitor progress, coordination, and outcomes in a structured system that keeps teams aligned and informed.</p>
-          </article>
-          <article class="service-card">
-            <div class="service-icon">🔒</div>
-            <h3>Responsible access</h3>
-            <p>Role-based permissions and audit visibility help organizations protect data and strengthen accountability.</p>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <section class="feature-band" id="solutions">
-      <div class="container feature-layout">
-        <div class="feature-image">
-          <img src="https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?auto=format&fit=crop&w=1100&q=80" alt="Green landscape and sustainable environment" />
-        </div>
-        <div>
-          <div class="section-head" style="margin-bottom:20px">
-            <div>
-              <span class="section-kicker">What we deliver</span>
-              <h2>Everything your team needs to move from planning to impact.</h2>
-            </div>
-          </div>
-          <div class="feature-list">
-            <div class="feature-item"><strong>Field data collection</strong><span>Capture monitoring information and beneficiary details in a structured, location-aware way.</span></div>
-            <div class="feature-item"><strong>Team coordination</strong><span>Keep roles, responsibilities, and operational workflow connected from one clear system.</span></div>
-            <div class="feature-item"><strong>Programme governance</strong><span>Support accountability through visibility, permissions, and trusted records.</span></div>
-            <div class="feature-item"><strong>Impact learning</strong><span>Turn information into insight so teams can act with clarity and improve over time.</span></div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section id="impact">
-      <div class="container">
-        <div class="section-head">
-          <div>
-            <span class="section-kicker">Impact</span>
-            <h2>Creating long-term value for people, land, and institutions.</h2>
-          </div>
-          <p>We support practical action that is measurable, accountable, and rooted in real local needs.</p>
-        </div>
-
-        <div class="projects-grid" id="projects">
-          <article class="project-card">
-            <img src="https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?auto=format&fit=crop&w=900&q=80" alt="Green field programme" />
-            <div class="project-body">
-              <span class="project-badge">Ecosystem</span>
-              <h3>Restoration programmes</h3>
-              <p>Coordinating sustainable action and support across affected or at-risk communities.</p>
-            </div>
-          </article>
-          <article class="project-card">
-            <img src="https://images.unsplash.com/photo-1471193945509-9ad0617afabf?auto=format&fit=crop&w=900&q=80" alt="Agricultural project" />
-            <div class="project-body">
-              <span class="project-badge">Agriculture</span>
-              <h3>Food and resilience work</h3>
-              <p>Helping local action plans stay connected to the people they serve and the outcomes they seek.</p>
-            </div>
-          </article>
-          <article class="project-card">
-            <img src="https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=900&q=80" alt="Field team and community outreach" />
-            <div class="project-body">
-              <span class="project-badge">Governance</span>
-              <h3>Field operations</h3>
-              <p>Equipping teams with structured data flow, permissions, and operational visibility.</p>
-            </div>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <section id="contact" style="padding-top:0">
-      <div class="container">
-        <div class="cta-banner">
-          <div class="container" style="width:100%;padding:0">
-            <div>
-              <h2>Build a stronger future together.</h2>
-              <p>Let Kabonix Foundation help your organisation coordinate action, evidence, and progress.</p>
-            </div>
-            <a href="#" class="btn btn-primary" style="background:#fff;color:var(--forest)">Contact us</a>
-          </div>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <footer>
-    <div class="container">
-      <div class="footer-grid">
-        <div class="footer-col">
-          <div class="brand-footer">
-            <img src="./assets/kabonix-logo.svg" alt="Kabonix Foundation logo" />
-            <span>Kabonix</span>
-          </div>
-          <p style="margin:0;color:rgba(255,255,255,.72)">Building connected solutions for community delivery, field operations, and measurable impact.</p>
-        </div>
-        <div class="footer-col">
-          <h4>Explore</h4>
-          <ul>
-            <li>About</li>
-            <li>Solutions</li>
-            <li>Impact</li>
-            <li>Projects</li>
-          </ul>
-        </div>
-        <div class="footer-col">
-          <h4>Support</h4>
-          <ul>
-            <li>Contact</li>
-            <li>Partnerships</li>
-            <li>Resources</li>
-            <li>FAQs</li>
-          </ul>
-        </div>
-        <div class="footer-col">
-          <h4>Contact</h4>
-          <ul>
-            <li>hello@kabonix.foundation</li>
-            <li>+255 000 000 000</li>
-            <li>Dar es Salaam, Tanzania</li>
-          </ul>
-        </div>
-      </div>
-      <div class="footer-bottom">
-        <span>© 2026 Kabonix Foundation</span>
-        <span>Digital Ecosystem Platform</span>
-      </div>
-    </div>
-  </footer>
 </body>
 </html>

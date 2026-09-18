@@ -3,70 +3,18 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Staff & field officer portal for programme data collection and administration.">
+  <meta name="website-url" content="/">
   <meta property="og:title" content="Kabonix Foundation — Digital Platform">
   <meta property="og:description" content="Staff & field officer portal for programme data collection and administration.">
-  <meta property="og:image" content="/assets/kabonix-logo.svg">
-  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://eu-central.storage.cloudconvert.com/tasks/bc256320-0b38-4a10-ad9f-b7d6b83da673/logo.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=cloudconvert-production%2F20260918%2Ffra%2Fs3%2Faws4_request&X-Amz-Date=20260918T233139Z&X-Amz-Expires=86400&X-Amz-Signature=e911c9b437c8222587b7922ac15b4e8145bbd32bf68108d1b0bf63cec7236032&X-Amz-SignedHeaders=host&response-content-disposition=attachment%3B%20filename%3D%22logo.png%22&response-content-type=image%2Fpng&x-amz-checksum-mode=ENABLED&x-id=GetObject">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Kabonix Foundation — Digital Platform">
-  <meta name="twitter:description" content="Staff & field officer portal for programme data collection and administration.">
-  <meta name="twitter:image" content="/assets/kabonix-logo.svg">
-  <link rel="icon" href="/assets/kabonix-logo.svg" type="image/svg+xml">
+  <meta name="twitter:image" content="https://eu-central.storage.cloudconvert.com/tasks/bc256320-0b38-4a10-ad9f-b7d6b83da673/logo.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=cloudconvert-production%2F20260918%2Ffra%2Fs3%2Faws4_request&X-Amz-Date=20260918T233139Z&X-Amz-Expires=86400&X-Amz-Signature=e911c9b437c8222587b7922ac15b4e8145bbd32bf68108d1b0bf63cec7236032&X-Amz-SignedHeaders=host&response-content-disposition=attachment%3B%20filename%3D%22logo.png%22&response-content-type=image%2Fpng&x-amz-checksum-mode=ENABLED&x-id=GetObject">
+  <link rel="icon" href="https://eu-central.storage.cloudconvert.com/tasks/bc256320-0b38-4a10-ad9f-b7d6b83da673/logo.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=cloudconvert-production%2F20260918%2Ffra%2Fs3%2Faws4_request&X-Amz-Date=20260918T233139Z&X-Amz-Expires=86400&X-Amz-Signature=e911c9b437c8222587b7922ac15b4e8145bbd32bf68108d1b0bf63cec7236032&X-Amz-SignedHeaders=host&response-content-disposition=attachment%3B%20filename%3D%22logo.png%22&response-content-type=image%2Fpng&x-amz-checksum-mode=ENABLED&x-id=GetObject" type="image/png">
   <title>Kabonix Foundation — Digital Platform</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: Inter, Arial, sans-serif;
-      background: linear-gradient(180deg, #f5faf5 0%, #edf7ef 100%);
-      color: #183a2f;
-      display: grid;
-      place-items: center;
-      min-height: 100vh;
-    }
-
-    .wrap {
-      width: min(760px, calc(100% - 48px));
-      background: rgba(255,255,255,0.72);
-      border: 1px solid rgba(21,58,47,0.08);
-      border-radius: 28px;
-      box-shadow: 0 28px 60px rgba(12, 36, 31, 0.08);
-      padding: 38px 28px;
-      text-align: center;
-    }
-
-    .logo {
-      display: block;
-      width: min(480px, 78vw);
-      max-width: 480px;
-      margin: 0 auto 12px;
-    }
-
-    .title {
-      margin: 0;
-      font-size: clamp(2.1rem, 5vw, 4.2rem);
-      line-height: 0.92;
-      letter-spacing: -0.06em;
-      font-weight: 800;
-      color: #0b3c35;
-    }
-
-    .subtitle {
-      display: block;
-      margin-top: 10px;
-      color: #4e7b63;
-      font-size: clamp(1rem, 2vw, 1.7rem);
-      font-weight: 700;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-    }
-  </style>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="wrap">
-    <img class="logo" src="/assets/kabonix-logo.svg" alt="Kabonix Foundation logo">
-    <h1 class="title">KABONIX</h1>
-    <span class="subtitle">Foundation</span>
-  </div>
+  <div id="root"></div>
+  <script src="app.js"></script>
 </body>
 </html>
