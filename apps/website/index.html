@@ -1,913 +1,1068 @@
 <!DOCTYPE html>
-<html lang="en" id="html-root">
+<html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Kabonix Foundation</title>
-  <link rel="stylesheet" href="styles/design-system.css">
-  <link rel="stylesheet" href="styles/premium-home.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GreenEarth Environmental Solutions</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* CSS Variables */
+        :root {
+            --primary-dark: #123c2d;
+            --primary-green: #64a35a;
+            --accent-green: #8ccf62;
+            --bg-light: #f8f9fa;
+            --text-dark: #222;
+            --text-light: #666;
+            --white: #ffffff;
+            --border-color: #e0e0e0;
+        }
+
+        /* Reset & Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            color: var(--text-dark);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        ul {
+            list-style: none;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 24px;
+            border-radius: 4px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .btn-green {
+            background-color: var(--primary-green);
+            color: var(--white);
+        }
+
+        .btn-green:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            color: var(--white);
+            border: 1px solid var(--white);
+        }
+
+        .btn-outline:hover {
+            background-color: var(--white);
+            color: var(--primary-dark);
+        }
+
+        .btn-white {
+            background-color: var(--white);
+            color: var(--text-dark);
+        }
+
+        /* --- Top Bar --- */
+        .top-bar {
+            background-color: var(--primary-dark);
+            color: var(--white);
+            font-size: 0.75rem;
+            padding: 8px 0;
+        }
+
+        .top-bar .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .top-bar-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .top-bar-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .top-bar-right span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .top-bar .btn {
+            padding: 4px 12px;
+            font-size: 0.7rem;
+        }
+
+        /* --- Navigation --- */
+        nav {
+            background-color: var(--white);
+            padding: 15px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            position: relative;
+            z-index: 100;
+        }
+
+        nav .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-icon {
+            font-size: 2rem;
+            color: var(--primary-green);
+        }
+
+        .logo-text h1 {
+            font-size: 1.2rem;
+            color: var(--primary-dark);
+            line-height: 1.1;
+        }
+
+        .logo-text p {
+            font-size: 0.65rem;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 25px;
+        }
+
+        .nav-links a {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-dark);
+            padding-bottom: 5px;
+        }
+
+        .nav-links a.active {
+            border-bottom: 2px solid var(--primary-dark);
+        }
+
+        /* --- Hero Section --- */
+        .hero {
+            position: relative;
+            min-height: 600px;
+            background: url('https://images.unsplash.com/photo-1511497584788-876760111969?q=80&w=2000&auto=format&fit=crop') center/cover no-repeat;
+            display: flex;
+            align-items: center;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to right, rgba(18, 60, 45, 0.9) 0%, rgba(18, 60, 45, 0.7) 40%, rgba(0,0,0,0.2) 100%);
+        }
+
+        .hero .container {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+
+        .hero-content {
+            max-width: 600px;
+            color: var(--white);
+        }
+
+        .hero-content .subtitle {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .hero-content h1 {
+            font-size: 3rem;
+            line-height: 1.2;
+            margin-bottom: 20px;
+        }
+
+        .hero-content h1 span {
+            color: var(--accent-green);
+        }
+
+        .hero-content p {
+            font-size: 0.95rem;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 15px;
+        }
+
+        .hero-features {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            color: var(--white);
+        }
+
+        .hero-feature-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .hero-feature-item i {
+            font-size: 1.5rem;
+        }
+
+        .hero-feature-item div {
+            font-size: 0.85rem;
+            line-height: 1.3;
+        }
+
+        /* --- Services Section --- */
+        .services {
+            padding: 80px 0;
+            background-color: var(--white);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 50px;
+        }
+
+        .section-header-left h2 {
+            font-size: 2rem;
+            color: var(--primary-dark);
+            line-height: 1.3;
+            max-width: 400px;
+        }
+
+        .section-header-left .subtitle {
+            font-size: 0.75rem;
+            color: var(--primary-green);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .section-header-right p {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            max-width: 450px;
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+        }
+
+        .service-card {
+            padding: 40px 30px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            transition: box-shadow 0.3s ease;
+        }
+
+        .service-card:hover {
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        }
+
+        .service-icon {
+            width: 50px;
+            height: 50px;
+            background-color: #eef7eb;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+            color: var(--primary-green);
+            font-size: 1.2rem;
+        }
+
+        .service-card h3 {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            color: var(--primary-dark);
+        }
+
+        .service-card p {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            margin-bottom: 20px;
+        }
+
+        .learn-more {
+            font-size: 0.85rem;
+            color: var(--primary-green);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* --- Impact/Stats Section --- */
+        .impact {
+            background: linear-gradient(rgba(18, 60, 45, 0.9), rgba(18, 60, 45, 0.9)), url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=2000&auto=format&fit=crop') center/cover;
+            padding: 60px 0;
+            color: var(--white);
+        }
+
+        .impact .container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .impact-title {
+            max-width: 300px;
+        }
+
+        .impact-title .subtitle {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            display: block;
+            color: var(--accent-green);
+        }
+
+        .impact-title h2 {
+            font-size: 2.2rem;
+            line-height: 1.2;
+        }
+
+        .stats-grid {
+            display: flex;
+            gap: 50px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-icon {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+            color: var(--accent-green);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            opacity: 0.9;
+        }
+
+        /* --- Projects Section --- */
+        .projects {
+            padding: 80px 0;
+            background-color: var(--bg-light);
+        }
+
+        .projects .section-header {
+            align-items: center;
+        }
+
+        .projects .view-all {
+            font-size: 0.85rem;
+            color: var(--primary-dark);
+            font-weight: 500;
+        }
+
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 20px;
+        }
+
+        .project-card {
+            background: var(--white);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .project-img {
+            height: 150px;
+            width: 100%;
+            object-fit: cover;
+        }
+
+        .project-content {
+            padding: 15px;
+        }
+
+        .project-content h4 {
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            color: var(--primary-dark);
+            line-height: 1.3;
+        }
+
+        .project-location {
+            font-size: 0.7rem;
+            color: var(--text-light);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 15px;
+        }
+
+        .project-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid var(--border-color);
+            padding-top: 10px;
+        }
+
+        .project-tag {
+            background-color: #eef7eb;
+            color: var(--primary-green);
+            font-size: 0.65rem;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+
+        .project-arrow {
+            color: var(--primary-green);
+            font-size: 0.8rem;
+        }
+
+        /* --- Why Choose Us --- */
+        .why-choose {
+            padding: 80px 0;
+            background-color: var(--white);
+        }
+
+        .why-choose .container {
+            display: flex;
+            gap: 50px;
+            align-items: center;
+        }
+
+        .why-choose-img {
+            flex: 1;
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .why-choose-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        .why-choose-content {
+            flex: 1;
+        }
+
+        .why-choose-content .subtitle {
+            font-size: 0.75rem;
+            color: var(--primary-green);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .why-choose-content h2 {
+            font-size: 2rem;
+            color: var(--primary-dark);
+            margin-bottom: 30px;
+            line-height: 1.2;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+        }
+
+        .feature-item {
+            display: flex;
+            gap: 15px;
+        }
+
+        .feature-icon {
+            color: var(--primary-green);
+            font-size: 1.2rem;
+            margin-top: 3px;
+        }
+
+        .feature-text h4 {
+            font-size: 0.95rem;
+            margin-bottom: 5px;
+            color: var(--primary-dark);
+        }
+
+        .feature-text p {
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+
+        /* --- CTA Section --- */
+        .cta {
+            background-color: var(--primary-dark);
+            padding: 40px 0;
+            color: var(--white);
+        }
+
+        .cta .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .cta-text h2 {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+
+        .cta-text p {
+            font-size: 0.85rem;
+            opacity: 0.8;
+        }
+
+        /* --- Footer --- */
+        footer {
+            background-color: #0b261c;
+            color: var(--white);
+            padding: 60px 0 20px;
+            font-size: 0.8rem;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1.5fr 2fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .footer-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .footer-logo .logo-icon {
+            color: var(--accent-green);
+            font-size: 1.5rem;
+        }
+
+        .footer-logo h3 {
+            font-size: 1.1rem;
+        }
+
+        .footer-logo p {
+            font-size: 0.6rem;
+            opacity: 0.7;
+        }
+
+        .footer-col h4 {
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+            color: var(--white);
+        }
+
+        .footer-links li {
+            margin-bottom: 10px;
+        }
+
+        .footer-links a {
+            opacity: 0.7;
+            transition: opacity 0.3s;
+        }
+
+        .footer-links a:hover {
+            opacity: 1;
+            color: var(--accent-green);
+        }
+
+        .footer-contact li {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            opacity: 0.7;
+        }
+
+        .newsletter-form {
+            display: flex;
+            margin-top: 15px;
+        }
+
+        .newsletter-form input {
+            padding: 10px;
+            border: none;
+            border-radius: 4px 0 0 4px;
+            width: 100%;
+            outline: none;
+        }
+
+        .newsletter-form button {
+            border-radius: 0 4px 4px 0;
+        }
+
+        .social-icons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .social-icons a {
+            opacity: 0.7;
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding-top: 20px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.7rem;
+            opacity: 0.6;
+        }
+
+        /* Responsive adjustments (basic) */
+        @media (max-width: 1024px) {
+            .services-grid { grid-template-columns: repeat(2, 1fr); }
+            .projects-grid { grid-template-columns: repeat(3, 1fr); }
+            .footer-grid { grid-template-columns: repeat(3, 1fr); }
+            .hero-content h1 { font-size: 2.5rem; }
+        }
+
+        @media (max-width: 768px) {
+            .top-bar .container { flex-direction: column; gap: 10px; }
+            .nav-links { display: none; } /* Add hamburger menu in real scenario */
+            .hero .container { flex-direction: column; text-align: center; gap: 40px; }
+            .hero-buttons { justify-content: center; }
+            .hero-features { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+            .section-header { flex-direction: column; align-items: flex-start; gap: 20px; }
+            .services-grid { grid-template-columns: 1fr; }
+            .impact .container { flex-direction: column; gap: 40px; text-align: center; }
+            .stats-grid { flex-wrap: wrap; justify-content: center; gap: 30px; }
+            .projects-grid { grid-template-columns: repeat(2, 1fr); }
+            .why-choose .container { flex-direction: column; }
+            .cta .container { flex-direction: column; text-align: center; gap: 20px; }
+            .footer-grid { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
 </head>
 <body>
 
-  <a class="skip-link" href="#main-content">Skip to content</a>
-
-  <!-- Top announcement / contact strip -->
-  <div class="top-bar">
-    <div class="container" style="display:flex;align-items:center;justify-content:space-between;padding:8px 16px">
-      <div style="font-size:13px;color:#eaf9f0">Together for a Greener Tomorrow</div>
-      <div style="display:flex;gap:14px;align-items:center">
-        <div style="font-size:13px;color:#eaf9f0">+255 123 456 789</div>
-        <a href="#contact" class="top-cta">Free Consultation</a>
-      </div>
-    </div>
-  </div>
-
-<!-- ───────────────────────────── NAV ───────────────────────────────────── -->
-<nav>
-  <div class="nav-inner">
-    <style>
-      /* make nav white for premium look */
-      nav{background:#fff;color:var(--ink);box-shadow:0 6px 24px rgba(12,60,38,0.06)}
-      .nav-logo-img{filter:none}
-    </style>
-    <button id="menu-toggle" class="menu-btn" aria-label="Menu" aria-expanded="false" style="background:transparent;border:none;color:#fff;font-size:20px;padding:6px;margin-right:8px;">☰</button>
-    <a class="nav-brand" href="#home">
-      <div class="nav-logo"><img src="/assets/logo.png" class="nav-logo-img" alt="Kabonix logo"></div>
-      <div><div class="nav-name">KABONIX FOUNDATION</div>
-           <div class="nav-tag" data-en="People · Planet · Prosperity" data-sw="Watu · Sayari · Ustawi">People · Planet · Prosperity</div></div>
-    </a>
-    <div class="nav-links">
-      <a href="#programmes" data-en="Programmes"   data-sw="Programu">Programmes</a>
-      <a href="#news"       data-en="News & Events" data-sw="Habari">News & Events</a>
-      <a href="#impact"     data-en="Impact"        data-sw="Athari">Impact</a>
-      <a href="#partners"   data-en="Partners"      data-sw="Washirika">Partners</a>
-      <a href="#contact"    data-en="Contact"       data-sw="Wasiliana">Contact</a>
-    </div>
-    <div class="nav-cta">
-      <div class="lang-toggle">
-        <button class="lang-btn active" data-lang="en" onclick="setLang('en')">EN</button>
-        <button class="lang-btn"        data-lang="sw" onclick="setLang('sw')">SW</button>
-      </div>
-      <a href="#contact" class="donate-btn nav-donate" style="margin-left:12px;padding:8px 12px;border-radius:12px;background:var(--accent);color:var(--primary);font-weight:700;text-decoration:none">Donate Now</a>
-      <button class="btn-nav-login" onclick="openModal('login')" data-en="Staff login" data-sw="Ingia">Staff login</button>
-    </div>
-  </div>
-</nav>
-
-<!-- ───────────────────────── MODAL: AUTH ───────────────────────────────── -->
-<div class="modal-overlay" id="auth-modal" onclick="maybeCloseModal(event)">
-  <div class="modal" role="dialog" aria-modal="true">
-    <button class="modal-close" onclick="closeModal()" aria-label="Close">✕</button>
-
-    <!-- ── tab bar (hidden when showing single-purpose screens) ── -->
-    <div class="modal-tabs" id="modal-tabs">
-      <button class="modal-tab active" id="tab-login"  onclick="switchTab('login')"  data-en="Sign in"       data-sw="Ingia">Sign in</button>
-      <button class="modal-tab"        id="tab-forgot" onclick="switchTab('forgot')" data-en="Reset password" data-sw="Weka upya">Reset password</button>
-    </div>
-
-    <!-- ── SIGN IN ── -->
-    <div id="pane-login">
-      <div class="staff-note" data-en="This portal is for Kabonix Foundation staff and field officers." data-sw="Lango hili ni kwa wafanyakazi wa Kabonix Foundation na maafisa wa shamba.">This portal is for Kabonix Foundation staff and field officers.</div>
-      <div class="field"><label data-en="Email address" data-sw="Barua pepe">Email address</label>
-        <input id="li-email" type="email" autocomplete="email" placeholder="you@kabonix.org"></div>
-      <div class="field"><label data-en="Password" data-sw="Nywila">Password</label>
-        <input id="li-pw" type="password" autocomplete="current-password" placeholder="••••••••"></div>
-      <button class="btn btn-leaf" id="li-btn" onclick="doLogin()">
-        <span data-en="Sign in" data-sw="Ingia">Sign in</span>
-      </button>
-      <div class="err-msg" id="li-err"></div>
-      <div class="modal-hint">
-        <a onclick="switchTab('forgot')" data-en="Forgot your password?" data-sw="Umesahau nywila yako?">Forgot your password?</a>
-        <br><span data-en="Don't have an account? Ask your Foundation Admin to invite you." data-sw="Huna akaunti? Omba Msimamizi wako wa Mfuko akualike.">Don't have an account? Ask your Foundation Admin to invite you.</span>
-      </div>
-    </div>
-
-    <!-- ── MFA CHALLENGE ── -->
-    <div id="pane-mfa" style="display:none">
-      <h2 data-en="Two-factor authentication" data-sw="Uthibitisho wa hatua mbili">Two-factor authentication</h2>
-      <p class="sub" data-en="Enter the 6-digit code from your authenticator app." data-sw="Ingiza nambari 6 kutoka programu yako ya uthibitisho.">Enter the 6-digit code from your authenticator app.</p>
-      <div class="field"><label data-en="Authentication code" data-sw="Nambari ya uthibitisho">Authentication code</label>
-        <input id="mfa-code" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="000000"></div>
-      <button class="btn btn-leaf" onclick="doMfa()" data-en="Verify" data-sw="Thibitisha">Verify</button>
-      <div class="err-msg" id="mfa-err"></div>
-      <div class="modal-hint"><a onclick="showPane('login')" data-en="← Back to sign in" data-sw="← Rudi kuingia">← Back to sign in</a></div>
-    </div>
-
-    <!-- ── FORGOT PASSWORD ── -->
-    <div id="pane-forgot" style="display:none">
-      <div class="field"><label data-en="Your email address" data-sw="Anwani yako ya barua pepe">Your email address</label>
-        <input id="fp-email" type="email" autocomplete="email" placeholder="you@kabonix.org"></div>
-      <button class="btn btn-leaf" onclick="doForgot()" data-en="Send reset link" data-sw="Tuma kiungo cha kuweka upya">Send reset link</button>
-      <div class="err-msg"  id="fp-err"></div>
-      <div class="ok-msg"   id="fp-ok"  data-en="If that email exists, a reset link has been sent. Check your inbox (and the API console in dev mode)." data-sw="Ikiwa barua pepe hiyo ipo, kiungo cha kuweka upya kimetumwa.">If that email exists, a reset link has been sent.</div>
-      <div class="modal-hint"><a onclick="switchTab('login')" data-en="← Back to sign in" data-sw="← Rudi kuingia">← Back to sign in</a></div>
-    </div>
-
-    <!-- ── RESET PASSWORD (token from URL) ── -->
-    <div id="pane-reset" style="display:none">
-      <h2 data-en="Set a new password" data-sw="Weka nywila mpya">Set a new password</h2>
-      <p class="sub" data-en="Choose a strong password of at least 8 characters." data-sw="Chagua nywila imara ya angalau herufi 8.">Choose a strong password of at least 8 characters.</p>
-      <div class="field"><label data-en="New password" data-sw="Nywila mpya">New password</label>
-        <input id="rp-pw" type="password" autocomplete="new-password" placeholder="New password"></div>
-      <div class="field"><label data-en="Confirm password" data-sw="Thibitisha nywila">Confirm password</label>
-        <input id="rp-pw2" type="password" autocomplete="new-password" placeholder="Repeat password"></div>
-      <button class="btn btn-leaf" onclick="doReset()" data-en="Set password" data-sw="Weka nywila">Set password</button>
-      <div class="err-msg" id="rp-err"></div>
-      <div class="ok-msg"  id="rp-ok"  data-en="Password updated. You can now sign in." data-sw="Nywila imesasishwa. Sasa unaweza kuingia.">Password updated. You can now sign in.</div>
-    </div>
-
-    <!-- ── EMAIL VERIFIED landing ── -->
-    <div id="pane-verified" style="display:none">
-      <div style="text-align:center;padding:10px 0 20px">
-        <div style="font-size:44px;margin-bottom:14px">✅</div>
-        <h2 data-en="Email verified!" data-sw="Barua pepe imethibitishwa!">Email verified!</h2>
-        <p class="sub" data-en="Your email has been confirmed. Sign in to get started." data-sw="Barua pepe yako imethibitishwa. Ingia kuanza.">Your email has been confirmed. Sign in to get started.</p>
-        <button class="btn btn-leaf" onclick="switchTab('login')" style="margin-top:12px" data-en="Go to sign in" data-sw="Nenda kuingia">Go to sign in</button>
-      </div>
-    </div>
-
-    <!-- ── SIGNED IN: portal links ── -->
-    <div id="pane-portal" style="display:none">
-      <div style="text-align:center;margin-bottom:22px">
-        <div style="font-size:40px;margin-bottom:10px">👤</div>
-        <h2 id="portal-name" style="margin-bottom:4px"></h2>
-        <p class="sub" id="portal-roles"></p>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:9px">
-        <a id="portal-link" href="#" target="_blank" class="btn btn-leaf" style="text-align:center" data-en="Open staff portal →" data-sw="Fungua lango la wafanyakazi →">Open staff portal →</a>
-        <button class="btn" style="background:var(--paper);color:var(--ink);border:1px solid var(--line)" onclick="doSignOut()" data-en="Sign out" data-sw="Toka">Sign out</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ───────────────────────────── HERO ──────────────────────────────────── -->
-<main id="main-content" role="main">
-<section class="ph-hero" id="home" aria-labelledby="hero-title">
-  <div class="container">
-    <div class="grid">
-      <div class="reveal">
-        <div class="ph-badge">🌿 Saving Our Planet</div>
-        <h1 id="hero-title" style="margin-top:18px">Protecting our oceans and planting forests for a sustainable tomorrow.</h1>
-        <p class="lead">We work with coastal communities, farmers and youth-led enterprises to protect ecosystems, create livelihoods, and measure impact for climate resilience.</p>
-        <div class="ph-actions">
-          <a href="#contact" class="btn btn-primary" style="border-radius:12px;padding:12px 18px;color:#fff;text-decoration:none" aria-label="Request a free quote">Request a free quote</a>
-          <a href="#programmes" class="btn btn-ghost" style="border-radius:12px;padding:10px 14px;text-decoration:none" aria-label="Our services">Our services</a>
-          <a href="tel:+254700000000" class="ph-phone muted" style="margin-left:8px;font-weight:600;color:var(--primary);text-decoration:none">Call us: +254 700 000 000</a>
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <div class="container">
+            <div class="top-bar-left">
+                <i class="fa-solid fa-leaf"></i>
+                <span>Together for a Greener Tomorrow</span>
+            </div>
+            <div class="top-bar-right">
+                <span><i class="fa-solid fa-phone"></i> +255 123 456 789</span>
+                <span><i class="fa-solid fa-envelope"></i> info@greenearth.co.tz</span>
+                <span><i class="fa-solid fa-location-dot"></i> Dar es Salaam, Tanzania</span>
+                <a href="#" class="btn btn-green">Free Consultation <i class="fa-solid fa-arrow-right"></i></a>
+            </div>
         </div>
-        <div class="ph-ribbon">
-          <div class="ph-metrics">
-            <div class="ph-metric"><div class="num">15M+</div><div class="lbl">Trees Planted</div></div>
-            <div class="ph-metric"><div class="num">$4.5M+</div><div class="lbl">Funds Raised</div></div>
-            <div class="ph-metric"><div class="num">20k+</div><div class="lbl">Active Volunteers</div></div>
-          </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav>
+        <div class="container">
+            <div class="logo">
+                <i class="fa-solid fa-leaf logo-icon"></i>
+                <div class="logo-text">
+                    <h1>GreenEarth</h1>
+                    <p>Environmental Solutions</p>
+                </div>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#" class="active">Home</a></li>
+                <li><a href="#">About Us</a></li>
+                <li><a href="#">Services <i class="fa-solid fa-chevron-down" style="font-size: 0.6rem;"></i></a></li>
+                <li><a href="#">Projects</a></li>
+                <li><a href="#">Sustainability</a></li>
+                <li><a href="#">Blog</a></li>
+                <li><a href="#">Contact</a></li>
+            </ul>
+            <a href="#" class="btn btn-green">Get a Quote <i class="fa-solid fa-arrow-right"></i></a>
         </div>
-      </div>
-      <div class="ph-media reveal" aria-hidden="false">
-        <picture>
-          <source type="image/webp" srcset="/assets/hero-nature-1600.webp 1600w, /assets/hero-nature-1200.webp 1200w, /assets/hero-nature-800.webp 800w" sizes="(min-width:1100px) 520px, 100vw">
-          <source type="image/jpeg" srcset="/assets/hero-nature-1600.jpg 1600w, /assets/hero-nature-1200.jpg 1200w, /assets/hero-nature-800.jpg 800w" sizes="(min-width:1100px) 520px, 100vw">
-          <img src="/assets/hero-nature-1200.jpg" alt="Community restoring mangroves and planting trees" loading="lazy" decoding="async">
-        </picture>
-      </div>
-    </div>
-  </div>
-</section>
+    </nav>
 
-<!-- ──────────────────────── PROGRAMMES ─────────────────────────────────── -->
-<section class="ph-causes" id="causes">
-  <div class="container">
-    <div class="section-head">
-      <div class="label">The causes we fight for</div>
-      <h2 id="causes-title">Our Core Causes</h2>
-      <p>Focused initiatives that protect biodiversity, restore landscapes, and build resilient livelihoods.</p>
-    </div>
-    <div class="grid" style="grid-template-columns:repeat(3,1fr);gap:22px">
-      <div class="cause-card reveal">
-        <div class="cause-icon" style="background:linear-gradient(135deg,#E4F4F6,#D2FFF0)">🌊</div>
-        <div class="cause-title">Ocean & Coasts</div>
-        <p>Protecting coastal habitats, sustainable fisheries and blue carbon projects.</p>
-        <div class="progress" aria-hidden><i style="width:72%"></i></div>
-        <div style="margin-top:8px;font-size:13px;color:rgba(28,37,33,0.6)">72% Raised of $120,000</div>
-      </div>
-      <div class="cause-card reveal">
-        <div class="cause-icon" style="background:linear-gradient(135deg,#FFF3E6,#FFEFD8)">🌲</div>
-        <div class="cause-title">Forest Restoration</div>
-        <p>Large-scale reforestation and agroforestry programs supporting community nurseries.</p>
-        <div class="progress"><i style="width:48%"></i></div>
-        <div style="margin-top:8px;font-size:13px;color:rgba(28,37,33,0.6)">48% Raised of $50,000</div>
-      </div>
-      <div class="cause-card reveal">
-        <div class="cause-icon" style="background:linear-gradient(135deg,#FCE8F0,#FFF0F6)">👩‍🌾</div>
-        <div class="cause-title">Sustainable Livelihoods</div>
-        <p>Skills, market access and enterprise development for youth and women.</p>
-        <div class="progress"><i style="width:88%"></i></div>
-        <div style="margin-top:8px;font-size:13px;color:rgba(28,37,33,0.6)">88% Raised of $30,000</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section class="container">
-  <div class="ph-split">
-    <div class="a reveal">
-      <h3>Join our field teams</h3>
-      <p>Volunteer with restoration crews, community trainers and data collectors across project sites.</p>
-      <div style="margin-top:18px"><button class="btn">Become a Volunteer</button></div>
-    </div>
-    <div class="b reveal">
-      <h3>Support recurring impact</h3>
-      <p>Help sustain long-term projects by sponsoring a community or a restoration site.</p>
-      <div style="margin-top:18px"><a href="#" class="muted" style="font-weight:700">Sponsor a Project →</a></div>
-    </div>
-  </div>
-</section>
-
-<!-- ─────────────────────── FEATURED PROJECTS (thumbnail cards) ───────────────────── -->
-<section class="section" id="projects">
-  <div class="container">
-    <div class="section-head">
-      <div class="label">Featured Projects</div>
-      <h2>Our Recent Projects</h2>
-      <p class="sans">Selected highlights from the field — images and short summaries for the communications team to publish.</p>
-    </div>
-    <div class="grid-4" id="projects-grid">
-      <div class="post-card card-with-thumb fade">
-        <div class="card-img" style="background-image:url('/assets/project-1.jpg')" aria-hidden></div>
-        <div class="post-card-body">
-          <span class="post-badge b-news">Project</span>
-          <h3>Environmental Impact Assessment</h3>
-          <p class="sans">Arusha, Tanzania · EIA and community engagement for coastal restoration.</p>
-          <div style="margin-top:10px;font-size:13px;color:var(--ink-faint)">Arusha, Tanzania</div>
-          <a href="#" class="read-more">View project →</a>
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <span class="subtitle">ENVIRONMENTAL CONSULTING & MANAGEMENT</span>
+                <h1>Creating Sustainable Solutions for a <span>Better Environment</span></h1>
+                <p>We provide innovative and practical environmental solutions for businesses, communities and ecosystems. From consultation to implementation, we help you build a cleaner, greener and more sustainable future.</p>
+                <div class="hero-buttons">
+                    <a href="#" class="btn btn-green">Our Services <i class="fa-solid fa-arrow-right"></i></a>
+                    <a href="#" class="btn btn-outline">Contact Us</a>
+                </div>
+            </div>
+            <div class="hero-features">
+                <div class="hero-feature-item">
+                    <i class="fa-solid fa-leaf"></i>
+                    <div>Cleaner<br>Environment</div>
+                </div>
+                <div class="hero-feature-item">
+                    <i class="fa-solid fa-recycle"></i>
+                    <div>Sustainable<br>Practices</div>
+                </div>
+                <div class="hero-feature-item">
+                    <i class="fa-solid fa-users"></i>
+                    <div>Stronger<br>Communities</div>
+                </div>
+            </div>
         </div>
-      </div>
+    </section>
 
-      <div class="post-card card-with-thumb fade">
-        <div class="card-img" style="background-image:url('/assets/project-2.jpg')" aria-hidden></div>
-        <div class="post-card-body">
-          <span class="post-badge b-news">Project</span>
-          <h3>Waste Management Pilot</h3>
-          <p class="sans">Dar es Salaam · Recycling & community collection improvements.</p>
-          <div style="margin-top:10px;font-size:13px;color:var(--ink-faint)">Dar es Salaam, Tanzania</div>
-          <a href="#" class="read-more">View project →</a>
+    <!-- Services Section -->
+    <section class="services">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-header-left">
+                    <span class="subtitle">OUR SERVICES</span>
+                    <h2>Comprehensive Environmental Services for a Sustainable Future</h2>
+                </div>
+                <div class="section-header-right">
+                    <p>We offer a wide range of environmental services designed to meet the unique needs of our clients while protecting our natural resources and supporting sustainable development.</p>
+                </div>
+            </div>
+            <div class="services-grid">
+                <!-- Card 1 -->
+                <div class="service-card">
+                    <div class="service-icon"><i class="fa-solid fa-leaf"></i></div>
+                    <h3>Environmental Consultancy</h3>
+                    <p>Professional advice and strategic support for sustainable projects and operations.</p>
+                    <a href="#" class="learn-more">Learn More <i class="fa-solid fa-arrow-right"></i></a>
+                </div>
+                <!-- Card 2 -->
+                <div class="service-card">
+                    <div class="service-icon"><i class="fa-solid fa-clipboard-check"></i></div>
+                    <h3>Environmental Impact Assessment</h3>
+                    <p>Assessing and managing environmental risks associated with development projects.</p>
+                    <a href="#" class="learn-more">Learn More <i class="fa-solid fa-arrow-right"></i></a>
+                </div>
+                <!-- Card 3 -->
+                <div class="service-card">
+                    <div class="service-icon"><i class="fa-solid fa-recycle"></i></div>
+                    <h3>Waste Management</h3>
+                    <p>Sustainable waste collection, treatment, recycling and disposal solutions.</p>
+                    <a href="#" class="learn-more">Learn More <i class="fa-solid fa-arrow-right"></i></a>
+                </div>
+                <!-- Card 4 -->
+                <div class="service-card">
+                    <div class="service-icon"><i class="fa-solid fa-droplet"></i></div>
+                    <h3>Water & Wastewater Management</h3>
+                    <p>Solutions for responsible water use and wastewater management.</p>
+                    <a href="#" class="learn-more">Learn More <i class="fa-solid fa-arrow-right"></i></a>
+                </div>
+                <!-- Card 5 -->
+                <div class="service-card">
+                    <div class="service-icon"><i class="fa-solid fa-magnifying-glass-chart"></i></div>
+                    <h3>Environmental Monitoring</h3>
+                    <p>Field monitoring, sampling, analysis and environmental compliance.</p>
+                    <a href="#" class="learn-more">Learn More <i class="fa-solid fa-arrow-right"></i></a>
+                </div>
+                <!-- Card 6 -->
+                <div class="service-card">
+                    <div class="service-icon"><i class="fa-solid fa-tree"></i></div>
+                    <h3>Conservation & Restoration</h3>
+                    <p>Supporting ecosystem restoration, biodiversity and natural-resource conservation.</p>
+                    <a href="#" class="learn-more">Learn More <i class="fa-solid fa-arrow-right"></i></a>
+                </div>
+            </div>
         </div>
-      </div>
+    </section>
 
-      <div class="post-card card-with-thumb fade">
-        <div class="card-img" style="background-image:url('/assets/project-3.jpg')" aria-hidden></div>
-        <div class="post-card-body">
-          <span class="post-badge b-news">Project</span>
-          <h3>Water Conservation Project</h3>
-          <p class="sans">Mtwara, Tanzania · Watershed protection and training for farmers.</p>
-          <div style="margin-top:10px;font-size:13px;color:var(--ink-faint)">Mtwara, Tanzania</div>
-          <a href="#" class="read-more">View project →</a>
+    <!-- Impact/Stats Section -->
+    <section class="impact">
+        <div class="container">
+            <div class="impact-title">
+                <span class="subtitle">OUR ENVIRONMENTAL IMPACT</span>
+                <h2>Real Actions.<br>Lasting Change.</h2>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <i class="fa-solid fa-clipboard-list stat-icon"></i>
+                    <div class="stat-number">250+</div>
+                    <div class="stat-label">Projects Completed</div>
+                </div>
+                <div class="stat-item">
+                    <i class="fa-solid fa-recycle stat-icon"></i>
+                    <div class="stat-number">85K+</div>
+                    <div class="stat-label">Tons of Waste Managed</div>
+                </div>
+                <div class="stat-item">
+                    <i class="fa-solid fa-tree stat-icon"></i>
+                    <div class="stat-number">120K+</div>
+                    <div class="stat-label">Trees Planted</div>
+                </div>
+                <div class="stat-item">
+                    <i class="fa-solid fa-users stat-icon"></i>
+                    <div class="stat-number">40+</div>
+                    <div class="stat-label">Communities Supported</div>
+                </div>
+            </div>
         </div>
-      </div>
+    </section>
 
-      <div class="post-card card-with-thumb fade">
-        <div class="card-img" style="background-image:url('/assets/project-4.jpg')" aria-hidden></div>
-        <div class="post-card-body">
-          <span class="post-badge b-news">Project</span>
-          <h3>Ecosystem Restoration</h3>
-          <p class="sans">Kilifi, Kenya · Mangrove replanting and coastal restoration.</p>
-          <div style="margin-top:10px;font-size:13px;color:var(--ink-faint)">Kilifi, Kenya</div>
-          <a href="#" class="read-more">View project →</a>
+    <!-- Projects Section -->
+    <section class="projects">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-header-left">
+                    <span class="subtitle">FEATURED PROJECTS</span>
+                    <h2>Our Recent Projects</h2>
+                </div>
+                <a href="#" class="view-all">View All Projects <i class="fa-solid fa-arrow-right"></i></a>
+            </div>
+            <div class="projects-grid">
+                <!-- Project 1 -->
+                <div class="project-card">
+                    <img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=400&auto=format&fit=crop" alt="Project" class="project-img">
+                    <div class="project-content">
+                        <h4>Environmental Impact Assessment</h4>
+                        <div class="project-location"><i class="fa-solid fa-location-dot"></i> Arusha, Tanzania</div>
+                        <div class="project-footer">
+                            <span class="project-tag">EIA</span>
+                            <i class="fa-solid fa-arrow-right project-arrow"></i>
+                        </div>
+                    </div>
+                </div>
+                <!-- Project 2 -->
+                <div class="project-card">
+                    <img src="https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?q=80&w=400&auto=format&fit=crop" alt="Project" class="project-img">
+                    <div class="project-content">
+                        <h4>Waste Management Project</h4>
+                        <div class="project-location"><i class="fa-solid fa-location-dot"></i> Dar es Salaam, Tanzania</div>
+                        <div class="project-footer">
+                            <span class="project-tag">Recycling & Disposal</span>
+                            <i class="fa-solid fa-arrow-right project-arrow"></i>
+                        </div>
+                    </div>
+                </div>
+                <!-- Project 3 -->
+                <div class="project-card">
+                    <img src="https://images.unsplash.com/photo-1538300342682-cf57afb97285?q=80&w=400&auto=format&fit=crop" alt="Project" class="project-img">
+                    <div class="project-content">
+                        <h4>Water Conservation Project</h4>
+                        <div class="project-location"><i class="fa-solid fa-location-dot"></i> Mbeya, Tanzania</div>
+                        <div class="project-footer">
+                            <span class="project-tag">Water Management</span>
+                            <i class="fa-solid fa-arrow-right project-arrow"></i>
+                        </div>
+                    </div>
+                </div>
+                <!-- Project 4 -->
+                <div class="project-card">
+                    <img src="https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?q=80&w=400&auto=format&fit=crop" alt="Project" class="project-img">
+                    <div class="project-content">
+                        <h4>Ecosystem Restoration</h4>
+                        <div class="project-location"><i class="fa-solid fa-location-dot"></i> Morogoro, Tanzania</div>
+                        <div class="project-footer">
+                            <span class="project-tag">Conservation</span>
+                            <i class="fa-solid fa-arrow-right project-arrow"></i>
+                        </div>
+                    </div>
+                </div>
+                <!-- Project 5 -->
+                <div class="project-card">
+                    <img src="https://images.unsplash.com/photo-1593113589914-07599018dd2a?q=80&w=400&auto=format&fit=crop" alt="Project" class="project-img">
+                    <div class="project-content">
+                        <h4>Community Environmental Program</h4>
+                        <div class="project-location"><i class="fa-solid fa-location-dot"></i> Kilimanjaro, Tanzania</div>
+                        <div class="project-footer">
+                            <span class="project-tag">Community Outreach</span>
+                            <i class="fa-solid fa-arrow-right project-arrow"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-    <div style="text-align:right;margin-top:14px"><a href="#projects" class="muted" style="font-weight:700">View All Projects →</a></div>
-  </div>
-</section>
+    </section>
 
-<script>
-// Scroll reveal using IntersectionObserver
-document.addEventListener('DOMContentLoaded', function(){
-  const els = document.querySelectorAll('.reveal');
-  if(!els.length) return;
-  const io = new IntersectionObserver((entries, obs)=>{
-    entries.forEach(en=>{
-      if(en.isIntersecting){ en.target.classList.add('reveal-in'); obs.unobserve(en.target); }
-    });
-  },{threshold:0.12});
-  els.forEach(el=> io.observe(el));
-});
-</script>
-
-<!-- ───────────────────────── NEWS / EVENTS ──────────────────────────────── -->
-<section class="section section-alt" id="news">
-  <div class="container">
-    <div class="section-head">
-      <div class="label" data-en="News, Events & Publications" data-sw="Habari, Matukio & Machapisho">News, Events & Publications</div>
-      <h2 data-en="What's Happening" data-sw="Kinachoendelea">What's Happening</h2>
-    </div>
-    <div class="tab-bar">
-      <button class="tab-btn active" data-f="all"         onclick="filterPosts('all')"         data-en="All"          data-sw="Yote">All</button>
-      <button class="tab-btn"        data-f="news"        onclick="filterPosts('news')"        data-en="News"         data-sw="Habari">News</button>
-      <button class="tab-btn"        data-f="event"       onclick="filterPosts('event')"       data-en="Events"       data-sw="Matukio">Events</button>
-      <button class="tab-btn"        data-f="publication" onclick="filterPosts('publication')" data-en="Publications" data-sw="Machapisho">Publications</button>
-    </div>
-    <div class="grid-3" id="posts-grid">
-      <div class="post-card"><div class="post-card-body"><div class="skel st"></div><div class="skel sl"></div><div class="skel sl" style="width:80%"></div></div></div>
-      <div class="post-card"><div class="post-card-body"><div class="skel st"></div><div class="skel sl"></div><div class="skel sl" style="width:80%"></div></div></div>
-      <div class="post-card"><div class="post-card-body"><div class="skel st"></div><div class="skel sl"></div><div class="skel sl" style="width:80%"></div></div></div>
-    </div>
-  </div>
-</section>
-
-<!-- ───────────────────────────── IMPACT ────────────────────────────────── -->
-<section class="section" id="impact">
-  <div class="container">
-    <div class="section-head">
-      <div class="label" data-en="Results & Impact" data-sw="Matokeo & Athari">Results & Impact</div>
-      <h2 data-en="Stories From the Field" data-sw="Hadithi Kutoka Shambani">Stories From the Field</h2>
-      <p data-en="Real outcomes from the communities and ecosystems Kabonix works with — verified by field data and third-party auditors." data-sw="Matokeo ya kweli kutoka kwa jamii na mifumo ya ikolojia ambayo Kabonix inafanya kazi nayo.">Real outcomes from the communities and ecosystems Kabonix works with — verified by field data and third-party auditors.</p>
-    </div>
-    <div class="grid-3" id="impact-grid">
-      <div class="impact-card"><div class="skel st"></div><div class="skel sl"></div><div class="skel sl" style="width:80%"></div></div>
-      <div class="impact-card"><div class="skel st"></div><div class="skel sl"></div><div class="skel sl" style="width:80%"></div></div>
-      <div class="impact-card"><div class="skel st"></div><div class="skel sl"></div><div class="skel sl" style="width:80%"></div></div>
-    </div>
-  </div>
-</section>
-
-<!-- ──────────────────────────── PARTNERS ───────────────────────────────── -->
-<section class="section section-alt" id="partners">
-  <div class="container">
-    <div class="section-head">
-      <div class="label" data-en="Partners & Donors" data-sw="Washirika & Wafadhili">Partners & Donors</div>
-      <h2 data-en="Who We Work With" data-sw="Tunafanya Kazi na Nani">Who We Work With</h2>
-    </div>
-    <div class="grid-4" id="partners-grid">
-      <div class="partner-card"><div class="skel st"></div><div class="skel sl"></div></div>
-      <div class="partner-card"><div class="skel st"></div><div class="skel sl"></div></div>
-      <div class="partner-card"><div class="skel st"></div><div class="skel sl"></div></div>
-      <div class="partner-card"><div class="skel st"></div><div class="skel sl"></div></div>
-    </div>
-  </div>
-</section>
-
-<!-- ──────────────────────────── CONTACT ────────────────────────────────── -->
-<section class="section" id="contact">
-  <div class="container">
-    <div class="contact-wrap">
-      <div class="contact-info">
-        <div class="label" data-en="Get in Touch" data-sw="Wasiliana Nasi">Get in Touch</div>
-        <h2 data-en="Partner With Us" data-sw="Shiriki Nasi">Partner With Us</h2>
-        <p data-en="Whether you're a donor, government agency, NGO, researcher or community leader — we'd like to hear from you." data-sw="Iwe wewe ni mfadhili, shirika la serikali, NGO, mtafiti au kiongozi wa jamii — tungependa kusikia kutoka kwako.">Whether you're a donor, government agency, NGO, researcher or community leader — we'd like to hear from you.</p>
-        <div class="c-detail"><div class="c-icon">📍</div><div><strong data-en="Address" data-sw="Anwani">Address</strong>Dar es Salaam, Tanzania</div></div>
-        <div class="c-detail"><div class="c-icon">✉️</div><div><strong>Email</strong>info@kabonix.org</div></div>
-        <div class="c-detail"><div class="c-icon">🌐</div><div><strong data-en="Focus areas" data-sw="Maeneo ya kuzingatia">Focus areas</strong><span data-en="Blue Economy · Carbon · Agriculture · Energy · Youth & Women" data-sw="Uchumi wa Bluu · Kaboni · Kilimo · Nishati · Vijana na Wanawake">Blue Economy · Carbon · Agriculture · Energy · Youth & Women</span></div></div>
-      </div>
-      <div class="form-card">
-        <div id="contact-form-area">
-          <div class="form-err" id="cf-err"></div>
-          <div class="field-row">
-            <div class="field"><label data-en="Full name *" data-sw="Jina kamili *">Full name *</label><input id="cf-name" type="text"></div>
-            <div class="field"><label data-en="Email *"     data-sw="Barua pepe *">Email *</label><input id="cf-email" type="email"></div>
-          </div>
-          <div class="field"><label data-en="Organisation" data-sw="Shirika">Organisation</label><input id="cf-org" type="text"></div>
-          <div class="field"><label data-en="Subject *" data-sw="Mada *">Subject *</label>
-            <select id="cf-sub">
-              <option value="" data-en="Select…" data-sw="Chagua…">Select…</option>
-              <option data-en="Partnership enquiry"   data-sw="Ombi la ushirikiano">Partnership enquiry</option>
-              <option data-en="Funding / donation"    data-sw="Ufadhili / mchango">Funding / donation</option>
-              <option data-en="Carbon / MRV data"     data-sw="Data ya kaboni / MRV">Carbon / MRV data</option>
-              <option data-en="Research collaboration" data-sw="Ushirikiano wa utafiti">Research collaboration</option>
-              <option data-en="Community programme"   data-sw="Programu ya jamii">Community programme</option>
-              <option data-en="Media enquiry"         data-sw="Ombi la vyombo vya habari">Media enquiry</option>
-              <option data-en="Other"                 data-sw="Nyingine">Other</option>
-            </select>
-          </div>
-          <div class="field"><label data-en="Message *" data-sw="Ujumbe *">Message *</label><textarea id="cf-msg"></textarea></div>
-          <button class="submit-btn" id="cf-btn" onclick="submitContact()" data-en="Send Message" data-sw="Tuma Ujumbe">Send Message</button>
+    <!-- Why Choose Us Section -->
+    <section class="why-choose">
+        <div class="container">
+            <div class="why-choose-img">
+                <img src="https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?q=80&w=800&auto=format&fit=crop" alt="Hands holding plant">
+            </div>
+            <div class="why-choose-content">
+                <span class="subtitle">WHY CHOOSE US</span>
+                <h2>Your Partner in Environmental Excellence</h2>
+                <div class="features-grid">
+                    <div class="feature-item">
+                        <i class="fa-solid fa-leaf feature-icon"></i>
+                        <div class="feature-text">
+                            <h4>Sustainable Approach</h4>
+                            <p>Solutions designed around long-term environmental responsibility.</p>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fa-solid fa-gear feature-icon"></i>
+                        <div class="feature-text">
+                            <h4>Technical Expertise</h4>
+                            <p>Qualified professionals and evidence-based environmental practices.</p>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fa-solid fa-shield-halved feature-icon"></i>
+                        <div class="feature-text">
+                            <h4>Regulatory Compliance</h4>
+                            <p>Helping organisations meet applicable environmental requirements.</p>
+                        </div>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fa-solid fa-users feature-icon"></i>
+                        <div class="feature-text">
+                            <h4>Community Impact</h4>
+                            <p>Creating solutions that benefit both people and ecosystems.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  </div>
-</section>
+    </section>
 
-<!-- ───────────────────────────── FOOTER ────────────────────────────────── -->
-</main>
-<!-- CTA strip before footer -->
-<div class="cta-strip">
-  <div class="container">
-    <div style="max-width:780px">
-      <h3 style="margin:0;color:#fff">Together, We Can Build a Sustainable Future</h3>
-      <p style="margin:6px 0 0;color:rgba(255,255,255,0.9)">Let's discuss your environmental project and how Kabonix can help.</p>
-    </div>
-    <div>
-      <a class="btn" href="#contact">Get a Free Consultation</a>
-    </div>
-  </div>
-</div>
-
-<footer role="contentinfo">
-  <div class="container">
-    <div class="footer-grid">
-      <div class="footer-brand">
-        <div class="fn">KABONIX FOUNDATION</div>
-        <div class="ft" data-en="People · Planet · Prosperity" data-sw="Watu · Sayari · Ustawi">People · Planet · Prosperity</div>
-        <p data-en="A unified platform to collect, manage and act on climate, blue-economy and community-development data." data-sw="Mfumo mmoja wa kukusanya, kusimamia na kutenda kwa data ya hali ya hewa, uchumi wa bluu na maendeleo ya jamii.">A unified platform to collect, manage and act on climate, blue-economy and community-development data.</p>
-      </div>
-      <div class="footer-col">
-        <h4 data-en="Programmes" data-sw="Programu">Programmes</h4>
-        <a href="#programmes" data-en="Blue Economy & Climate"        data-sw="Uchumi wa Bluu na Hali ya Hewa">Blue Economy & Climate</a>
-        <a href="#programmes" data-en="Carbon & MRV"                  data-sw="Kaboni na MRV">Carbon & MRV</a>
-        <a href="#programmes" data-en="Climate-smart Agriculture"      data-sw="Kilimo Kinachostahimili Hali ya Hewa">Climate-smart Agriculture</a>
-        <a href="#programmes" data-en="Youth & Women Entrepreneurship" data-sw="Ujasiriamali wa Vijana na Wanawake">Youth & Women</a>
-        <a href="#programmes" data-en="Renewable Energy"              data-sw="Nishati Jadidifu">Renewable Energy</a>
-      </div>
-      <div class="footer-col">
-        <h4 data-en="Resources" data-sw="Rasilimali">Resources</h4>
-        <a href="#news" data-en="News"         data-sw="Habari">News</a>
-        <a href="#news" data-en="Events"        data-sw="Matukio">Events</a>
-        <a href="#news" data-en="Publications"  data-sw="Machapisho">Publications</a>
-        <a href="#impact" data-en="Impact Stories" data-sw="Hadithi za Athari">Impact Stories</a>
-      </div>
-      <div class="footer-col">
-        <h4 data-en="Organisation" data-sw="Shirika">Organisation</h4>
-        <a href="#partners" data-en="Partners & Donors" data-sw="Washirika na Wafadhili">Partners & Donors</a>
-        <a href="#contact"  data-en="Contact Us"         data-sw="Wasiliana Nasi">Contact Us</a>
-        <a href="#" onclick="openModal('login');return false" data-en="Staff Portal" data-sw="Lango la Wafanyakazi">Staff Portal</a>
-      </div>
-    </div>
-    <div class="footer-bottom">
-      <p>© 2026 Kabonix Foundation. <span data-en="All rights reserved." data-sw="Haki zote zimehifadhiwa.">All rights reserved.</span></p>
-      <p data-en="Tanzania | Dar es Salaam" data-sw="Tanzania | Dar es Salaam">Tanzania | Dar es Salaam</p>
-    </div>
-  </div>
-</footer>
-
-<script>
-// ─── Config ─────────────────────────────────────────────────────────────────
-// API_URL is set by the serve.js server via a <meta> tag so the same
-// HTML file works both locally and on Render without a build step.
-const API = (document.querySelector('meta[name="api-url"]')?.content || 'http://localhost:4000') + '/api';
-const PORTAL_URL = document.querySelector('meta[name="portal-url"]')?.content || 'http://localhost:3000';
-let   lang    = 'en';
-let   _mfaChallenge = null;
-let   _resetToken   = null;
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-function esc(s){ if(!s) return ''; return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-function lsGet(k)   { try{return localStorage.getItem(k);}catch{return(window.__m||{})[k]||null;} }
-function lsSet(k,v) { try{localStorage.setItem(k,v);}catch{window.__m=window.__m||{};window.__m[k]=v;} }
-function lsDel(k)   { try{localStorage.removeItem(k);}catch{if(window.__m)delete window.__m[k];} }
-
-function toast(msg, isErr){
-  const el=Object.assign(document.createElement('div'),{className:'toast'+(isErr?' err':''),textContent:msg});
-  document.body.appendChild(el); setTimeout(()=>el.remove(),3400);
-}
-
-async function apiCall(path, opts={}){
-  const token = lsGet('kbx_access');
-  const res = await fetch(API+path,{
-    ...opts,
-    headers:{'Content-Type':'application/json',...(token?{Authorization:`Bearer ${token}`}:{}),...(opts.headers||{})},
-    body: opts.body ? JSON.stringify(opts.body) : undefined,
-  });
-  const data = await res.json().catch(()=>({}));
-  if (!res.ok) throw new Error(data.error||`Error ${res.status}`);
-  return data;
-}
-
-function skelCards(n, outer, inner){
-  return Array(n).fill(0).map(()=>`<div class="${outer}"><div class="${inner}" style="padding:22px"><div class="skel st"></div><div class="skel sl"></div><div class="skel sl" style="width:80%"></div></div></div>`).join('');
-}
-
-// ─── Language ─────────────────────────────────────────────────────────────────
-function setLang(l){
-  lang = l;
-  document.getElementById('html-root').lang = l;
-  document.querySelectorAll('[data-en]').forEach(el=>{
-    const t = l==='sw' ? el.dataset.sw : el.dataset.en;
-    if(t) el.textContent = t;
-  });
-  document.querySelectorAll('select option[data-en]').forEach(opt=>{
-    opt.textContent = l==='sw' ? opt.dataset.sw : opt.dataset.en;
-    opt.value = l==='sw' ? (opt.dataset.sw||opt.dataset.en) : opt.dataset.en;
-  });
-  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('active',b.dataset.lang===l));
-  loadPosts();
-  loadImpactStories();
-  loadPartners();
-}
-
-// ─── Modal control ────────────────────────────────────────────────────────────
-function openModal(intent){
-  const modal = document.getElementById('auth-modal');
-  modal.classList.add('open');
-  document.body.style.overflow='hidden';
-
-  // If already signed in, jump straight to portal pane
-  if (lsGet('kbx_access')) { showPane('portal'); updatePortalPane(); return; }
-
-  if (intent==='login')  switchTab('login');
-  if (intent==='forgot') switchTab('forgot');
-}
-function closeModal(){
-  document.getElementById('auth-modal').classList.remove('open');
-  document.body.style.overflow='';
-}
-function maybeCloseModal(e){ if(e.target===document.getElementById('auth-modal')) closeModal(); }
-document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
-
-function showPane(name){
-  ['login','mfa','forgot','reset','verified','portal'].forEach(n=>{
-    const el=document.getElementById('pane-'+n);
-    if(el) el.style.display = n===name?'':'none';
-  });
-  // Show/hide tabs: only for login and forgot
-  document.getElementById('modal-tabs').style.display = ['login','forgot'].includes(name) ? 'flex' : 'none';
-  // Update active tab
-  if(name==='login')  { document.getElementById('tab-login').classList.add('active');    document.getElementById('tab-forgot').classList.remove('active'); }
-  if(name==='forgot') { document.getElementById('tab-forgot').classList.add('active');   document.getElementById('tab-login').classList.remove('active'); }
-}
-
-function switchTab(tab){ showPane(tab); clearErrors(); }
-
-function clearErrors(){
-  ['li-err','mfa-err','fp-err','rp-err'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent=''; });
-  ['fp-ok','rp-ok'].forEach(id=>{ const el=document.getElementById(id); if(el) el.style.display='none'; });
-}
-
-// ─── Auth flows ───────────────────────────────────────────────────────────────
-
-// Sign in (step 1 — password)
-async function doLogin(){
-  const email = document.getElementById('li-email').value.trim();
-  const pw    = document.getElementById('li-pw').value;
-  const err   = document.getElementById('li-err');
-  err.textContent='';
-  if(!email||!pw){ err.textContent='Please enter your email and password.'; return; }
-  document.getElementById('li-btn').disabled=true;
-  try{
-    const d = await apiCall('/auth/login',{method:'POST',body:{email,password:pw}});
-    if(d.mfaRequired){
-      _mfaChallenge = d.challengeToken;
-      showPane('mfa');
-      document.getElementById('mfa-code').focus();
-    } else {
-      lsSet('kbx_access',  d.accessToken);
-      lsSet('kbx_refresh', d.refreshToken);
-      lsSet('kbx_user',    JSON.stringify(d.user));
-      lsSet('kbx_roles',   JSON.stringify(d.roles));
-      showPane('portal');
-      updatePortalPane();
-    }
-  } catch(e){ err.textContent=e.message; }
-  finally{ document.getElementById('li-btn').disabled=false; }
-}
-
-// Sign in (step 2 — MFA code)
-async function doMfa(){
-  const code = document.getElementById('mfa-code').value.trim();
-  const err  = document.getElementById('mfa-err');
-  err.textContent='';
-  if(!/^\d{6}$/.test(code)){ err.textContent='Please enter the 6-digit code from your authenticator app.'; return; }
-  try{
-    const d = await apiCall('/auth/mfa/challenge',{method:'POST',body:{challengeToken:_mfaChallenge, code}});
-    lsSet('kbx_access',  d.accessToken);
-    lsSet('kbx_refresh', d.refreshToken);
-    lsSet('kbx_user',    JSON.stringify(d.user));
-    lsSet('kbx_roles',   JSON.stringify(d.roles));
-    _mfaChallenge=null;
-    showPane('portal');
-    updatePortalPane();
-  } catch(e){ err.textContent=e.message; }
-}
-
-// Forgot password
-async function doForgot(){
-  const email = document.getElementById('fp-email').value.trim();
-  const err   = document.getElementById('fp-err');
-  const ok    = document.getElementById('fp-ok');
-  err.textContent=''; ok.style.display='none';
-  if(!email){ err.textContent='Please enter your email address.'; return; }
-  try{
-    await apiCall('/auth/password/forgot',{method:'POST',body:{email}});
-    ok.style.display='block';
-    ok.textContent = lang==='sw'
-      ? 'Ikiwa barua pepe hiyo ipo, kiungo cha kuweka upya kimetumwa. Angalia API console (dev mode).'
-      : 'If that email exists, a reset link has been sent. Check the API console (dev mode) for the link.';
-  } catch(e){ err.textContent=e.message; }
-}
-
-// Reset password (token came from URL → _resetToken)
-async function doReset(){
-  const pw   = document.getElementById('rp-pw').value;
-  const pw2  = document.getElementById('rp-pw2').value;
-  const err  = document.getElementById('rp-err');
-  const ok   = document.getElementById('rp-ok');
-  err.textContent=''; ok.style.display='none';
-  if(pw.length<8){ err.textContent='Password must be at least 8 characters.'; return; }
-  if(pw!==pw2)   { err.textContent='Passwords do not match.'; return; }
-  try{
-    await apiCall('/auth/password/reset',{method:'POST',body:{token:_resetToken, newPassword:pw}});
-    ok.style.display='block';
-    ok.textContent = lang==='sw' ? 'Nywila imesasishwa. Sasa unaweza kuingia.' : 'Password updated! You can now sign in with your new password.';
-    setTimeout(()=>switchTab('login'), 2200);
-  } catch(e){ err.textContent=e.message; }
-}
-
-// Sign out
-async function doSignOut(){
-  const refreshToken = lsGet('kbx_refresh');
-  if(refreshToken){ apiCall('/auth/logout',{method:'POST',body:{refreshToken}}).catch(()=>{}); }
-  ['kbx_access','kbx_refresh','kbx_user','kbx_roles'].forEach(lsDel);
-  switchTab('login');
-  updateNavLoginBtn();
-}
-
-function updatePortalPane(){
-  try{
-    const u = JSON.parse(lsGet('kbx_user')||'{}');
-    const roles = JSON.parse(lsGet('kbx_roles')||'[]');
-    document.getElementById('portal-name').textContent = u.name||'';
-    document.getElementById('portal-roles').textContent = roles.map(r=>r.name).join(' · ')||'No roles';
-    // Set the portal link href from the runtime variable (read from the
-    // <meta name="portal-url"> tag injected by serve.js at request time).
-    const link = document.getElementById('portal-link');
-    if (link) link.href = PORTAL_URL;
-    updateNavLoginBtn(u);
-  } catch{}
-}
-
-function updateNavLoginBtn(user){
-  const btn = document.querySelector('.btn-nav-login');
-  if(!btn) return;
-  if(user){
-    btn.textContent = user.name?.split(' ')[0] || 'Portal';
-  } else {
-    btn.textContent = lang==='sw' ? 'Ingia' : 'Staff login';
-  }
-}
-
-// ─── URL token handling (email links) ────────────────────────────────────────
-function handleUrlTokens(){
-  const params = new URLSearchParams(window.location.search);
-
-  if(params.has('resetToken')){
-    _resetToken = params.get('resetToken');
-    history.replaceState({},'',window.location.pathname); // clean URL
-    document.getElementById('modal-tabs').style.display='none';
-    openModal('login');
-    showPane('reset');
-    return;
-  }
-
-  if(params.has('verifyToken')){
-    const token = params.get('verifyToken');
-    history.replaceState({},'',window.location.pathname);
-    // Call the verify endpoint then show the confirmed pane
-    apiCall('/auth/email/verify',{method:'POST',body:{token}})
-      .then(()=>{
-        openModal('login');
-        showPane('verified');
-      })
-      .catch(e=>{
-        openModal('login');
-        switchTab('login');
-        document.getElementById('li-err').textContent = 'Email verification failed: '+e.message;
-      });
-    return;
-  }
-
-  // If already signed in (page reload), update the nav button
-  const user = lsGet('kbx_user');
-  if(user){ try{ updateNavLoginBtn(JSON.parse(user)); }catch{} }
-}
-
-// ─── Programmes (static) ─────────────────────────────────────────────────────
-const PROGS=[
-  {icon:'🌊',bg:'#e4f4f6',en:['Blue Economy & Climate','Blue carbon and mangrove restoration, sustainable fisheries and aquaculture, coastal community projects and marine conservation site management.'],sw:['Uchumi wa Bluu na Hali ya Hewa','Urejeshaji wa kaboni ya bluu na mikoko, uvuvi endelevu, miradi ya jamii za pwani na usimamizi wa maeneo ya uhifadhi wa bahari.']},
-  {icon:'🌱',bg:'#e8f5ee',en:['Carbon & Environmental Data','Carbon project and landholder registry, GIS plot mapping, MRV workflows, carbon credit records and Article 6 alignment.'],sw:['Data ya Kaboni na Mazingira','Usajili wa mradi wa kaboni, uwekaji ramani wa GIS, mtiririko wa MRV, rekodi za mikopo ya kaboni na mwelekeo wa Kifungu 6.']},
-  {icon:'🌾',bg:'#fdf3e3',en:['Climate-smart Agriculture','Supporting smallholder farmers with climate-adaptive practices, soil health monitoring and green agricultural market linkages.'],sw:['Kilimo Kinachostahimili Hali ya Hewa','Kusaidia wakulima wadogo kwa mazoea yanayostahimili hali ya hewa, ufuatiliaji wa udongo na miunganiko ya masoko ya kilimo ya kijani.']},
-  {icon:'⚡',bg:'#f0f0ff',en:['Renewable Energy','Solar and clean-energy access for rural and coastal communities, trained through the Foundation\'s green entrepreneurship programme.'],sw:['Nishati Jadidifu','Ufikiaji wa nishati ya jua kwa jamii za vijijini na pwani, zilizofunzwa kupitia programu ya ujasiriamali wa kijani wa Mfuko.']},
-  {icon:'👩‍💼',bg:'#fce8f0',en:['Youth & Women Entrepreneurship','Business-skills training, cooperative formation, market linkages and mentorship for youth and women across coastal and rural Tanzania.'],sw:['Ujasiriamali wa Vijana na Wanawake','Mafunzo ya ujuzi wa biashara, uundaji wa ushirika, miunganiko ya masoko na ushauri kwa vijana na wanawake Tanzania.']},
-  {icon:'📋',bg:'#e8f5ee',en:['Data Collection & M&E','Configurable field surveys, beneficiary registration, GPS-stamped submissions online or offline, and SDG results-framework tracking.'],sw:['Ukusanyaji wa Data na MEAL','Uchunguzi wa shamba unaoweza kusanidiwa, usajili wa wanufaika, mawasilisho yenye alama ya GPS, na ufuatiliaji wa mfumo wa matokeo wa SDG.']},
-];
-function renderProgrammes(){
-  document.getElementById('prog-grid').innerHTML=PROGS.map(p=>`
-    <div class="prog-card">
-      <div class="prog-icon" style="background:${p.bg}">${p.icon}</div>
-      <h3>${esc(lang==='sw'?p.sw[0]:p.en[0])}</h3>
-      <p class="sans">${esc(lang==='sw'?p.sw[1]:p.en[1])}</p>
-    </div>`).join('');
-}
-
-// ─── Posts ────────────────────────────────────────────────────────────────────
-async function loadPosts(type=''){
-  try{
-    const qs = new URLSearchParams({lang});
-    if(type && type!=='all') qs.set('type',type);
-    const posts = await apiCall(`/website/posts?${qs}`);
-    renderPosts(posts);
-  } catch{ document.getElementById('posts-grid').innerHTML='<p class="sans" style="color:var(--ink-faint);padding:20px 0">Content unavailable — start the API server.</p>'; }
-}
-
-function renderPosts(posts){
-  if(!posts.length){ document.getElementById('posts-grid').innerHTML='<p class="sans" style="color:var(--ink-faint)">No items found.</p>'; return; }
-  const BADGE={news:'b-news',event:'b-event',publication:'b-pub'};
-  const BADGE_LBL={news:{en:'News',sw:'Habari'},event:{en:'Event',sw:'Tukio'},publication:{en:'Publication',sw:'Chapisho'}};
-  document.getElementById('posts-grid').innerHTML=posts.map(p=>{
-    const meta=p.event_date
-      ? '📅 '+new Date(p.event_date).toLocaleDateString(lang==='sw'?'sw-TZ':'en-GB',{year:'numeric',month:'long',day:'numeric'})+(p.event_venue?' · '+p.event_venue:'')
-      : p.published_at ? new Date(p.published_at).toLocaleDateString(lang==='sw'?'sw-TZ':'en-GB',{year:'numeric',month:'long',day:'numeric'}) : '';
-    return `<div class="post-card fade">
-      <div class="post-card-body">
-        <span class="post-badge ${BADGE[p.type]||'b-news'}">${esc(lang==='sw'?BADGE_LBL[p.type]?.sw:BADGE_LBL[p.type]?.en)}</span>
-        <h3>${esc(p.title)}</h3>
-        <p class="sans">${esc(p.summary)}</p>
-        ${meta?`<div class="post-meta sans">${esc(meta)}</div>`:''}
-        ${p.doc_url&&p.doc_url!=='#'?`<a class="sans" style="font-size:13px;font-weight:600;color:var(--forest-lt);margin-top:10px;display:block" href="${p.doc_url}" target="_blank">${lang==='sw'?'Soma Zaidi →':'Read More →'}</a>`:''}
-      </div></div>`;
-  }).join('');
-}
-
-function filterPosts(type){
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.f===type));
-  loadPosts(type);
-}
-
-// ─── Impact stories ───────────────────────────────────────────────────────────
-async function loadImpactStories(){
-  try{
-    const stories = await apiCall(`/website/impact-stories?lang=${lang}`);
-    document.getElementById('impact-grid').innerHTML=stories.map(s=>`
-      <div class="impact-card fade">
-        <div class="impact-metric">
-          <div class="metric-val">${esc(s.metric_value)}</div>
-          <div class="metric-lbl sans">${esc(s.metric_label)}</div>
+    <!-- CTA Section -->
+    <section class="cta">
+        <div class="container">
+            <div class="cta-text">
+                <h2>Together, We Can Build a Sustainable Future</h2>
+                <p>Let's discuss your environmental project.</p>
+            </div>
+            <a href="#" class="btn btn-green">Get a Free Consultation <i class="fa-solid fa-arrow-right"></i></a>
         </div>
-        <h3>${esc(s.title)}</h3>
-        <p class="sans">${esc(s.body.slice(0,210))}${s.body.length>210?'…':''}</p>
-        <div>${s.programme?`<span class="prog-tag">${esc(s.programme)}</span>`:''}${s.location?`<span class="prog-tag" style="background:var(--sand-tint);color:#7a5610">${esc(s.location)}</span>`:''}</div>
-      </div>`).join('')||'<p class="sans" style="color:var(--ink-faint)">No impact stories yet.</p>';
-  } catch{ document.getElementById('impact-grid').innerHTML='<p class="sans" style="color:var(--ink-faint)">Content unavailable.</p>'; }
-}
+    </section>
 
-// ─── Partners ─────────────────────────────────────────────────────────────────
-async function loadPartners(){
-  const TYPE={partner:{en:'Partner',sw:'Mshirika'},donor:{en:'Donor',sw:'Mfadhili'},government:{en:'Government',sw:'Serikali'}};
-  try{
-    const ps = await apiCall(`/website/partners?lang=${lang}`);
-    document.getElementById('partners-grid').innerHTML=ps.map(p=>`
-      <div class="partner-card fade">
-        <div class="partner-type">${esc(lang==='sw'?TYPE[p.type]?.sw:TYPE[p.type]?.en)||p.type}</div>
-        <h3>${esc(p.name)}</h3>
-        <p class="sans">${esc(p.description||'')}</p>
-        ${p.website_url?`<a href="${esc(p.website_url)}" target="_blank" class="sans" style="font-size:12.5px">${lang==='sw'?'Tembelea Tovuti →':'Visit Website →'}</a>`:''}
-      </div>`).join('');
-  } catch{ document.getElementById('partners-grid').innerHTML='<p class="sans" style="color:var(--ink-faint)">Content unavailable.</p>'; }
-}
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-col">
+                    <div class="footer-logo">
+                        <i class="fa-solid fa-leaf logo-icon"></i>
+                        <div>
+                            <h3>GreenEarth</h3>
+                            <p>Environmental Solutions</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="footer-col">
+                    <h4>Quick Links</h4>
+                    <ul class="footer-links">
+                        <li><a href="#">Home</a></li>
+                        <li><a href="#">About Us</a></li>
+                        <li><a href="#">Services</a></li>
+                        <li><a href="#">Projects</a></li>
+                        <li><a href="#">Blog</a></li>
+                        <li><a href="#">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Our Services</h4>
+                    <ul class="footer-links">
+                        <li><a href="#">Environmental Consultancy</a></li>
+                        <li><a href="#">Impact Assessment</a></li>
+                        <li><a href="#">Waste Management</a></li>
+                        <li><a href="#">Water & Wastewater Management</a></li>
+                        <li><a href="#">Monitoring & Analysis</a></li>
+                        <li><a href="#">Conservation & Restoration</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Contact Us</h4>
+                    <ul class="footer-contact">
+                        <li><i class="fa-solid fa-phone"></i> +255 123 456 789</li>
+                        <li><i class="fa-solid fa-envelope"></i> info@greenearth.co.tz</li>
+                        <li><i class="fa-solid fa-location-dot"></i> Dar es Salaam, Tanzania</li>
+                    </ul>
+                    <div class="social-icons">
+                        <a href="#"><i class="fa-brands fa-facebook-f"></i></a>
+                        <a href="#"><i class="fa-brands fa-x-twitter"></i></a>
+                        <a href="#"><i class="fa-brands fa-linkedin-in"></i></a>
+                        <a href="#"><i class="fa-brands fa-instagram"></i></a>
+                        <a href="#"><i class="fa-brands fa-youtube"></i></a>
+                    </div>
+                </div>
+                <div class="footer-col">
+                    <h4>Subscribe to Our Newsletter</h4>
+                    <p style="opacity: 0.7; margin-bottom: 10px;">Get the latest updates on our projects, news and sustainability tips.</p>
+                    <form class="newsletter-form">
+                        <input type="email" placeholder="Your email address">
+                        <button type="submit" class="btn btn-green">Subscribe <i class="fa-solid fa-arrow-right"></i></button>
+                    </form>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>© 2025 GreenEarth Environmental Solutions. All rights reserved.</p>
+                <div>
+                    <a href="#" style="margin-right: 15px;">Privacy Policy</a>
+                    <a href="#">Terms & Conditions</a>
+                </div>
+            </div>
+        </div>
+    </footer>
 
-// ─── Contact form ─────────────────────────────────────────────────────────────
-async function submitContact(){
-  const btn=document.getElementById('cf-btn');
-  const err=document.getElementById('cf-err');
-  err.style.display='none';
-  const body={
-    full_name:    document.getElementById('cf-name').value.trim(),
-    email:        document.getElementById('cf-email').value.trim(),
-    organisation: document.getElementById('cf-org').value.trim(),
-    subject:      document.getElementById('cf-sub').value,
-    message:      document.getElementById('cf-msg').value.trim(),
-    lang,
-  };
-  const checks=[
-    [!body.full_name, lang==='sw'?'Tafadhali ingiza jina lako kamili.':'Please enter your full name.'],
-    [!body.email,     lang==='sw'?'Tafadhali ingiza anwani yako ya barua pepe.':'Please enter your email address.'],
-    [!body.subject,   lang==='sw'?'Tafadhali chagua mada.':'Please select a subject.'],
-    [!body.message,   lang==='sw'?'Tafadhali ingiza ujumbe.':'Please enter a message.'],
-  ];
-  for(const [fail,msg] of checks){ if(fail){ err.textContent=msg; err.style.display='block'; return; } }
-  btn.disabled=true;
-  try{
-    await apiCall('/website/contact',{method:'POST',body});
-    document.getElementById('contact-form-area').innerHTML=`
-      <div class="form-success">
-        <div class="ck">✅</div>
-        <h3>${lang==='sw'?'Asante!':'Thank you!'}</h3>
-        <p class="sans">${lang==='sw'?'Tumepokelewa ujumbe wako. Tutawasiliana nawe hivi karibuni.':'We\'ve received your message and will be in touch shortly.'}</p>
-      </div>`;
-  } catch(e){ err.textContent=e.message; err.style.display='block'; btn.disabled=false; }
-}
-
-// ─── Boot ─────────────────────────────────────────────────────────────────────
-// Menu and navigation behaviour: supports SPA sections or regular page navigation.
-;(function(){
-  // Set NAV_MODE to 'spa' for single-page behaviour or 'pages' for normal anchor navigation
-  const NAV_MODE = window.__NAV_MODE || 'spa';
-  const MENU_STYLE = window.__MENU_STYLE || 'left'; // 'left' or 'fullscreen'
-  const sections = Array.from(document.querySelectorAll('section[id]'));
-
-  function getById(id){ return document.getElementById(id); }
-
-  function getSetting(k, def){ return (window['__'+k] !== undefined ? window['__'+k] : localStorage.getItem(k)) || def; }
-
-  function clearAnimClasses(el){ el.classList.remove('section-enter','section-exit','enter-slide-left','enter-slide-right','enter-slide-up','enter-slide-down','exit-slide-left','exit-slide-right','exit-slide-up','exit-slide-down'); }
-
-  function enterSection(el){
-    const anim = getSetting('ANIM_TYPE','fade');
-    const dir  = getSetting('ANIM_DIR','down');
-    const dur  = getSetting('ANIM_DUR','360');
-    el.style.setProperty('--anim-dur', (Number(dur)||360)+'ms');
-    clearAnimClasses(el);
-    if(anim==='slide'){
-      const cls = `enter-slide-${dir}`;
-      el.classList.add(cls);
-      el.style.display='';
-      el.addEventListener('animationend', function t(){ el.classList.remove(cls); el.removeEventListener('animationend',t); });
-    } else {
-      el.classList.add('section-enter');
-      el.style.display='';
-      el.addEventListener('animationend', function t(){ el.classList.remove('section-enter'); el.removeEventListener('animationend',t); });
-    }
-  }
-
-  function exitSection(el){ return new Promise(res=>{ if(!el || el.style.display==='none'){ return res(); }
-    const anim = getSetting('ANIM_TYPE','fade');
-    const dir  = getSetting('ANIM_DIR','down');
-    const dur  = getSetting('ANIM_DUR','360');
-    el.style.setProperty('--anim-dur', (Number(dur)||360)+'ms');
-    clearAnimClasses(el);
-    if(anim==='slide'){
-      const cls = `exit-slide-${dir}`;
-      el.classList.add(cls);
-      el.addEventListener('animationend', function t(){ el.style.display='none'; el.classList.remove(cls); el.removeEventListener('animationend',t); res(); });
-    } else {
-      el.classList.add('section-exit');
-      el.addEventListener('animationend', function t(){ el.style.display='none'; el.classList.remove('section-exit'); el.removeEventListener('animationend',t); res(); });
-    }
-  }); }
-
-  async function showSection(id, push=true){
-    const target = getById(id) || getById('home');
-    if(!target) return;
-    // animate out all visible sections, then animate in the target
-    const visible = sections.filter(s=> s.style.display!== 'none');
-    await Promise.all(visible.map(s=> exitSection(s)));
-    enterSection(target);
-    document.querySelectorAll('.nav-links a').forEach(a=> a.classList.toggle('active', a.getAttribute('href') === '#'+id));
-    if(push) history.pushState(null,'', '#'+id);
-    window.scrollTo({top:0,behavior:'smooth'});
-  }
-
-  // Attach menu mode classes
-  const navLinks = document.querySelector('.nav-links');
-  if(navLinks){
-    navLinks.classList.remove('menu-fullscreen','menu-left');
-    navLinks.classList.add(MENU_STYLE==='fullscreen' ? 'menu-fullscreen' : 'menu-left');
-  }
-
-  // Expose a method to apply menu style changes at runtime
-  window.applyWebsiteSettings = function(){
-    try{
-      const navLinks = document.querySelector('.nav-links');
-      const menuStyle = localStorage.getItem('MENU_STYLE') || window.__MENU_STYLE || 'left';
-      if(navLinks){ navLinks.classList.remove('menu-left','menu-fullscreen'); navLinks.classList.add(menuStyle==='fullscreen' ? 'menu-fullscreen' : 'menu-left'); }
-    }catch(e){}
-  };
-
-  // Wire up link clicks
-  document.querySelectorAll('.nav-links a').forEach(a=>{
-    a.addEventListener('click', async e=>{
-      if(NAV_MODE === 'pages') return; // allow normal navigation
-      e.preventDefault();
-      const id = (a.getAttribute('href')||'#home').replace('#','')||'home';
-      await showSection(id);
-      document.body.classList.remove('menu-open');
-      const mt = document.getElementById('menu-toggle'); if(mt) mt.setAttribute('aria-expanded','false');
-    });
-  });
-
-  const mt = document.getElementById('menu-toggle');
-  if(mt){
-    mt.addEventListener('click', ()=>{
-      const open = document.body.classList.toggle('menu-open');
-      mt.setAttribute('aria-expanded', open ? 'true' : 'false');
-    });
-  }
-  window.addEventListener('popstate', ()=>{ const id = location.hash.replace('#','')||'home'; showSection(id,false); });
-
-  // Boot sequence
-  renderProgrammes();
-  loadPosts();
-  loadImpactStories();
-  loadPartners();
-  handleUrlTokens();
-  if (lsGet('kbx_access')) updatePortalPane();
-
-  // Prepare initial state: hide all sections then show initial with animation
-  sections.forEach(s=> s.style.display = 'none');
-  const initial = location.hash.replace('#','')||'home';
-  setTimeout(()=> showSection(initial,false), 100);
-})();
-</script>
-<script>
-// Preferences UI removed.
-</script>
 </body>
 </html>
