@@ -77,7 +77,30 @@ nav{position:sticky;top:0;z-index:100;background:var(--forest);color:#fff}
 .section-exit{animation:sectionOut .28s ease both}
 @keyframes sectionIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 @keyframes sectionOut{from{opacity:1;transform:none}to{opacity:0;transform:translateY(-8px)}}
+
+/* Slide variants */
+.enter-slide-left{animation:enterSlideLeft var(--anim-dur,360ms) both}
+.exit-slide-left {animation:exitSlideLeft var(--anim-dur,360ms) both}
+@keyframes enterSlideLeft {from{opacity:0;transform:translateX(-18px)}to{opacity:1;transform:none}}
+@keyframes exitSlideLeft  {from{opacity:1;transform:none}to{opacity:0;transform:translateX(18px)}}
+.enter-slide-right{animation:enterSlideRight var(--anim-dur,360ms) both}
+.exit-slide-right {animation:exitSlideRight var(--anim-dur,360ms) both}
+@keyframes enterSlideRight {from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:none}}
+@keyframes exitSlideRight  {from{opacity:1;transform:none}to{opacity:0;transform:translateX(-18px)}}
+.enter-slide-up{animation:enterSlideUp var(--anim-dur,360ms) both}
+.exit-slide-up {animation:exitSlideUp var(--anim-dur,360ms) both}
+@keyframes enterSlideUp {from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes exitSlideUp  {from{opacity:1;transform:none}to{opacity:0;transform:translateY(-12px)}}
+.enter-slide-down{animation:enterSlideDown var(--anim-dur,360ms) both}
+.exit-slide-down {animation:exitSlideDown var(--anim-dur,360ms) both}
+@keyframes enterSlideDown {from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:none}}
+@keyframes exitSlideDown  {from{opacity:1;transform:none}to{opacity:0;transform:translateY(12px)}}
 .nav-cta{display:flex;align-items:center;gap:12px;margin-left:20px}
+  /* Preferences button/panel */
+  #prefs-btn{background:transparent;border:1px solid rgba(255,255,255,.12);color:#fff;padding:6px 8px;border-radius:8px;cursor:pointer;margin-right:8px}
+  #prefs-panel{position:fixed;right:12px;top:76px;background:var(--card);color:var(--ink);padding:12px;border-radius:8px;box-shadow:0 12px 40px rgba(0,0,0,.18);display:none;z-index:120}
+  #prefs-panel.open{display:block}
+  #prefs-panel label{display:block;font-size:13px;margin-bottom:6px}
 .btn-nav-login{font-family:-apple-system,"Segoe UI",sans-serif;font-size:13px;font-weight:600;color:#fff;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);padding:7px 16px;border-radius:20px;cursor:pointer;transition:all .15s;border:none}
 .btn-nav-login:hover{background:rgba(255,255,255,.22)}
 .lang-toggle{display:flex;background:rgba(255,255,255,.1);border-radius:20px;overflow:hidden}
@@ -237,6 +260,20 @@ footer{background:var(--ink);color:#a0b0a6;padding:60px 0 28px}
       <a href="#contact"    data-en="Contact"       data-sw="Wasiliana">Contact</a>
     </div>
     <div class="nav-cta">
+      <button id="prefs-btn" aria-label="Preferences">⚙️</button>
+      <div id="prefs-panel" role="dialog" aria-hidden="true">
+        <label>NAV mode</label>
+        <select id="pref-navmode"><option value="spa">Single-page (SPA)</option><option value="pages">Separate pages</option></select>
+        <label style="margin-top:8px">Menu style</label>
+        <select id="pref-menustyle"><option value="left">Slide left</option><option value="fullscreen">Fullscreen</option></select>
+        <label style="margin-top:8px">Animation</label>
+        <select id="pref-animtype"><option value="fade">Fade</option><option value="slide">Slide</option></select>
+        <label style="margin-top:8px">Direction</label>
+        <select id="pref-animdir"><option value="left">Left</option><option value="right">Right</option><option value="up">Up</option><option value="down">Down</option></select>
+        <label style="margin-top:8px">Duration (ms)</label>
+        <input id="pref-animdur" type="number" min="80" max="2000" step="10" value="360" style="width:100%">
+      </div>
+      
       <div class="lang-toggle">
         <button class="lang-btn active" data-lang="en" onclick="setLang('en')">EN</button>
         <button class="lang-btn"        data-lang="sw" onclick="setLang('sw')">SW</button>
@@ -861,8 +898,43 @@ async function submitContact(){
 
   function getById(id){ return document.getElementById(id); }
 
-  function enterSection(el){ el.classList.remove('section-exit'); el.classList.add('section-enter'); el.style.display=''; el.addEventListener('animationend', function t(){ el.classList.remove('section-enter'); el.removeEventListener('animationend',t); }); }
-  function exitSection(el){ return new Promise(res=>{ if(!el || el.style.display==='none'){ return res(); } el.classList.remove('section-enter'); el.classList.add('section-exit'); el.addEventListener('animationend', function t(){ el.style.display='none'; el.classList.remove('section-exit'); el.removeEventListener('animationend',t); res(); }); }); }
+  function getSetting(k, def){ return (window['__'+k] !== undefined ? window['__'+k] : localStorage.getItem(k)) || def; }
+
+  function clearAnimClasses(el){ el.classList.remove('section-enter','section-exit','enter-slide-left','enter-slide-right','enter-slide-up','enter-slide-down','exit-slide-left','exit-slide-right','exit-slide-up','exit-slide-down'); }
+
+  function enterSection(el){
+    const anim = getSetting('ANIM_TYPE','fade');
+    const dir  = getSetting('ANIM_DIR','down');
+    const dur  = getSetting('ANIM_DUR','360');
+    el.style.setProperty('--anim-dur', (Number(dur)||360)+'ms');
+    clearAnimClasses(el);
+    if(anim==='slide'){
+      const cls = `enter-slide-${dir}`;
+      el.classList.add(cls);
+      el.style.display='';
+      el.addEventListener('animationend', function t(){ el.classList.remove(cls); el.removeEventListener('animationend',t); });
+    } else {
+      el.classList.add('section-enter');
+      el.style.display='';
+      el.addEventListener('animationend', function t(){ el.classList.remove('section-enter'); el.removeEventListener('animationend',t); });
+    }
+  }
+
+  function exitSection(el){ return new Promise(res=>{ if(!el || el.style.display==='none'){ return res(); }
+    const anim = getSetting('ANIM_TYPE','fade');
+    const dir  = getSetting('ANIM_DIR','down');
+    const dur  = getSetting('ANIM_DUR','360');
+    el.style.setProperty('--anim-dur', (Number(dur)||360)+'ms');
+    clearAnimClasses(el);
+    if(anim==='slide'){
+      const cls = `exit-slide-${dir}`;
+      el.classList.add(cls);
+      el.addEventListener('animationend', function t(){ el.style.display='none'; el.classList.remove(cls); el.removeEventListener('animationend',t); res(); });
+    } else {
+      el.classList.add('section-exit');
+      el.addEventListener('animationend', function t(){ el.style.display='none'; el.classList.remove('section-exit'); el.removeEventListener('animationend',t); res(); });
+    }
+  }); }
 
   async function showSection(id, push=true){
     const target = getById(id) || getById('home');
@@ -882,6 +954,15 @@ async function submitContact(){
     navLinks.classList.remove('menu-fullscreen','menu-left');
     navLinks.classList.add(MENU_STYLE==='fullscreen' ? 'menu-fullscreen' : 'menu-left');
   }
+
+  // Expose a method to apply menu style changes at runtime
+  window.applyWebsiteSettings = function(){
+    try{
+      const navLinks = document.querySelector('.nav-links');
+      const menuStyle = localStorage.getItem('MENU_STYLE') || window.__MENU_STYLE || 'left';
+      if(navLinks){ navLinks.classList.remove('menu-left','menu-fullscreen'); navLinks.classList.add(menuStyle==='fullscreen' ? 'menu-fullscreen' : 'menu-left'); }
+    }catch(e){}
+  };
 
   // Wire up link clicks
   document.querySelectorAll('.nav-links a').forEach(a=>{
@@ -909,6 +990,40 @@ async function submitContact(){
   sections.forEach(s=> s.style.display = 'none');
   const initial = location.hash.replace('#','')||'home';
   setTimeout(()=> showSection(initial,false), 100);
+})();
+</script>
+<script>
+// Preferences UI wiring: persist to localStorage and apply settings
+;(function(){
+  const btn = document.getElementById('prefs-btn');
+  const panel = document.getElementById('prefs-panel');
+  const selNav = document.getElementById('pref-navmode');
+  const selMenu = document.getElementById('pref-menustyle');
+  const selAnim = document.getElementById('pref-animtype');
+  const selDir = document.getElementById('pref-animdir');
+  const inpDur = document.getElementById('pref-animdur');
+  if(!btn||!panel) return;
+  // load
+  selNav.value = localStorage.getItem('NAV_MODE') || window.__NAV_MODE || 'spa';
+  selMenu.value = localStorage.getItem('MENU_STYLE') || window.__MENU_STYLE || 'left';
+  selAnim.value = localStorage.getItem('ANIM_TYPE') || 'fade';
+  selDir.value = localStorage.getItem('ANIM_DIR') || 'down';
+  inpDur.value = localStorage.getItem('ANIM_DUR') || '360';
+
+  function apply(){
+    localStorage.setItem('NAV_MODE', selNav.value);
+    localStorage.setItem('MENU_STYLE', selMenu.value);
+    localStorage.setItem('ANIM_TYPE', selAnim.value);
+    localStorage.setItem('ANIM_DIR', selDir.value);
+    localStorage.setItem('ANIM_DUR', inpDur.value);
+    window.__NAV_MODE = selNav.value; window.__MENU_STYLE = selMenu.value;
+    if(window.applyWebsiteSettings) window.applyWebsiteSettings();
+  }
+
+  [selNav,selMenu,selAnim,selDir,inpDur].forEach(el=>el.addEventListener('change', apply));
+  btn.addEventListener('click', ()=>{ panel.classList.toggle('open'); panel.setAttribute('aria-hidden', panel.classList.contains('open')? 'false':'true'); });
+  // close when clicking outside
+  document.addEventListener('click', e=>{ if(!panel.contains(e.target) && e.target!==btn) panel.classList.remove('open'); });
 })();
 </script>
 </body>
