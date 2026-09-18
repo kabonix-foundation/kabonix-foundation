@@ -55,6 +55,14 @@ nav{position:sticky;top:0;z-index:100;background:var(--forest);color:#fff}
 .nav-links{display:flex;gap:24px;align-items:center}
 .nav-links a{font-family:-apple-system,"Segoe UI",sans-serif;font-size:13.5px;color:#cde0d5;transition:color .15s}
 .nav-links a:hover{color:#fff;text-decoration:none}
+/* Mobile menu: hidden by default and toggled via `body.menu-open` */
+#menu-toggle{display:none}
+@media(max-width:900px){
+  #menu-toggle{display:inline-flex}
+  .nav-links{position:fixed;right:12px;top:72px;flex-direction:column;background:var(--forest);padding:12px;border-radius:8px;display:none;gap:12px;box-shadow:0 8px 30px rgba(0,0,0,.25)}
+  body.menu-open .nav-links{display:flex}
+  .nav-inner{height:64px}
+}
 .nav-cta{display:flex;align-items:center;gap:12px;margin-left:20px}
 .btn-nav-login{font-family:-apple-system,"Segoe UI",sans-serif;font-size:13px;font-weight:600;color:#fff;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);padding:7px 16px;border-radius:20px;cursor:pointer;transition:all .15s;border:none}
 .btn-nav-login:hover{background:rgba(255,255,255,.22)}
@@ -201,12 +209,13 @@ footer{background:var(--ink);color:#a0b0a6;padding:60px 0 28px}
 <!-- ───────────────────────────── NAV ───────────────────────────────────── -->
 <nav>
   <div class="nav-inner">
+    <button id="menu-toggle" aria-label="Menu" style="display:none;background:transparent;border:none;color:#fff;font-size:20px;padding:6px;margin-right:8px;">☰</button>
     <a class="nav-brand" href="#home">
       <div class="nav-logo"><img src="/assets/logo.png" class="nav-logo-img" alt="Kabonix logo"></div>
       <div><div class="nav-name">KABONIX FOUNDATION</div>
            <div class="nav-tag" data-en="People · Planet · Prosperity" data-sw="Watu · Sayari · Ustawi">People · Planet · Prosperity</div></div>
     </a>
-    <div class="nav-links hide-mob">
+    <div class="nav-links">
       <a href="#programmes" data-en="Programmes"   data-sw="Programu">Programmes</a>
       <a href="#news"       data-en="News & Events" data-sw="Habari">News & Events</a>
       <a href="#impact"     data-en="Impact"        data-sw="Athari">Impact</a>
@@ -829,12 +838,32 @@ async function submitContact(){
 }
 
 // ─── Boot ─────────────────────────────────────────────────────────────────────
-renderProgrammes();
-loadPosts();
-loadImpactStories();
-loadPartners();
-handleUrlTokens();
-if (lsGet('kbx_access')) updatePortalPane();
+// Single-page menu behaviour: show only the active section when a nav link is used.
+;(function(){
+  const sections = Array.from(document.querySelectorAll('section[id]'));
+  function showSection(id, push=true){
+    sections.forEach(s=>{ s.style.display = (s.id===id) ? '' : 'none'; });
+    document.querySelectorAll('.nav-links a').forEach(a=> a.classList.toggle('active', a.getAttribute('href') === '#'+id));
+    if(push) history.pushState(null,'', '#'+id);
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+  document.querySelectorAll('.nav-links a').forEach(a=> a.addEventListener('click', e=>{
+    e.preventDefault(); const id = (a.getAttribute('href')||'#home').replace('#','')||'home'; showSection(id);
+    document.body.classList.remove('menu-open');
+  }));
+  const mt = document.getElementById('menu-toggle'); if(mt) mt.addEventListener('click', ()=> document.body.classList.toggle('menu-open'));
+  window.addEventListener('popstate', ()=>{ const id = location.hash.replace('#','')||'home'; showSection(id,false); });
+  // Show initial section based on hash or default to home after other initialisers run
+  const initial = location.hash.replace('#','')||'home';
+  renderProgrammes();
+  loadPosts();
+  loadImpactStories();
+  loadPartners();
+  handleUrlTokens();
+  if (lsGet('kbx_access')) updatePortalPane();
+  // Delay showing initial section until content loads
+  setTimeout(()=> showSection(initial,false), 120);
+})();
 </script>
 </body>
 </html>
