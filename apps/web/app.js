@@ -169,7 +169,7 @@ function shell(contentHtml, activeRoute) {
   <aside class="sidebar">
     <div class="sb-brand">
       <a class="sb-brand-link" href="${WEBSITE_URL}" target="_blank" rel="noopener">
-        <div class="sb-logo"><img src="/assets/logo.png" class="sb-logo-img" onerror="this.style.display='none'" alt="Kabonix"><span class="sb-logo-letter">K</span></div>
+        <div class="sb-logo"><img src="/assets/logo.png" class="sb-logo-img" onerror="this.style.display='none'" alt="Kabonix logo"></div>
       </a>
       <div><div class="sb-name">KABONIX</div><div class="sb-sub">FOUNDATION</div></div>
     </div>
