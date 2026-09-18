@@ -11,7 +11,7 @@
 <!-- ───────────────────────────── NAV ───────────────────────────────────── -->
 <nav>
   <div class="nav-inner">
-    <button id="menu-toggle" aria-label="Menu" style="display:none;background:transparent;border:none;color:#fff;font-size:20px;padding:6px;margin-right:8px;">☰</button>
+    <button id="menu-toggle" class="menu-btn" aria-label="Menu" aria-expanded="false" style="background:transparent;border:none;color:#fff;font-size:20px;padding:6px;margin-right:8px;">☰</button>
     <a class="nav-brand" href="#home">
       <div class="nav-logo"><img src="/assets/logo.png" class="nav-logo-img" alt="Kabonix logo"></div>
       <div><div class="nav-name">KABONIX FOUNDATION</div>
@@ -724,10 +724,17 @@ async function submitContact(){
       const id = (a.getAttribute('href')||'#home').replace('#','')||'home';
       await showSection(id);
       document.body.classList.remove('menu-open');
+      const mt = document.getElementById('menu-toggle'); if(mt) mt.setAttribute('aria-expanded','false');
     });
   });
 
-  const mt = document.getElementById('menu-toggle'); if(mt) mt.addEventListener('click', ()=> document.body.classList.toggle('menu-open'));
+  const mt = document.getElementById('menu-toggle');
+  if(mt){
+    mt.addEventListener('click', ()=>{
+      const open = document.body.classList.toggle('menu-open');
+      mt.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+  }
   window.addEventListener('popstate', ()=>{ const id = location.hash.replace('#','')||'home'; showSection(id,false); });
 
   // Boot sequence
