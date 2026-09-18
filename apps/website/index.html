@@ -56,17 +56,17 @@ nav{position:sticky;top:0;z-index:100;background:var(--forest);color:#fff}
 .nav-links a{font-family:-apple-system,"Segoe UI",sans-serif;font-size:13.5px;color:#cde0d5;transition:color .15s}
 .nav-links a:hover{color:#fff;text-decoration:none}
 /* Mobile menu: hidden by default and toggled via `body.menu-open` */
-#menu-toggle{display:none}
+/* show the menu hamburger on all screen sizes */
+#menu-toggle{display:inline-flex}
 @media(max-width:900px){
-  #menu-toggle{display:inline-flex}
   .nav-links{position:fixed;right:12px;top:72px;flex-direction:column;background:var(--forest);padding:12px;border-radius:8px;display:none;gap:12px;box-shadow:0 8px 30px rgba(0,0,0,.25)}
   body.menu-open .nav-links{display:flex}
   .nav-inner{height:64px}
 }
 /* Menu modes */
-.nav-links.menu-left{left:12px;right:auto;top:72px;height:calc(100% - 84px);width:260px;padding:18px;display:flex;flex-direction:column;transform:translateX(-100%);transition:transform .28s ease;box-shadow:0 18px 60px rgba(0,0,0,.28)}
+.nav-links.menu-left{position:fixed;left:0;top:72px;height:calc(100% - 84px);width:260px;padding:18px;display:flex;flex-direction:column;transform:translateX(-100%);transition:transform .28s ease;box-shadow:0 18px 60px rgba(0,18,60,.28);z-index:110}
 .nav-links.menu-left a{white-space:normal}
-.menu-open .nav-links.menu-left{transform:translateX(0);}
+.menu-open .nav-links.menu-left{transform:translateX(0);} 
 .nav-links.menu-fullscreen{position:fixed;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;padding:32px}
 .menu-open .nav-links.menu-fullscreen{display:flex}
 
@@ -96,11 +96,7 @@ nav{position:sticky;top:0;z-index:100;background:var(--forest);color:#fff}
 @keyframes enterSlideDown {from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:none}}
 @keyframes exitSlideDown  {from{opacity:1;transform:none}to{opacity:0;transform:translateY(12px)}}
 .nav-cta{display:flex;align-items:center;gap:12px;margin-left:20px}
-  /* Preferences button/panel */
-  #prefs-btn{background:transparent;border:1px solid rgba(255,255,255,.12);color:#fff;padding:6px 8px;border-radius:8px;cursor:pointer;margin-right:8px}
-  #prefs-panel{position:fixed;right:12px;top:76px;background:var(--card);color:var(--ink);padding:12px;border-radius:8px;box-shadow:0 12px 40px rgba(0,0,0,.18);display:none;z-index:120}
-  #prefs-panel.open{display:block}
-  #prefs-panel label{display:block;font-size:13px;margin-bottom:6px}
+  /* (prefs UI removed) */
 .btn-nav-login{font-family:-apple-system,"Segoe UI",sans-serif;font-size:13px;font-weight:600;color:#fff;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);padding:7px 16px;border-radius:20px;cursor:pointer;transition:all .15s;border:none}
 .btn-nav-login:hover{background:rgba(255,255,255,.22)}
 .lang-toggle{display:flex;background:rgba(255,255,255,.1);border-radius:20px;overflow:hidden}
@@ -260,20 +256,6 @@ footer{background:var(--ink);color:#a0b0a6;padding:60px 0 28px}
       <a href="#contact"    data-en="Contact"       data-sw="Wasiliana">Contact</a>
     </div>
     <div class="nav-cta">
-      <button id="prefs-btn" aria-label="Preferences">⚙️</button>
-      <div id="prefs-panel" role="dialog" aria-hidden="true">
-        <label>NAV mode</label>
-        <select id="pref-navmode"><option value="spa">Single-page (SPA)</option><option value="pages">Separate pages</option></select>
-        <label style="margin-top:8px">Menu style</label>
-        <select id="pref-menustyle"><option value="left">Slide left</option><option value="fullscreen">Fullscreen</option></select>
-        <label style="margin-top:8px">Animation</label>
-        <select id="pref-animtype"><option value="fade">Fade</option><option value="slide">Slide</option></select>
-        <label style="margin-top:8px">Direction</label>
-        <select id="pref-animdir"><option value="left">Left</option><option value="right">Right</option><option value="up">Up</option><option value="down">Down</option></select>
-        <label style="margin-top:8px">Duration (ms)</label>
-        <input id="pref-animdur" type="number" min="80" max="2000" step="10" value="360" style="width:100%">
-      </div>
-      
       <div class="lang-toggle">
         <button class="lang-btn active" data-lang="en" onclick="setLang('en')">EN</button>
         <button class="lang-btn"        data-lang="sw" onclick="setLang('sw')">SW</button>
@@ -993,38 +975,7 @@ async function submitContact(){
 })();
 </script>
 <script>
-// Preferences UI wiring: persist to localStorage and apply settings
-;(function(){
-  const btn = document.getElementById('prefs-btn');
-  const panel = document.getElementById('prefs-panel');
-  const selNav = document.getElementById('pref-navmode');
-  const selMenu = document.getElementById('pref-menustyle');
-  const selAnim = document.getElementById('pref-animtype');
-  const selDir = document.getElementById('pref-animdir');
-  const inpDur = document.getElementById('pref-animdur');
-  if(!btn||!panel) return;
-  // load
-  selNav.value = localStorage.getItem('NAV_MODE') || window.__NAV_MODE || 'spa';
-  selMenu.value = localStorage.getItem('MENU_STYLE') || window.__MENU_STYLE || 'left';
-  selAnim.value = localStorage.getItem('ANIM_TYPE') || 'fade';
-  selDir.value = localStorage.getItem('ANIM_DIR') || 'down';
-  inpDur.value = localStorage.getItem('ANIM_DUR') || '360';
-
-  function apply(){
-    localStorage.setItem('NAV_MODE', selNav.value);
-    localStorage.setItem('MENU_STYLE', selMenu.value);
-    localStorage.setItem('ANIM_TYPE', selAnim.value);
-    localStorage.setItem('ANIM_DIR', selDir.value);
-    localStorage.setItem('ANIM_DUR', inpDur.value);
-    window.__NAV_MODE = selNav.value; window.__MENU_STYLE = selMenu.value;
-    if(window.applyWebsiteSettings) window.applyWebsiteSettings();
-  }
-
-  [selNav,selMenu,selAnim,selDir,inpDur].forEach(el=>el.addEventListener('change', apply));
-  btn.addEventListener('click', ()=>{ panel.classList.toggle('open'); panel.setAttribute('aria-hidden', panel.classList.contains('open')? 'false':'true'); });
-  // close when clicking outside
-  document.addEventListener('click', e=>{ if(!panel.contains(e.target) && e.target!==btn) panel.classList.remove('open'); });
-})();
+// Preferences UI removed.
 </script>
 </body>
 </html>
