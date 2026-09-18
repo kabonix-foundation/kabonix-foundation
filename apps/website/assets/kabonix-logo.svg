@@ -1,34 +1,50 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 1200" role="img" aria-labelledby="logoTitle logoDesc">
   <title id="logoTitle">Kabonix Foundation logo</title>
-  <desc id="logoDesc">Circular Kabonix Foundation emblem with a stylized white K, tree canopy, sun, and blue-green landscape above the Kabonix Foundation wordmark.</desc>
+  <desc id="logoDesc">Circular emblem with a white K, green tree canopy, teal landscape and a golden sun, with the Kabonix Foundation wordmark beneath.</desc>
   <defs>
-    <linearGradient id="greenCanopy" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#91C93F"/><stop offset="1" stop-color="#4B9A3E"/></linearGradient>
-    <linearGradient id="blueCanopy" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#146C77"/><stop offset="1" stop-color="#07515E"/></linearGradient>
+    <linearGradient id="leafGreen" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#9FD84A"/>
+      <stop offset="100%" stop-color="#5FAE46"/>
+    </linearGradient>
+    <linearGradient id="landBlue" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0A7380"/>
+      <stop offset="100%" stop-color="#0D4C5C"/>
+    </linearGradient>
   </defs>
 
-  <!-- Reference-matched emblem: centered, compact, and balanced inside the ring -->
-  <circle cx="700" cy="370" r="314" fill="#fff" stroke="#087040" stroke-width="14"/>
-  <clipPath id="badgeClip"><circle cx="700" cy="370" r="300"/></clipPath>
-  <g clip-path="url(#badgeClip)">
-    <!-- left green canopy -->
-    <path fill="#006B3B" d="M375 510c-37-39-51-92-35-143 13-41 43-74 82-92 0-65 40-113 96-127 36-9 72-4 102 12 35-55 101-82 163-61 41 14 72 45 86 84 70-7 133 36 151 101 38 15 65 50 66 91 2 35-15 69-44 89 4 60-37 113-94 128-42 11-87 1-120-27-39 41-102 57-156 38-47-16-82-52-97-98-44 44-113 53-168 22-11-6-21-14-30-25z"/>
-    <!-- lime upper canopy -->
-    <path fill="url(#greenCanopy)" d="M434 246c40-64 108-96 176-83 51 10 92 43 112 88 27-6 56 3 75 25 20 23 25 54 14 82-54-6-102 7-142 37-49 37-78 93-82 158-68-18-125-65-154-129-27-59-26-124 1-178z"/>
-    <!-- blue right landscape -->
-    <path fill="url(#blueCanopy)" d="M741 276c52-38 121-44 180-13 49 26 79 74 82 128 42 21 70 65 69 113-1 54-37 102-88 117-54 16-108-3-141-43-35 16-76 16-112-2-34-17-59-48-67-86 6-86 34-158 77-214z"/>
-    <!-- ground and trunk -->
-    <path fill="#006B3B" d="M330 665c91-44 188-68 287-69 112-2 222 24 321 78v46H330z"/>
-    <path fill="#0A5C56" d="M629 476c-36 69-40 137-12 205 14 34 36 62 68 84-70-21-119-71-134-135-15-65 9-126 78-154z"/>
-    <!-- white K/tree silhouette, optically centered -->
-    <path fill="#fff" d="M526 214h70v291l115-291h91L664 453l143 225h-95L596 509v169h-70V214z"/>
-    <!-- sun -->
-    <g transform="translate(760 358)" fill="#FFC51B" stroke="#FFC51B" stroke-linecap="round">
-      <circle r="48" stroke="none"/>
-      <path d="M0-82V-52M0 52V82M-82 0H-52M52 0H82M-58-58l21 21M58-58L37-37M-58 58l21-21M58 58L37 37" stroke-width="9"/>
+  <g transform="translate(0,10)">
+    <circle cx="700" cy="380" r="335" fill="#FFFFFF" stroke="#0B6A3B" stroke-width="14"/>
+    <g>
+      <path d="M404 390c-20-96 10-181 88-240 25 18 42 41 52 72 33-18 76-22 116-11 39 11 75 40 96 79 11 67 5 135-25 192-28 53-72 92-128 109-21 7-42 10-63 10-58 0-109-33-136-89z" fill="#F0F4F1" opacity="0.55"/>
+      <path d="M438 438c-28-55-12-135 37-181 46-42 135-59 181-18 40 36 52 85 45 141-7 60-34 114-75 152-54 49-129 67-195 49-22-6-43-18-62-35 8-31 24-72 69-108z" fill="#0B5E47" opacity="0.14"/>
+      <path d="M402 314c18-72 67-130 136-162 53-25 118-29 176-10 82 27 146 108 154 196 3 35-4 72-24 102-19 28-49 50-86 63-43 15-92 17-134 4-52-17-91-56-109-106-11-31-14-65-9-100 5-19 13-39 22-59-17 32-36 45-61 72-44 45-80 98-65 140z" fill="#1D8E5A" opacity="0.65"/>
+      <path d="M477 148c-18 27-38 52-64 74-15 13-32 25-50 35 10-31 8-64 1-96-4-19-10-37-18-55 28 2 55 9 81 23 30 15 54 38 68 73 13 32 16 64 11 98-8-15-21-31-29-52z" fill="#4CAF50"/>
+      <path d="M555 166c76 9 137 58 167 122 9 19 14 41 15 63-48-16-80-38-126-65-39-24-84-34-131-28 13-35 36-69 75-92z" fill="#78C54B"/>
+      <path d="M649 154c68 12 128 60 164 122 13 23 22 48 25 74-47-22-86-60-125-94-54-47-92-95-90-188 10 29 17 57 26 86z" fill="#8FCB5A"/>
+      <path d="M726 208c81 28 144 96 172 180-31-9-66-5-105 9-60 22-112 65-142 114-33-52-30-120 24-179 21-22 38-38 51-56z" fill="url(#landBlue)"/>
+      <path d="M822 322c77 25 132 86 157 167-58-26-120-35-180-19-66 18-114 63-144 124-24-93 17-197 167-272z" fill="#0A5D64"/>
+      <path d="M470 476c53-30 107-21 169 15-38 49-57 96-39 153-57-12-96-39-112-81-17-45-11-70-18-87z" fill="#0A5A54"/>
+      <path d="M612 583c38-38 81-57 129-58 67-2 125 29 175 97-81 29-163 28-241-2-27-11-54-25-63-37z" fill="#0C4E5A"/>
+      <path d="M436 697c89 8 176 14 271 6 96-7 191-31 286-79v57H436z" fill="#0B5D3B"/>
+    </g>
+
+    <g>
+      <path d="M645 146c-15 43-28 96-38 159-30-49-60-87-92-111-30-22-68-36-111-41 30-20 69-31 114-30 58 2 106 28 127 75z" fill="#3F9751"/>
+      <path d="M466 234c-36 5-73 20-103 44 36-9 72-14 108-14 39 0 72 7 102 19-21-23-52-41-107-49z" fill="#7FBF59"/>
+    </g>
+
+    <g transform="translate(685 463)" fill="#FFFFFF">
+      <path d="M145 0h95v410H145zm-10 0h105L39 219H-25zM136 221h104l-105 189H32z"/>
+    </g>
+
+    <g transform="translate(706 375)" fill="#F6C65A" stroke="#F6C65A" stroke-linecap="round">
+      <circle r="58" stroke="none"/>
+      <path d="M0-98V-62M0 62V98M-98 0H-62M62 0H98M-64-64l25 25M64-64L39-39M-64 64l25-25M64 64L39 39" stroke-width="10"/>
     </g>
   </g>
 
-  <!-- Reduced tracking and centered wordmark -->
-  <text x="700" y="846" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="132" font-weight="800" letter-spacing="2" fill="#075867">KABONIX</text>
-  <text x="700" y="950" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="76" font-weight="500" letter-spacing="1" fill="#3D9147">FOUNDATION</text>
+  <g transform="translate(0, 760)">
+    <text x="700" y="0" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="800" font-size="132" letter-spacing="2" fill="#0A5F6B">KABONIX</text>
+    <text x="700" y="120" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="86" letter-spacing="1" fill="#4FAE4D">FOUNDATION</text>
+  </g>
 </svg>
