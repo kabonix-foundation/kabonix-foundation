@@ -127,13 +127,13 @@
 <section class="ph-hero" id="home">
   <div class="container">
     <div class="grid">
-      <div>
+      <div class="reveal">
         <div class="ph-badge">🌿 Saving Our Planet</div>
         <h1 style="margin-top:18px">Protecting our oceans and planting forests for a sustainable tomorrow.</h1>
         <p class="lead">We work with coastal communities, farmers and youth-led enterprises to protect ecosystems, create livelihoods, and measure impact for climate resilience.</p>
         <div class="ph-actions">
-          <button class="btn btn-primary" style="background:var(--primary);border-radius:12px;padding:12px 18px;color:#fff">Get Involved</button>
-          <button class="btn btn-ghost ph-vid" style="border-radius:12px">▶ Watch Video</button>
+          <button class="btn btn-primary" style="background:var(--primary);border-radius:12px;padding:12px 18px;color:#fff" aria-label="Get involved">Get Involved</button>
+          <button class="btn btn-ghost ph-vid" style="border-radius:12px" aria-label="Watch introduction video">▶ Watch Video</button>
         </div>
         <div class="ph-ribbon">
           <div class="ph-metrics">
@@ -143,7 +143,7 @@
           </div>
         </div>
       </div>
-      <div class="ph-media">
+      <div class="ph-media reveal">
         <img src="/assets/hero-nature.jpg" alt="Community restoring mangroves and planting trees">
       </div>
     </div>
@@ -159,21 +159,21 @@
       <p>Focused initiatives that protect biodiversity, restore landscapes, and build resilient livelihoods.</p>
     </div>
     <div class="grid" style="grid-template-columns:repeat(3,1fr);gap:22px">
-      <div class="cause-card">
+      <div class="cause-card reveal">
         <div class="cause-icon" style="background:linear-gradient(135deg,#E4F4F6,#D2FFF0)">🌊</div>
         <div class="cause-title">Ocean & Coasts</div>
         <p>Protecting coastal habitats, sustainable fisheries and blue carbon projects.</p>
         <div class="progress" aria-hidden><i style="width:72%"></i></div>
         <div style="margin-top:8px;font-size:13px;color:rgba(28,37,33,0.6)">72% Raised of $120,000</div>
       </div>
-      <div class="cause-card">
+      <div class="cause-card reveal">
         <div class="cause-icon" style="background:linear-gradient(135deg,#FFF3E6,#FFEFD8)">🌲</div>
         <div class="cause-title">Forest Restoration</div>
         <p>Large-scale reforestation and agroforestry programs supporting community nurseries.</p>
         <div class="progress"><i style="width:48%"></i></div>
         <div style="margin-top:8px;font-size:13px;color:rgba(28,37,33,0.6)">48% Raised of $50,000</div>
       </div>
-      <div class="cause-card">
+      <div class="cause-card reveal">
         <div class="cause-icon" style="background:linear-gradient(135deg,#FCE8F0,#FFF0F6)">👩‍🌾</div>
         <div class="cause-title">Sustainable Livelihoods</div>
         <p>Skills, market access and enterprise development for youth and women.</p>
@@ -186,18 +186,32 @@
 
 <section class="container">
   <div class="ph-split">
-    <div class="a">
+    <div class="a reveal">
       <h3>Join our field teams</h3>
       <p>Volunteer with restoration crews, community trainers and data collectors across project sites.</p>
       <div style="margin-top:18px"><button class="btn">Become a Volunteer</button></div>
     </div>
-    <div class="b">
+    <div class="b reveal">
       <h3>Support recurring impact</h3>
       <p>Help sustain long-term projects by sponsoring a community or a restoration site.</p>
       <div style="margin-top:18px"><a href="#" class="muted" style="font-weight:700">Sponsor a Project →</a></div>
     </div>
   </div>
 </section>
+
+<script>
+// Scroll reveal using IntersectionObserver
+document.addEventListener('DOMContentLoaded', function(){
+  const els = document.querySelectorAll('.reveal');
+  if(!els.length) return;
+  const io = new IntersectionObserver((entries, obs)=>{
+    entries.forEach(en=>{
+      if(en.isIntersecting){ en.target.classList.add('reveal-in'); obs.unobserve(en.target); }
+    });
+  },{threshold:0.12});
+  els.forEach(el=> io.observe(el));
+});
+</script>
 
 <!-- ───────────────────────── NEWS / EVENTS ──────────────────────────────── -->
 <section class="section section-alt" id="news">
