@@ -5,9 +5,11 @@
   "type": "module",
   "engines": { "node": ">=18" },
   "scripts": {
-    "start": "node src/server.js"
+    "start": "node src/server.js",
+    "test-email": "node scripts/send-test-email.mjs"
   },
   "dependencies": {
+    "nodemailer": "^6.9.16",
     "pg": "^8.13.0"
   }
 }
