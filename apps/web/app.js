@@ -10,6 +10,10 @@ const state = {
   route: 'dashboard', routeParam: null,
 };
 
+// Top-level `const` in a classic script does NOT become a window property, so
+// ai.js could never see the session. Mirror it explicitly.
+window.state = state;
+
 function lsGet(k)    { try { return localStorage.getItem(k); } catch { return (window.__m||{})[k]||null; } }
 function lsSet(k,v)  { try { localStorage.setItem(k,v); } catch { window.__m=window.__m||{}; window.__m[k]=v; } }
 function lsDel(k)    { try { localStorage.removeItem(k); } catch { if(window.__m) delete window.__m[k]; } }
@@ -74,7 +78,8 @@ async function submitMfa(challengeToken, code) {
 }
 
 function logout() {
-  state.token=null; state.user=null; lsDel('kabonix_token'); render();
+  state.token=null; state.user=null; state.roles=[]; state.permissions=[];
+  lsDel('kabonix_token'); render();
 }
 
 // ── Router ───────────────────────────────────────────────────────────────────
@@ -254,13 +259,25 @@ function groupPerms(perms) {
   return out;
 }
 
+// Normalise list-shaped API payloads ({ users:[…] } vs […]) so the UI never
+// crashes on a shape change.
+function asArray(value, key) {
+  if (Array.isArray(value)) return value;
+  if (value && Array.isArray(value[key])) return value[key];
+  return [];
+}
+
 // ── Staff & Users ─────────────────────────────────────────────────────────────
 async function renderUsers() {
   shell(pageHead('Staff & Users','Manage team members, roles and account status.'), 'users');
   if (!can('admin','view')) return document.getElementById('main').insertAdjacentHTML('beforeend', forbidden());
 
   let users=[], roles=[];
-  try { [users, roles] = await Promise.all([api('/admin/users'), api('/admin/roles')]); }
+  try {
+    const [usersRes, rolesRes] = await Promise.all([api('/admin/users'), api('/admin/roles')]);
+    users = asArray(usersRes, 'users');
+    roles = asArray(rolesRes, 'roles');
+  }
   catch(e) { return document.getElementById('main').insertAdjacentHTML('beforeend', errBox(e.message)); }
 
   document.getElementById('main').innerHTML = `
@@ -285,24 +302,26 @@ async function renderUsers() {
       <table>
         <thead><tr><th>Name</th><th>Email</th><th>Roles</th><th>Status</th><th>MFA</th><th>Last active</th><th>Actions</th></tr></thead>
         <tbody id="users-tbody">
-          ${users.map(u => `<tr data-uid="${u.id}">
+          ${users.map(u => {
+            const userRoles = u.roles || [];
+            return `<tr data-uid="${u.id}">
             <td><strong>${esc(u.name)}</strong></td>
             <td class="meta">${esc(u.email)}</td>
-            <td>${u.roles.map(r=>`<span class="badge badge-role">${esc(r.name)}</span>`).join(' ')||'<span class="meta">none</span>'}</td>
+            <td>${userRoles.map(r=>`<span class="badge badge-role">${esc(r.name)}</span>`).join(' ')||'<span class="meta">none</span>'}</td>
             <td><span class="status-dot ${u.is_active?'active':'inactive'}"></span>${u.is_active?'Active':'Inactive'}</td>
             <td>${u.mfa_enabled?'✅ On':'⬜ Off'}</td>
             <td class="meta">${ago(u.last_active)}</td>
             <td class="action-cell">
               ${can('admin','edit') ? `
               <select class="inline-select" data-uid="${u.id}" id="role-sel-${u.id}">
-                ${roles.map(r=>`<option value="${esc(r.key)}" ${u.roles.some(ur=>ur.key===r.key)?'selected':''}>${esc(r.name)}</option>`).join('')}
+                ${roles.map(r=>`<option value="${esc(r.key)}" ${userRoles.some(ur=>ur.key===r.key)?'selected':''}>${esc(r.name)}</option>`).join('')}
               </select>
               <button class="btn-sm" data-assign="${u.id}">Assign</button>
               ${u.is_active && u.id!==state.user.id ? `<button class="btn-sm btn-danger" data-deactivate="${u.id}">Deactivate</button>` : ''}
               ${!u.is_active ? `<button class="btn-sm btn-ok" data-reactivate="${u.id}">Reactivate</button>` : ''}
               ` : ''}
             </td>
-          </tr>`).join('')}
+          </tr>`; }).join('')}
         </tbody>
       </table>
     </div>`;
@@ -346,7 +365,9 @@ async function renderRoles() {
   try { data = await api('/admin/roles'); }
   catch(e) { return document.getElementById('main').insertAdjacentHTML('beforeend', errBox(e.message)); }
 
-  const { roles, modules, levels } = data;
+  const roles   = asArray(data, 'roles');
+  const modules = Array.isArray(data?.modules) ? data.modules : [];
+  const levels  = Array.isArray(data?.levels)  ? data.levels  : [];
 
   document.getElementById('main').innerHTML = `
     ${pageHead('Roles & Permissions', `${roles.length} roles · tick cells to grant a permission · click Save to apply`)}
@@ -361,7 +382,7 @@ async function renderRoles() {
       </div>
     </div>` : ''}
     ${roles.map(role => {
-      const permSet = new Set(role.permissions.map(p=>`${p.module}:${p.level}`));
+      const permSet = new Set((role.permissions||[]).map(p=>`${p.module}:${p.level}`));
       return `<div class="card" style="margin-bottom:16px; overflow-x:auto;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
           <div><strong>${esc(role.name)}</strong> <span class="meta">${esc(role.key)}</span></div>
@@ -414,7 +435,7 @@ async function renderConfig() {
 
   let cfg=[], prefs={};
   try {
-    [cfg] = await Promise.all([api('/admin/config')]);
+    cfg = asArray(await api('/admin/config'), 'config');
     prefs = await api('/admin/notifications/preferences').catch(()=>({}));
   } catch(e) { return document.getElementById('main').insertAdjacentHTML('beforeend', errBox(e.message)); }
 
@@ -484,24 +505,25 @@ async function renderConfig() {
   }
 
   document.getElementById('save-prefs-btn').onclick = async () => {
-    const prefs = {
+    const nextPrefs = {
       email:    document.querySelector('[data-pref="email"]').checked,
       sms:      document.querySelector('[data-pref="sms"]').checked,
       whatsapp: document.querySelector('[data-pref="whatsapp"]').checked,
       in_app:   document.querySelector('[data-pref="in_app"]').checked,
       subscriptions: ['approval_required','submission_flagged','project_milestone_due','system_alert'],
     };
-    try { await api('/admin/notifications/preferences',{method:'PUT',body:prefs}); toast('Notification preferences saved.'); }
+    try { await api('/admin/notifications/preferences',{method:'PUT',body:nextPrefs}); toast('Notification preferences saved.'); }
     catch(e) { toast(e.message, true); }
   };
 }
 
 async function pool_migrations_display() {
+  const el = document.getElementById('migration-list');
+  if (!el) return;
   try {
     const stats = await api('/admin/stats');
-    document.getElementById('migration-list').innerHTML =
-      `<span class="badge badge-ok">✓ ${stats.migrationsApplied} migrations applied</span>`;
-  } catch { document.getElementById('migration-list').textContent = 'Could not load.'; }
+    el.innerHTML = `<span class="badge badge-ok">✓ ${stats.migrationsApplied} migrations applied</span>`;
+  } catch { el.textContent = 'Could not load.'; }
 }
 
 function cfgControl(c) {
@@ -587,7 +609,10 @@ async function renderAudit() {
 async function renderForms() {
   shell(pageHead('M&E Data Collection','Household Baseline Survey and field data submission.'), 'forms');
   let forms=[], submissions=[];
-  try { [forms, submissions] = await Promise.all([api('/forms'), api('/submissions')]); }
+  try {
+    forms       = asArray(await api('/forms'), 'forms');
+    submissions = asArray(await api('/submissions'), 'submissions');
+  }
   catch(e) { return document.getElementById('main').insertAdjacentHTML('beforeend', errBox(e.message)); }
 
   const form = forms[0];
@@ -651,7 +676,8 @@ async function renderMessages() {
   if (!can('admin','view')) return document.getElementById('main').insertAdjacentHTML('beforeend', forbidden());
 
   let msgs=[];
-  try { msgs = await api('/admin/contact-messages'); } catch(e) { return; }
+  try { msgs = asArray(await api('/admin/contact-messages'), 'messages'); }
+  catch(e) { return document.getElementById('main').insertAdjacentHTML('beforeend', errBox(e.message)); }
 
   const statusColor = { new:'badge-new', read:'badge-role', replied:'badge-ok', archived:'meta' };
 
@@ -664,7 +690,7 @@ async function renderMessages() {
           ${msgs.map(m=>`<tr>
             <td><strong>${esc(m.full_name)}</strong><br><span class="meta">${esc(m.email)}</span></td>
             <td class="meta">${esc(m.organisation||'—')}</td>
-            <td>${esc(m.subject)}<br><span class="meta">${esc(m.message.slice(0,80))}${m.message.length>80?'…':''}</span></td>
+            <td>${esc(m.subject)}<br><span class="meta">${esc((m.message||'').slice(0,80))}${(m.message||'').length>80?'…':''}</span></td>
             <td><span class="badge ${statusColor[m.status]||''}">${m.status}</span></td>
             <td class="meta">${ago(m.created_at)}</td>
             <td class="action-cell">
