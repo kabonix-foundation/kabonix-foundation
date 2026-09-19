@@ -18,7 +18,6 @@
   --ok:            #1a7a55;
   --warn:          #c8922a;
   --sidebar-w:     230px;
-  --sidebar-w-collapsed: 72px;
   --focus:         0 0 0 3px rgba(34,160,107,.35);
 }
 
@@ -163,26 +162,9 @@ code { font-family: "Menlo","Consolas","Courier New",monospace; font-size: 12px;
 }
 .sb-logout:hover { background: rgba(255,255,255,.07); color: #fff; }
 
-/* Hamburger — inline on desktop, floating on mobile */
-#sb-toggle {
-  display: inline-flex; align-items: center; justify-content: center;
-  background: transparent; border: none; color: #fff; font-size: 19px;
-  padding: 6px; cursor: pointer; margin-right: 4px; flex-shrink: 0; line-height: 1;
-}
-
-/* ── Collapsed sidebar (icons only) ── */
-.sidebar.collapsed { width: var(--sidebar-w-collapsed); }
-.sidebar.collapsed .sb-brand { flex-direction: column; gap: 8px; padding: 12px 8px; }
-.sidebar.collapsed .sb-name,
-.sidebar.collapsed .sb-sub { display: none; }
-.sidebar.collapsed .sb-logo { width: 36px; height: 36px; }
-.sidebar.collapsed .sb-logo-img { width: 30px; height: 30px; }
-.sidebar.collapsed #sb-toggle { margin: 0; }
-.sidebar.collapsed .nav-item { padding: 9px 0; justify-content: center; }
-.sidebar.collapsed .nav-item .nav-label { display: none; }
-.sidebar.collapsed .nav-item .nav-icon { font-size: 16px; }
-.sidebar.collapsed .sb-logout { font-size: 0; padding: 9px 0; }
-.sidebar.collapsed .sb-logout::after { content: '⎋'; font-size: 14px; }
+/* Hamburger — mobile only. The desktop sidebar is always visible, so a
+   collapse control there would be redundant. */
+#sb-toggle { display: none; }
 
 /* ── Mobile: off-canvas drawer ──
    Uses `left` rather than `transform` so the floating #sb-toggle (a fixed
@@ -201,9 +183,13 @@ code { font-family: "Menlo","Consolas","Courier New",monospace; font-size: 12px;
   /* Clear the floating button. */
   .sb-brand { padding: 14px 14px 14px 64px; }
   #sb-toggle {
+    display: inline-flex;
+    align-items: center; justify-content: center;
     position: fixed; top: 14px; left: 14px; z-index: 1100;
     width: 42px; height: 42px; margin: 0; border-radius: 9px;
-    background: var(--forest); box-shadow: 0 3px 12px rgba(0,0,0,.22);
+    background: var(--forest); color: #fff; font-size: 19px; line-height: 1;
+    border: none; cursor: pointer;
+    box-shadow: 0 3px 12px rgba(0,0,0,.22);
   }
   .main-area { padding: 68px 18px 48px; }
 }
