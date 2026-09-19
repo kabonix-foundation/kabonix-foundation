@@ -1,6 +1,15 @@
 -- Performance indexes for filtered, ordered collection endpoints.
 -- Partial indexes keep inactive/unpublished rows out of the hot paths.
 
+CREATE INDEX IF NOT EXISTS user_roles_user_id_role_id_idx
+  ON user_roles (user_id, role_id);
+
+CREATE INDEX IF NOT EXISTS user_roles_role_id_user_id_idx
+  ON user_roles (role_id, user_id);
+
+CREATE INDEX IF NOT EXISTS permissions_role_id_module_level_idx
+  ON permissions (role_id, module, level);
+
 CREATE INDEX IF NOT EXISTS users_email_lower_idx
   ON users (LOWER(email));
 
