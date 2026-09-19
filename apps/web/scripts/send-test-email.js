@@ -1,15 +1,18 @@
 // scripts/send-test-email.mjs
 // Verifies SMTP delivery end to end without going through the reset flow.
 //
-//   node scripts/send-test-email.mjs you@example.com
+//   npm run test-email -- you@example.com
 //
 // Exit code 0 = delivered (or logged, in dev mode). 1 = real send failed.
+//
+// This file lives at apps/api/scripts/, while mailer.js lives at
+// apps/api/src/mailer.js — hence the ../src/ prefix below.
 
-import { sendMail, mailerStatus } from '../mailer.js';
+import { sendMail, mailerStatus } from '../src/mailer.js';
 
 const to = process.argv[2];
 if (!to) {
-  console.error('Usage: node scripts/send-test-email.mjs you@example.com');
+  console.error('Usage: npm run test-email -- you@example.com');
   process.exit(1);
 }
 
