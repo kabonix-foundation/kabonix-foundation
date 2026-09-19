@@ -1,13 +1,31 @@
-// rbac.js — RBAC skeleton (Sprint 01, Step 4), Postgres version
-//
-// Cross-cutting rule from the build-order doc: "Every API endpoint checks
-// permissions server-side, not just in the UI." This module is that check.
-// Module/level combinations mirror Section 8.1 of the architecture doc
-// (View / Create / Edit / Approve / Export per module).
+// rbac.js — RBAC helpers with short-lived per-process caching.
+// Permission changes are reflected after CACHE_TTL_MS or explicit invalidation.
 
 import { pool } from './db.js';
 
+const CACHE_TTL_MS = 30_000;
+const permissionCache = new Map();
+const roleCache = new Map();
+
+function cached(cache, userId) {
+  const entry = cache.get(userId);
+  return entry && entry.expiresAt > Date.now() ? entry.value : null;
+}
+
+export function invalidateUserPermissions(userId) {
+  permissionCache.delete(userId);
+  roleCache.delete(userId);
+}
+
+export function invalidateAllPermissions() {
+  permissionCache.clear();
+  roleCache.clear();
+}
+
 export async function loadPermissions(userId) {
+  const hit = cached(permissionCache, userId);
+  if (hit) return hit;
+
   const { rows } = await pool.query(
     `SELECT DISTINCT p.module, p.level
      FROM permissions p
@@ -15,16 +33,21 @@ export async function loadPermissions(userId) {
      WHERE ur.user_id = $1`,
     [userId]
   );
+  permissionCache.set(userId, { value: rows, expiresAt: Date.now() + CACHE_TTL_MS });
   return rows;
 }
 
 export async function loadRoles(userId) {
+  const hit = cached(roleCache, userId);
+  if (hit) return hit;
+
   const { rows } = await pool.query(
     `SELECT r.key, r.name FROM roles r
      JOIN user_roles ur ON ur.role_id = r.id
      WHERE ur.user_id = $1`,
     [userId]
   );
+  roleCache.set(userId, { value: rows, expiresAt: Date.now() + CACHE_TTL_MS });
   return rows;
 }
 
