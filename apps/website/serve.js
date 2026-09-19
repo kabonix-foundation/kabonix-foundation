@@ -33,7 +33,12 @@ function escapeAttribute(value) {
 }
 
 function safePath(requestPath) {
-  const pathname = decodeURIComponent(requestPath.split('?')[0]);
+  let pathname;
+  try {
+    pathname = decodeURIComponent(requestPath.split('?')[0]);
+  } catch {
+    return null;
+  }
   const requested = pathname === '/' || !path.extname(pathname) ? '/index.html' : pathname;
   const filePath = path.resolve(__dirname, `.${requested}`);
   return filePath.startsWith(__dirname + path.sep) ? filePath : null;
@@ -59,9 +64,10 @@ http.createServer((req, res) => {
         content
           .toString()
           .replace('<head>', `<head>${META_INJECT}`)
-          // The homepage originally used ../web/, which resolves against the
-          // website host and breaks in production. Point it at the configured
-          // portal service instead.
+          // Use the shared vector mark on the public site as well. The PNG
+          // contains the complete wordmark and can disappear when constrained
+          // to the compact circular logo slot; the SVG keeps the emblem crisp.
+          .replaceAll('./assets/logo.png', './assets/kabonix-logo.svg')
           .replaceAll('../web/', escapeAttribute(PORTAL_URL))
       );
     }
