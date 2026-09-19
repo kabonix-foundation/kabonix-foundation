@@ -13,6 +13,7 @@
 //   9. Audit log
 
 import http      from 'node:http';
+import crypto    from 'node:crypto';
 import { URL }   from 'node:url';
 import { pool, seedIfEmpty } from './db.js';
 import { runMigrations }     from './migrate.js';
@@ -120,6 +121,49 @@ function validatePassword(pw) {
   return null;
 }
 
+// ── Data-quality helpers (Section 4.2) ────────────────────────────────────────
+
+function normaliseName(s) {
+  return String(s ?? '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function beneficiaryDeDupHash(name, village) {
+  return crypto.createHash('md5')
+    .update(`${normaliseName(name)}|${normaliseName(village)}`)
+    .digest('hex');
+}
+
+/** Returns an error string, or null if the value passes. */
+function validateFieldValue(field, value) {
+  const required = !!field.required;
+  const isEmpty  = value === undefined || value === null || value === '';
+
+  if (required && isEmpty) return `Missing required field: ${field.label}`;
+  if (isEmpty) return null;
+
+  if (field.type === 'number') {
+    const n = Number(value);
+    if (!Number.isFinite(n))                          return `${field.label} must be a number`;
+    if (field.integer && !Number.isInteger(n))        return `${field.label} must be a whole number`;
+    if (field.min != null && n < field.min)           return `${field.label} must be at least ${field.min}`;
+    if (field.max != null && n > field.max)           return `${field.label} must be at most ${field.max}`;
+  } else {
+    const s = String(value);
+    if (field.minLength != null && s.length < field.minLength)
+      return `${field.label} must be at least ${field.minLength} characters`;
+    if (field.maxLength != null && s.length > field.maxLength)
+      return `${field.label} must be at most ${field.maxLength} characters`;
+    if (field.pattern && !new RegExp(field.pattern).test(s))
+      return `${field.label} is not in the expected format`;
+    if (field.type === 'select' && Array.isArray(field.options) && !field.options.includes(s))
+      return `${field.label} must be one of: ${field.options.join(', ')}`;
+  }
+  return null;
+}
+
 // ── Main handler ──────────────────────────────────────────────────────────────
 
 const server = http.createServer(async (req, res) => {
@@ -140,7 +184,6 @@ const server = http.createServer(async (req, res) => {
 
     // ── 2. PUBLIC AUTH ROUTES ─────────────────────────────────────────────────
 
-    // POST /api/auth/login
     if (parts[1] === 'auth' && parts[2] === 'login' && req.method === 'POST') {
       const { email = '', password = '' } = await readBody(req);
 
@@ -183,7 +226,6 @@ const server = http.createServer(async (req, res) => {
       });
     }
 
-    // POST /api/auth/mfa/challenge
     if (parts[1] === 'auth' && parts[2] === 'mfa' && parts[3] === 'challenge' && req.method === 'POST') {
       const { challengeToken = '', code = '' } = await readBody(req);
       const { rows } = await pool.query(
@@ -214,7 +256,6 @@ const server = http.createServer(async (req, res) => {
       });
     }
 
-    // POST /api/auth/refresh
     if (parts[1] === 'auth' && parts[2] === 'refresh' && req.method === 'POST') {
       const { refreshToken = '' } = await readBody(req);
       const { rows } = await pool.query('SELECT * FROM refresh_tokens WHERE token_hash = $1', [hashOpaqueToken(refreshToken)]);
@@ -239,7 +280,6 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { accessToken, refreshToken: newRT });
     }
 
-    // POST /api/auth/logout
     if (parts[1] === 'auth' && parts[2] === 'logout' && req.method === 'POST') {
       const { refreshToken = '' } = await readBody(req);
       const { rows } = await pool.query(
@@ -253,7 +293,6 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { ok: true });
     }
 
-    // POST /api/auth/password/forgot
     if (parts[1] === 'auth' && parts[2] === 'password' && parts[3] === 'forgot' && req.method === 'POST') {
       const { email = '' } = await readBody(req);
       const { rows } = await pool.query('SELECT * FROM users WHERE LOWER(email) = LOWER($1) AND is_active = TRUE', [email]);
@@ -276,7 +315,6 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { ok: true, message: 'If that email exists in our system, a reset link has been sent.' });
     }
 
-    // POST /api/auth/password/reset
     if (parts[1] === 'auth' && parts[2] === 'password' && parts[3] === 'reset' && req.method === 'POST') {
       const { token = '', newPassword = '' } = await readBody(req);
 
@@ -299,7 +337,6 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { ok: true });
     }
 
-    // POST /api/auth/email/verify
     if (parts[1] === 'auth' && parts[2] === 'email' && parts[3] === 'verify' && req.method === 'POST') {
       const { token = '' } = await readBody(req);
       const { rows } = await pool.query(
@@ -517,7 +554,7 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, rows.map(r => ({ ...r, answers: r.answers_json })));
     }
 
-    if (parts[1] === 'submissions' && parts[2] && req.method === 'GET') {
+    if (parts[1] === 'submissions' && parts[2] && req.method === 'GET' && parts[3] !== 'revisions') {
       const denied = await checkPerm(user, 'data_collection', 'view');
       if (denied) return send(res, denied.status, denied.body);
       const { rows } = await pool.query('SELECT * FROM me_submissions WHERE id = $1', [Number(parts[2])]);
@@ -525,41 +562,192 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { ...rows[0], answers: rows[0].answers_json });
     }
 
+    // GET /api/submissions/:id/revisions
+    if (parts[1] === 'submissions' && parts[2] && parts[3] === 'revisions' && req.method === 'GET') {
+      const denied = await checkPerm(user, 'data_collection', 'view');
+      if (denied) return send(res, denied.status, denied.body);
+      const id = Number(parts[2]);
+      const { rows: subRows } = await pool.query('SELECT id FROM me_submissions WHERE id = $1', [id]);
+      if (!subRows[0]) return send(res, 404, { error: 'Submission not found' });
+      const { rows } = await pool.query(
+        `SELECT r.id, r.revision_no, r.answers_json, r.change_summary, r.changed_at,
+                u.name AS changed_by_name, u.email AS changed_by_email
+           FROM me_submission_revisions r
+           LEFT JOIN users u ON u.id = r.changed_by
+          WHERE r.submission_id = $1
+          ORDER BY r.revision_no ASC`,
+        [id]
+      );
+      return send(res, 200, { submissionId: id, revisions: rows });
+    }
+
+    // POST /api/submissions — create, with validation + de-dup + revision 1
     if (parts[1] === 'submissions' && req.method === 'POST') {
       const denied = await checkPerm(user, 'data_collection', 'create');
       if (denied) return send(res, denied.status, denied.body);
-      const { formKey, answers } = await readBody(req);
+      const { formKey, answers = {}, forceNew = false, changeSummary } = await readBody(req);
+
       const { rows: fRows } = await pool.query('SELECT * FROM me_forms WHERE key = $1', [formKey]);
       const form = fRows[0];
       if (!form) return send(res, 400, { error: 'Unknown form key' });
 
+      // 1. Field-level validation — required, format, range, length, pattern.
       for (const field of form.schema_json) {
-        if (field.required && (answers[field.id] === undefined || answers[field.id] === '')) {
-          return send(res, 400, { error: `Missing required field: ${field.label}` });
-        }
+        const problem = validateFieldValue(field, answers[field.id]);
+        if (problem) return send(res, 400, { error: problem, field: field.id });
       }
 
+      // 2. De-duplication on the beneficiary.
       let beneficiaryId = null;
+      let beneficiaryCreated = false;
       if (answers.beneficiary_name) {
+        const dupHash = beneficiaryDeDupHash(answers.beneficiary_name, answers.village);
+
+        if (!forceNew) {
+          const { rows: dupes } = await pool.query(
+            `SELECT id, full_name, village, programme, created_at
+               FROM beneficiaries
+              WHERE de_dup_hash = $1
+              ORDER BY id DESC LIMIT 1`,
+            [dupHash]
+          );
+          if (dupes[0]) {
+            return send(res, 409, {
+              error: 'Possible duplicate beneficiary',
+              duplicate: dupes[0],
+              hint: 'Resubmit with forceNew: true if this is a genuinely distinct person.',
+            });
+          }
+        }
+
         const hasGps = answers.gps_lat !== undefined && answers.gps_lng !== undefined &&
                        answers.gps_lat !== ''        && answers.gps_lng !== '';
+
         const { rows: bRows } = await pool.query(
           hasGps
-            ? 'INSERT INTO beneficiaries (full_name, village, programme, created_by, location) VALUES ($1,$2,$3,$4, ST_SetSRID(ST_MakePoint($5,$6),4326)::geography) RETURNING id'
-            : 'INSERT INTO beneficiaries (full_name, village, programme, created_by) VALUES ($1,$2,$3,$4) RETURNING id',
+            ? `INSERT INTO beneficiaries
+                 (full_name, name_normalised, de_dup_hash, village, programme, created_by, location)
+               VALUES ($1,$2,$3,$4,$5,$6, ST_SetSRID(ST_MakePoint($7,$8),4326)::geography)
+               RETURNING id`
+            : `INSERT INTO beneficiaries
+                 (full_name, name_normalised, de_dup_hash, village, programme, created_by)
+               VALUES ($1,$2,$3,$4,$5,$6) RETURNING id`,
           hasGps
-            ? [answers.beneficiary_name, answers.village || null, answers.programme_area || null, user.id, Number(answers.gps_lng), Number(answers.gps_lat)]
-            : [answers.beneficiary_name, answers.village || null, answers.programme_area || null, user.id]
+            ? [answers.beneficiary_name, normaliseName(answers.beneficiary_name), dupHash,
+               answers.village || null, answers.programme_area || null, user.id,
+               Number(answers.gps_lng), Number(answers.gps_lat)]
+            : [answers.beneficiary_name, normaliseName(answers.beneficiary_name), dupHash,
+               answers.village || null, answers.programme_area || null, user.id]
         );
         beneficiaryId = bRows[0].id;
+        beneficiaryCreated = true;
       }
 
-      const { rows: sRows } = await pool.query(
-        'INSERT INTO me_submissions (form_id, beneficiary_id, submitted_by, answers_json) VALUES ($1,$2,$3,$4) RETURNING id',
-        [form.id, beneficiaryId, user.id, JSON.stringify(answers)]
+      // 3. Site upsert — villages typed into the form are tagged type='village'.
+      //    ON CONFLICT DO NOTHING (no target) catches any unique violation,
+      //    including the expression index sites_name_district_uidx.
+      if (answers.village) {
+        await pool.query(
+          `INSERT INTO sites (name, name_normalised, type, created_by)
+           VALUES ($1, $2, 'village', $3)
+           ON CONFLICT DO NOTHING`,
+          [answers.village, normaliseName(answers.village), user.id]
+        );
+      }
+
+      // 4. Insert the submission and its first revision in one transaction.
+      const client = await pool.connect();
+      let submissionId;
+      try {
+        await client.query('BEGIN');
+        const { rows: sRows } = await client.query(
+          'INSERT INTO me_submissions (form_id, beneficiary_id, submitted_by, answers_json) VALUES ($1,$2,$3,$4) RETURNING id',
+          [form.id, beneficiaryId, user.id, JSON.stringify(answers)]
+        );
+        submissionId = sRows[0].id;
+        await client.query(
+          `INSERT INTO me_submission_revisions
+             (submission_id, revision_no, answers_json, changed_by, change_summary)
+           VALUES ($1, 1, $2, $3, $4)`,
+          [submissionId, JSON.stringify(answers), user.id, changeSummary || 'initial submission']
+        );
+        await client.query('COMMIT');
+      } catch (err) {
+        await client.query('ROLLBACK');
+        throw err;
+      } finally {
+        client.release();
+      }
+
+      await logAction({
+        userId: user.id, userEmail: user.email,
+        action: 'create', entity: 'me_submission', entityId: submissionId,
+        detail: `form: ${form.key}${beneficiaryCreated ? ' (new beneficiary)' : ''}`,
+      });
+
+      return send(res, 201, {
+        id: submissionId,
+        revisionNo: 1,
+        beneficiaryCreated,
+        ok: true,
+      });
+    }
+
+    // PATCH /api/submissions/:id — edit in place, always as a new revision
+    if (parts[1] === 'submissions' && parts[2] && req.method === 'PATCH') {
+      const denied = await checkPerm(user, 'data_collection', 'edit');
+      if (denied) return send(res, denied.status, denied.body);
+      const id = Number(parts[2]);
+      const { answers, changeSummary } = await readBody(req);
+      if (!answers || typeof answers !== 'object') {
+        return send(res, 400, { error: 'answers object is required' });
+      }
+
+      const { rows: subRows } = await pool.query(
+        'SELECT s.*, f.schema_json FROM me_submissions s JOIN me_forms f ON f.id = s.form_id WHERE s.id = $1',
+        [id]
       );
-      await logAction({ userId: user.id, userEmail: user.email, action: 'create', entity: 'me_submission', entityId: sRows[0].id, detail: `form: ${form.key}` });
-      return send(res, 201, { id: sRows[0].id, ok: true });
+      const sub = subRows[0];
+      if (!sub) return send(res, 404, { error: 'Submission not found' });
+
+      for (const field of sub.schema_json) {
+        const problem = validateFieldValue(field, answers[field.id]);
+        if (problem) return send(res, 400, { error: problem, field: field.id });
+      }
+
+      const client = await pool.connect();
+      let revisionNo;
+      try {
+        await client.query('BEGIN');
+        const { rows: maxRows } = await client.query(
+          'SELECT COALESCE(MAX(revision_no), 0) + 1 AS next FROM me_submission_revisions WHERE submission_id = $1',
+          [id]
+        );
+        revisionNo = maxRows[0].next;
+        await client.query(
+          `INSERT INTO me_submission_revisions
+             (submission_id, revision_no, answers_json, changed_by, change_summary)
+           VALUES ($1, $2, $3, $4, $5)`,
+          [id, revisionNo, JSON.stringify(answers), user.id, changeSummary || `revision ${revisionNo}`]
+        );
+        await client.query(
+          'UPDATE me_submissions SET answers_json = $1 WHERE id = $2',
+          [JSON.stringify(answers), id]
+        );
+        await client.query('COMMIT');
+      } catch (err) {
+        await client.query('ROLLBACK');
+        throw err;
+      } finally {
+        client.release();
+      }
+
+      await logAction({
+        userId: user.id, userEmail: user.email,
+        action: 'edit', entity: 'me_submission', entityId: id,
+        detail: `revision ${revisionNo}`,
+      });
+      return send(res, 200, { id, revisionNo, ok: true });
     }
 
     // DELETE /api/submissions/:id — requires data_collection:approve
@@ -576,6 +764,16 @@ const server = http.createServer(async (req, res) => {
         detail: `deleted submission #${id}`,
       });
       return send(res, 200, { ok: true });
+    }
+
+    // GET /api/indicators — standard indicator definitions
+    if (parts[1] === 'indicators' && req.method === 'GET') {
+      const denied = await checkPerm(user, 'data_collection', 'view');
+      if (denied) return send(res, denied.status, denied.body);
+      const { rows } = await pool.query(
+        'SELECT * FROM indicators WHERE is_active = TRUE ORDER BY code'
+      );
+      return send(res, 200, rows);
     }
 
     // ── 9. AUDIT LOG ──────────────────────────────────────────────────────────
