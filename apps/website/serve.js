@@ -14,8 +14,8 @@ const PORTAL_URL = process.env.PORTAL_URL || 'http://localhost:3000';
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
-  '.js': 'text/javascript',
-  '.css': 'text/css',
+  '.js': 'text/javascript; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
   '.ico': 'image/x-icon',
   '.png': 'image/png',
   '.jpg': 'image/jpeg',
@@ -64,10 +64,8 @@ http.createServer((req, res) => {
         content
           .toString()
           .replace('<head>', `<head>${META_INJECT}`)
-          // Use the shared vector mark on the public site as well. The PNG
-          // contains the complete wordmark and can disappear when constrained
-          // to the compact circular logo slot; the SVG keeps the emblem crisp.
           .replaceAll('./assets/logo.png', './assets/kabonix-logo.svg')
+          .replaceAll('/assets/logo.png', '/assets/kabonix-logo.svg')
           .replaceAll('../web/', escapeAttribute(PORTAL_URL))
       );
     }
