@@ -7,8 +7,8 @@ const CACHE_TTL_MS = 30_000;
 const permissionCache = new Map();
 const roleCache = new Map();
 
-function cached(cache, userId) {
-  const entry = cache.get(userId);
+function cached(cache, key) {
+  const entry = cache.get(key);
   return entry && entry.expiresAt > Date.now() ? entry.value : null;
 }
 
