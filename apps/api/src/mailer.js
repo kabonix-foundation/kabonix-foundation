@@ -1,36 +1,44 @@
 // mailer.js — real SMTP delivery with a dev-mode fallback.
 //
-// Configure via environment variables. If SMTP_HOST is unset, this file
-// behaves exactly like the old stub: it logs what would be sent and returns
-// { ok: true, dev: true }. No other file needs to change.
+// Configured by default for the Foundation's Gmail account
+// (Kabonixfoundation@gmail.com). Set SMTP_PASS to the 16-character Google
+// App Password and email delivery works — everything else has a sensible
+// default. Override any of the variables below to move to another provider
+// (Postmark, SendGrid, AWS SES) without touching this file.
 //
-// Required when using SMTP:
-//   SMTP_HOST   e.g. smtp.postmarkapp.com, smtp.sendgrid.net, mail.example.org
-//   SMTP_PORT   587 (STARTTLS, default) or 465 (implicit TLS)
-//   SMTP_USER   usually the full API key id for transactional providers
-//   SMTP_PASS   the API key or mailbox password
+// Required:
+//   SMTP_PASS        16-character Google App Password
+//                    (Google Account → Security → 2-Step Verification →
+//                     App passwords → generate for "Kabonix API")
 //
-// Optional:
-//   SMTP_SECURE       'true' to force implicit TLS (auto-true when port is 465)
-//   MAIL_FROM         'Kabonix Foundation <noreply@kabonix.org>' by default
-//   MAIL_REPLY_TO     default reply-to address
-//   ORG_NAME          shown in the email header/footer, defaults to 'Kabonix Foundation'
+// Optional (defaults shown):
+//   SMTP_HOST        smtp.gmail.com
+//   SMTP_PORT        587              (STARTTLS; use 465 for implicit TLS)
+//   SMTP_SECURE      false            (auto-true when port is 465)
+//   SMTP_USER        Kabonixfoundation@gmail.com
+//   MAIL_FROM        Kabonix Foundation <Kabonixfoundation@gmail.com>
+//   MAIL_REPLY_TO    Kabonixfoundation@gmail.com
+//   ORG_NAME         Kabonix Foundation
+//
+// If SMTP_PASS is unset, this file behaves like the original stub: it logs
+// what would be sent and returns { ok: true, dev: true }. No other file
+// needs to change.
 //
 // Install once:  npm install nodemailer
 
-const SMTP_HOST     = process.env.SMTP_HOST || '';
+const SMTP_HOST     = process.env.SMTP_HOST || (process.env.SMTP_PASS ? 'smtp.gmail.com' : '');
 const SMTP_PORT     = Number(process.env.SMTP_PORT || 587);
 const SMTP_SECURE   = process.env.SMTP_SECURE === 'true' || SMTP_PORT === 465;
-const SMTP_USER     = process.env.SMTP_USER || '';
+const SMTP_USER     = process.env.SMTP_USER || 'Kabonixfoundation@gmail.com';
 const SMTP_PASS     = process.env.SMTP_PASS || '';
-const MAIL_FROM     = process.env.MAIL_FROM || 'Kabonix Foundation <noreply@kabonix.org>';
-const MAIL_REPLY_TO = process.env.MAIL_REPLY_TO || '';
-const ORG_NAME      = process.env.ORG_NAME || 'Kabonix Foundation';
+const MAIL_FROM     = process.env.MAIL_FROM     || 'Kabonix Foundation <Kabonixfoundation@gmail.com>';
+const MAIL_REPLY_TO = process.env.MAIL_REPLY_TO || 'Kabonixfoundation@gmail.com';
+const ORG_NAME      = process.env.ORG_NAME      || 'Kabonix Foundation';
 
-const isConfigured = !!SMTP_HOST;
+const isConfigured = !!SMTP_HOST && !!SMTP_PASS;
 
 // Nodemailer is loaded lazily so a dev environment without SMTP never needs
-// it installed. If SMTP_HOST is set but the package is missing, we say so
+// it installed. If SMTP is configured but the package is missing, we say so
 // clearly and fall back to logging rather than crashing on boot.
 let transporter = null;
 if (isConfigured) {
@@ -45,14 +53,15 @@ if (isConfigured) {
       greetingTimeout:    8_000,
       socketTimeout:     15_000,
     });
-    console.log(`[mailer] SMTP configured → ${SMTP_HOST}:${SMTP_PORT}${SMTP_SECURE ? ' (TLS)' : ''}`);
+    console.log(`[mailer] SMTP configured → ${SMTP_HOST}:${SMTP_PORT}${SMTP_SECURE ? ' (TLS)' : ''} as ${SMTP_USER}`);
   } catch (err) {
-    console.error('[mailer] SMTP_HOST is set but nodemailer is not installed.');
+    console.error('[mailer] SMTP is configured but nodemailer is not installed.');
     console.error('[mailer] Run:  npm install nodemailer');
     console.error('[mailer] Falling back to dev mode (no email will be sent).');
   }
-} else {
-  console.log('[mailer] SMTP not configured — running in dev mode (emails are logged, not sent).');
+} else if (!SMTP_PASS) {
+  console.log('[mailer] SMTP_PASS not set — running in dev mode (emails are logged, not sent).');
+  console.log('[mailer] To enable delivery, set SMTP_PASS to a Google App Password for Kabonixfoundation@gmail.com.');
 }
 
 function escapeHtml(s) {
@@ -151,9 +160,11 @@ export function mailerStatus() {
   return {
     configured: isConfigured && !!transporter,
     host: isConfigured && transporter ? `${SMTP_HOST}:${SMTP_PORT}${SMTP_SECURE ? ' (TLS)' : ''}` : null,
+    user: isConfigured && transporter ? SMTP_USER : null,
     from: MAIL_FROM,
-    reason: !isConfigured ? 'SMTP_HOST not set'
-          : !transporter  ? 'nodemailer not installed'
+    reason: !SMTP_PASS   ? 'SMTP_PASS not set'
+          : !SMTP_HOST   ? 'SMTP_HOST not set'
+          : !transporter ? 'nodemailer not installed'
           : null,
   };
 }
