@@ -30,13 +30,10 @@ import { handleAdminRoute } from './admin-routes.js';
 
 const PORT        = process.env.PORT        || 4000;
 const WEB_ORIGIN  = process.env.WEB_ORIGIN  || 'http://localhost:3001';
-// ALLOWED_ORIGINS: comma-separated list of frontend URLs allowed to call this API.
-// Set this on Render to your exact website + staff-portal URLs (no trailing slash).
-// Falls back to * in dev so local testing works without config.
 const ALLOWED_ORIGINS_RAW = process.env.ALLOWED_ORIGINS || '';
 const ALLOWED_ORIGINS = ALLOWED_ORIGINS_RAW
   ? new Set(ALLOWED_ORIGINS_RAW.split(',').map(s => s.trim()))
-  : null; // null = allow *
+  : null;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -129,7 +126,7 @@ const server = http.createServer(async (req, res) => {
   const send = makeSend(req);
   if (req.method === 'OPTIONS') return send(res, 204, {});
 
-  const url   = new URL(req.url, 'http://x');  // base is a dummy — only used to parse pathname/searchParams
+  const url   = new URL(req.url, 'http://x');
   const parts = url.pathname.split('/').filter(Boolean);
 
   try {
@@ -142,9 +139,8 @@ const server = http.createServer(async (req, res) => {
     if (parts[0] !== 'api') return send(res, 404, { error: 'Not found' });
 
     // ── 2. PUBLIC AUTH ROUTES ─────────────────────────────────────────────────
-    //    No access token required for any of these.
 
-    // POST /api/auth/login  — step 1: password
+    // POST /api/auth/login
     if (parts[1] === 'auth' && parts[2] === 'login' && req.method === 'POST') {
       const { email = '', password = '' } = await readBody(req);
 
@@ -155,7 +151,6 @@ const server = http.createServer(async (req, res) => {
       const { rows } = await pool.query('SELECT * FROM users WHERE LOWER(email) = LOWER($1)', [email]);
       const user = rows[0];
 
-      // Always use the same error to prevent user enumeration
       const badCreds = { error: 'Invalid email or password' };
 
       if (!user || !user.is_active) {
@@ -168,7 +163,6 @@ const server = http.createServer(async (req, res) => {
         return send(res, 401, badCreds);
       }
 
-      // MFA enrolled — issue a short-lived challenge token instead of session tokens
       if (user.mfa_enabled) {
         const challengeToken = generateOpaqueToken();
         await pool.query(
@@ -189,7 +183,7 @@ const server = http.createServer(async (req, res) => {
       });
     }
 
-    // POST /api/auth/mfa/challenge  — step 2: TOTP code
+    // POST /api/auth/mfa/challenge
     if (parts[1] === 'auth' && parts[2] === 'mfa' && parts[3] === 'challenge' && req.method === 'POST') {
       const { challengeToken = '', code = '' } = await readBody(req);
       const { rows } = await pool.query(
@@ -220,7 +214,7 @@ const server = http.createServer(async (req, res) => {
       });
     }
 
-    // POST /api/auth/refresh  — rotate refresh token
+    // POST /api/auth/refresh
     if (parts[1] === 'auth' && parts[2] === 'refresh' && req.method === 'POST') {
       const { refreshToken = '' } = await readBody(req);
       const { rows } = await pool.query('SELECT * FROM refresh_tokens WHERE token_hash = $1', [hashOpaqueToken(refreshToken)]);
@@ -230,7 +224,6 @@ const server = http.createServer(async (req, res) => {
         return send(res, 401, { error: 'Session expired. Please sign in again.' });
       }
       if (stored.revoked_at) {
-        // Revoke the entire family — possible token theft
         await pool.query('UPDATE refresh_tokens SET revoked_at = now() WHERE family_id = $1 AND revoked_at IS NULL', [stored.family_id]);
         await logAction({ userId: stored.user_id, action: 'token_reuse_detected', entity: 'refresh_token', entityId: stored.id, detail: 'family revoked' });
         return send(res, 401, { error: 'Session invalidated for security. Please sign in again.' });
@@ -260,7 +253,7 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { ok: true });
     }
 
-    // POST /api/auth/password/forgot  — request reset link (never reveals whether email exists)
+    // POST /api/auth/password/forgot
     if (parts[1] === 'auth' && parts[2] === 'password' && parts[3] === 'forgot' && req.method === 'POST') {
       const { email = '' } = await readBody(req);
       const { rows } = await pool.query('SELECT * FROM users WHERE LOWER(email) = LOWER($1) AND is_active = TRUE', [email]);
@@ -280,11 +273,10 @@ const server = http.createServer(async (req, res) => {
         });
         await logAction({ userId: user.id, userEmail: user.email, action: 'password_reset_requested', entity: 'user', entityId: user.id });
       }
-      // Always return the same response to prevent user enumeration
       return send(res, 200, { ok: true, message: 'If that email exists in our system, a reset link has been sent.' });
     }
 
-    // POST /api/auth/password/reset  — set new password using token
+    // POST /api/auth/password/reset
     if (parts[1] === 'auth' && parts[2] === 'password' && parts[3] === 'reset' && req.method === 'POST') {
       const { token = '', newPassword = '' } = await readBody(req);
 
@@ -301,14 +293,13 @@ const server = http.createServer(async (req, res) => {
       const { hash, salt } = hashPassword(newPassword);
       await pool.query('UPDATE users SET password_hash = $1, password_salt = $2 WHERE id = $3', [hash, salt, reset.user_id]);
       await pool.query('UPDATE password_reset_tokens SET used_at = now() WHERE id = $1', [reset.id]);
-      // Revoke all active sessions — forces re-login everywhere
       await pool.query('UPDATE refresh_tokens SET revoked_at = now() WHERE user_id = $1 AND revoked_at IS NULL', [reset.user_id]);
       const { rows: u } = await pool.query('SELECT email FROM users WHERE id = $1', [reset.user_id]);
       await logAction({ userId: reset.user_id, userEmail: u[0]?.email, action: 'password_reset_completed', entity: 'user', entityId: reset.user_id, detail: 'all sessions revoked' });
       return send(res, 200, { ok: true });
     }
 
-    // POST /api/auth/email/verify  — confirm email address using token from link
+    // POST /api/auth/email/verify
     if (parts[1] === 'auth' && parts[2] === 'email' && parts[3] === 'verify' && req.method === 'POST') {
       const { token = '' } = await readBody(req);
       const { rows } = await pool.query(
@@ -324,11 +315,10 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { ok: true });
     }
 
-    // ── 3. PUBLIC WEBSITE CONTENT (no auth required) ──────────────────────────
+    // ── 3. PUBLIC WEBSITE CONTENT ─────────────────────────────────────────────
     const lang = url.searchParams.get('lang') === 'sw' ? 'sw' : 'en';
 
     if (parts[1] === 'website') {
-      // GET /api/website/posts
       if (parts[2] === 'posts' && !parts[3] && req.method === 'GET') {
         const type = url.searchParams.get('type');
         const { rows } = await pool.query(
@@ -342,7 +332,6 @@ const server = http.createServer(async (req, res) => {
         return send(res, 200, rows);
       }
 
-      // GET /api/website/posts/:slug
       if (parts[2] === 'posts' && parts[3] && req.method === 'GET') {
         const { rows } = await pool.query(
           `SELECT id,type,slug,
@@ -357,7 +346,6 @@ const server = http.createServer(async (req, res) => {
         return send(res, 200, rows[0]);
       }
 
-      // GET /api/website/impact-stories
       if (parts[2] === 'impact-stories' && !parts[3] && req.method === 'GET') {
         const { rows } = await pool.query(
           `SELECT id, slug, title_${lang} AS title, body_${lang} AS body,
@@ -367,7 +355,6 @@ const server = http.createServer(async (req, res) => {
         return send(res, 200, rows);
       }
 
-      // GET /api/website/partners
       if (parts[2] === 'partners' && req.method === 'GET') {
         const { rows } = await pool.query(
           `SELECT id, name, type, logo_url, website_url,
@@ -377,7 +364,6 @@ const server = http.createServer(async (req, res) => {
         return send(res, 200, rows);
       }
 
-      // POST /api/website/contact
       if (parts[2] === 'contact' && req.method === 'POST') {
         const { full_name = '', email = '', organisation = '', subject = '', message = '', lang: msgLang = 'en' } = await readBody(req);
         if (!full_name || !email || !subject || !message) {
@@ -402,13 +388,12 @@ const server = http.createServer(async (req, res) => {
       return send(res, 404, { error: 'Not found' });
     }
 
-    // ── 4. AUTH WALL — everything below requires a valid access token ─────────
+    // ── 4. AUTH WALL ──────────────────────────────────────────────────────────
     const user = await getAuthUser(req);
     if (!user) return send(res, 401, { error: 'Not authenticated. Please sign in.' });
 
     // ── 5. AUTHENTICATED AUTH ROUTES ──────────────────────────────────────────
 
-    // GET /api/auth/me
     if (parts[1] === 'auth' && parts[2] === 'me' && req.method === 'GET') {
       return send(res, 200, {
         user:        publicUser(user),
@@ -417,7 +402,6 @@ const server = http.createServer(async (req, res) => {
       });
     }
 
-    // POST /api/auth/email/resend  — resend verification email
     if (parts[1] === 'auth' && parts[2] === 'email' && parts[3] === 'resend' && req.method === 'POST') {
       if (user.email_verified_at) {
         return send(res, 400, { error: 'Your email address is already verified.' });
@@ -433,17 +417,14 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { ok: true });
     }
 
-    // POST /api/auth/mfa/setup  — generate TOTP secret & QR URI
     if (parts[1] === 'auth' && parts[2] === 'mfa' && parts[3] === 'setup' && req.method === 'POST') {
       const secret = generateBase32Secret();
       await pool.query('UPDATE users SET mfa_pending_secret = $1 WHERE id = $2', [secret, user.id]);
       return send(res, 200, { secret, otpauthUri: otpauthUri({ secret, accountEmail: user.email }) });
     }
 
-    // POST /api/auth/mfa/enable  — confirm TOTP code to activate MFA
     if (parts[1] === 'auth' && parts[2] === 'mfa' && parts[3] === 'enable' && req.method === 'POST') {
       const { code = '' } = await readBody(req);
-      // Re-fetch to get mfa_pending_secret (currentUser caches old row)
       const { rows: fresh } = await pool.query('SELECT * FROM users WHERE id = $1', [user.id]);
       const u = fresh[0];
       if (!u.mfa_pending_secret) return send(res, 400, { error: 'Please call /api/auth/mfa/setup first' });
@@ -458,7 +439,6 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { ok: true });
     }
 
-    // POST /api/auth/mfa/disable  — disable MFA (requires valid current TOTP code)
     if (parts[1] === 'auth' && parts[2] === 'mfa' && parts[3] === 'disable' && req.method === 'POST') {
       const { code = '' } = await readBody(req);
       const { rows: fresh } = await pool.query('SELECT * FROM users WHERE id = $1', [user.id]);
@@ -480,7 +460,7 @@ const server = http.createServer(async (req, res) => {
       return send(res, 404, { error: 'Not found' });
     }
 
-    // ── 7. LEGACY admin routes (kept for backward compat with admin UI) ────────
+    // ── 7. LEGACY admin routes ────────────────────────────────────────────────
     if (parts[1] === 'users' && req.method === 'GET' && !parts[2]) {
       const denied = await checkPerm(user, 'admin', 'view');
       if (denied) return send(res, denied.status, denied.body);
@@ -580,6 +560,22 @@ const server = http.createServer(async (req, res) => {
       );
       await logAction({ userId: user.id, userEmail: user.email, action: 'create', entity: 'me_submission', entityId: sRows[0].id, detail: `form: ${form.key}` });
       return send(res, 201, { id: sRows[0].id, ok: true });
+    }
+
+    // DELETE /api/submissions/:id — requires data_collection:approve
+    if (parts[1] === 'submissions' && parts[2] && req.method === 'DELETE') {
+      const denied = await checkPerm(user, 'data_collection', 'approve');
+      if (denied) return send(res, denied.status, denied.body);
+      const id = Number(parts[2]);
+      const { rows } = await pool.query('SELECT id, form_id, beneficiary_id FROM me_submissions WHERE id = $1', [id]);
+      if (!rows[0]) return send(res, 404, { error: 'Submission not found' });
+      await pool.query('DELETE FROM me_submissions WHERE id = $1', [id]);
+      await logAction({
+        userId: user.id, userEmail: user.email,
+        action: 'delete', entity: 'me_submission', entityId: id,
+        detail: `deleted submission #${id}`,
+      });
+      return send(res, 200, { ok: true });
     }
 
     // ── 9. AUDIT LOG ──────────────────────────────────────────────────────────
