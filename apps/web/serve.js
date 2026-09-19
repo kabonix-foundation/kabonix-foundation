@@ -12,21 +12,55 @@ const WEBSITE_URL = process.env.WEBSITE_URL || 'http://localhost:3001';
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
-  '.js':   'text/javascript',
-  '.css':  'text/css',
+  '.js':   'text/javascript; charset=utf-8',
+  '.css':  'text/css; charset=utf-8',
+  '.png':  'image/png',
+  '.jpg':  'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.webp': 'image/webp',
+  '.svg':  'image/svg+xml',
+  '.ico':  'image/x-icon',
 };
 
 const META_INJECT = `
-  <meta name="api-url"     content="${API_URL}">
-  <meta name="website-url" content="${WEBSITE_URL}">`;
+  <meta name="api-url"     content="${escapeAttribute(API_URL)}">
+  <meta name="website-url" content="${escapeAttribute(WEBSITE_URL)}">`;
+
+function escapeAttribute(value) {
+  return String(value).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function safePath(requestUrl) {
+  let pathname;
+  try {
+    pathname = decodeURIComponent((requestUrl || '/').split('?')[0]);
+  } catch {
+    return null;
+  }
+  const requested = pathname === '/' ? '/index.html' : pathname;
+  const filePath = path.resolve(__dirname, `.${requested}`);
+  return filePath.startsWith(__dirname + path.sep) ? filePath : null;
+}
 
 http.createServer((req, res) => {
-  let p = req.url === '/' ? '/index.html' : req.url.split('?')[0];
-  const filePath = path.join(__dirname, p);
-  const ext = path.extname(filePath);
+  const filePath = safePath(req.url);
+  if (!filePath) {
+    res.writeHead(400, { 'Content-Type': 'text/plain; charset=utf-8' });
+    return res.end('Bad request');
+  }
 
   fs.readFile(filePath, (err, content) => {
+    // Keep deployments that omit the raster asset working by serving the
+    // checked-in vector mark for the legacy logo.png URL.
+    if (err && filePath.endsWith(`${path.sep}assets${path.sep}logo.png`)) {
+      return fs.readFile(path.join(__dirname, 'assets', 'kabonix-logo.svg'), (svgErr, svg) => {
+        if (svgErr) { res.writeHead(404); return res.end('Not found'); }
+        res.writeHead(200, { 'Content-Type': MIME['.svg'], 'Cache-Control': 'public, max-age=3600' });
+        res.end(svg);
+      });
+    }
     if (err) { res.writeHead(404); return res.end('Not found'); }
+    const ext = path.extname(filePath);
     let body = content;
     if (ext === '.html') {
       body = Buffer.from(content.toString().replace('<head>', `<head>${META_INJECT}`));
