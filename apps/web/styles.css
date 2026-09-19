@@ -10,7 +10,7 @@
   --sand-tint:     #fdf3e3;
   --ink:           #171f1a;
   --ink-soft:      #3d4d44;
-  --ink-faint:     #758270;
+  --ink-faint:     #5f6d5c;   /* darkened from #758270 for AA contrast on --paper */
   --paper:         #f6f8f5;
   --card:          #ffffff;
   --line:          #dde5de;
@@ -18,6 +18,8 @@
   --ok:            #1a7a55;
   --warn:          #c8922a;
   --sidebar-w:     230px;
+  --sidebar-w-collapsed: 72px;
+  --focus:         0 0 0 3px rgba(34,160,107,.35);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -27,19 +29,53 @@ body { font-family: "Georgia", "Times New Roman", serif; font-size: 15px; color:
 a { color: var(--forest-light); }
 code { font-family: "Menlo","Consolas","Courier New",monospace; font-size: 12px; }
 
+/* ── Focus visibility ── */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--leaf);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+  }
+}
+
 /* ── Login ── */
 .login-screen { display: grid; grid-template-columns: 1fr 1fr; min-height: 100vh; }
 @media (max-width: 800px) { .login-screen { grid-template-columns: 1fr; } .login-visual { display: none; } }
 
 .login-visual {
+  position: relative; overflow: hidden;
   background: linear-gradient(155deg, var(--forest) 0%, var(--forest-mid) 55%, #0e5a7a 100%);
   color: #fff; padding: 60px 52px;
-  display: flex; flex-direction: column; justify-content: space-between;
+  display: flex; flex-direction: column; justify-content: flex-start;
 }
-.login-visual .mark { font-family: -apple-system,"Segoe UI",sans-serif; font-size: 12px; font-weight: 700; letter-spacing: .1em; color: #a9cbb8; margin-bottom: 40px; }
+/* Brand lockup: wordmark → logo mark → heading, with the pills pinned to the floor. */
+.login-visual::before {
+  content: "";
+  order: 0;
+  display: block;
+  width: 120px; height: 120px;
+  margin: 0 0 28px;
+  border-radius: 50%;
+  border: 3px solid rgba(255,255,255,.78);
+  background: #fff url('./assets/logo.png') center / 110px 96px no-repeat;
+  box-shadow: 0 12px 30px rgba(0,0,0,.16);
+}
+.login-visual .mark {
+  order: -1;
+  font-family: -apple-system,"Segoe UI",sans-serif;
+  font-size: 12px; font-weight: 700; letter-spacing: .1em;
+  color: #a9cbb8; margin-bottom: 22px;
+}
 .login-visual h1 { font-size: 38px; font-weight: 400; line-height: 1.2; max-width: 340px; margin-bottom: 20px; }
 .login-visual p { font-family: -apple-system,"Segoe UI",sans-serif; font-size: 14px; color: #a9cbb8; line-height: 1.7; max-width: 320px; }
-.login-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+.login-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; padding-top: 40px; }
 .login-pills span { font-family: -apple-system,"Segoe UI",sans-serif; font-size: 12px; background: rgba(255,255,255,.12); padding: 5px 12px; border-radius: 20px; color: #cde0d5; }
 
 .login-form-side { display: flex; align-items: center; justify-content: center; padding: 40px; }
@@ -58,7 +94,7 @@ code { font-family: "Menlo","Consolas","Courier New",monospace; font-size: 12px;
   transition: border .15s, box-shadow .15s;
 }
 .field input:focus, .field select:focus, .field textarea:focus {
-  outline: none; border-color: var(--leaf); box-shadow: 0 0 0 3px rgba(34,160,107,.14);
+  outline: none; border-color: var(--leaf); box-shadow: var(--focus);
 }
 .field textarea { resize: vertical; min-height: 80px; }
 .form-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-start; }
@@ -90,15 +126,27 @@ code { font-family: "Menlo","Consolas","Courier New",monospace; font-size: 12px;
 .app-shell { display: flex; min-height: 100vh; }
 .sidebar {
   width: var(--sidebar-w); flex: 0 0 auto; background: var(--forest);
-  display: flex; flex-direction: column; padding: 0; position: sticky; top: 0; height: 100vh; overflow-y: auto;
+  display: flex; flex-direction: column; padding: 0;
+  position: sticky; top: 0; height: 100vh; overflow-y: auto; overflow-x: hidden;
 }
-.sb-brand { display: flex; align-items: center; gap: 10px; padding: 20px 18px 18px; border-bottom: 1px solid rgba(255,255,255,.08); }
-.sb-logo { width: 96px; height: 96px; background: transparent; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: -apple-system,"Segoe UI",sans-serif; font-size: 18px; font-weight: 700; color: #fff; }
-.sb-logo-img { width: 88px; height: 88px; border-radius: 50%; object-fit: cover; display: block; }
-.sb-logo-letter { display: none; }
-.sb-name { font-family: -apple-system,"Segoe UI",sans-serif; font-size: 13px; font-weight: 700; letter-spacing: .06em; color: #fff; line-height: 1.1; }
-.sb-sub  { font-family: -apple-system,"Segoe UI",sans-serif; font-size: 9.5px; color: #7aaa8e; letter-spacing: .06em; }
-.sb-nav { flex: 1; padding: 10px 10px; }
+
+/* Brand block — 40px mark keeps the lockup inside 230px without crowding the nav. */
+.sb-brand {
+  display: flex; align-items: center; gap: 10px;
+  padding: 16px 14px; border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.sb-brand > div { min-width: 0; }
+.sb-brand-link { display: flex; align-items: center; text-decoration: none; flex-shrink: 0; border-radius: 50%; }
+.sb-logo {
+  width: 40px; height: 40px; flex-shrink: 0;
+  background: #fff; border-radius: 50%;
+  display: grid; place-items: center; overflow: hidden;
+}
+.sb-logo-img { width: 34px; height: 34px; border-radius: 50%; object-fit: contain; display: block; }
+.sb-name { font-family: -apple-system,"Segoe UI",sans-serif; font-size: 12.5px; font-weight: 700; letter-spacing: .06em; color: #fff; line-height: 1.15; white-space: nowrap; }
+.sb-sub  { font-family: -apple-system,"Segoe UI",sans-serif; font-size: 9px; color: #7aaa8e; letter-spacing: .07em; white-space: nowrap; }
+
+.sb-nav { flex: 1; padding: 10px; }
 .nav-item {
   display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 6px;
   font-family: -apple-system,"Segoe UI",sans-serif; font-size: 13px; color: #b0cdb9;
@@ -115,40 +163,56 @@ code { font-family: "Menlo","Consolas","Courier New",monospace; font-size: 12px;
 }
 .sb-logout:hover { background: rgba(255,255,255,.07); color: #fff; }
 
-/* Collapsed sidebar (icons-only) */
-.sidebar.collapsed { width: 72px; }
-.sidebar.collapsed .sb-brand { padding: 12px; }
-.sidebar.collapsed .sb-name, .sidebar.collapsed .sb-sub { display: none; }
-.sidebar.collapsed .nav-item { padding: 8px; justify-content: center; }
+/* Hamburger — inline on desktop, floating on mobile */
+#sb-toggle {
+  display: inline-flex; align-items: center; justify-content: center;
+  background: transparent; border: none; color: #fff; font-size: 19px;
+  padding: 6px; cursor: pointer; margin-right: 4px; flex-shrink: 0; line-height: 1;
+}
+
+/* ── Collapsed sidebar (icons only) ── */
+.sidebar.collapsed { width: var(--sidebar-w-collapsed); }
+.sidebar.collapsed .sb-brand { flex-direction: column; gap: 8px; padding: 12px 8px; }
+.sidebar.collapsed .sb-name,
+.sidebar.collapsed .sb-sub { display: none; }
+.sidebar.collapsed .sb-logo { width: 36px; height: 36px; }
+.sidebar.collapsed .sb-logo-img { width: 30px; height: 30px; }
+.sidebar.collapsed #sb-toggle { margin: 0; }
+.sidebar.collapsed .nav-item { padding: 9px 0; justify-content: center; }
 .sidebar.collapsed .nav-item .nav-label { display: none; }
 .sidebar.collapsed .nav-item .nav-icon { font-size: 16px; }
+.sidebar.collapsed .sb-logout { font-size: 0; padding: 9px 0; }
+.sidebar.collapsed .sb-logout::after { content: '⎋'; font-size: 14px; }
 
-/* Mobile overlay behaviour: hide by default and slide in when open */
+/* ── Mobile: off-canvas drawer ──
+   Uses `left` rather than `transform` so the floating #sb-toggle (a fixed
+   descendant) is not re-parented by a transformed ancestor. */
 @media (max-width: 800px) {
-  .sidebar { position: fixed; left: -100%; top: 0; height: 100vh; width: var(--sidebar-w); transition: transform .22s ease; transform: translateX(-100%); z-index: 1000; }
-  .app-shell.sidebar-open .sidebar { transform: translateX(0); left: 0; }
-  .app-shell.sidebar-open::after { content: ''; position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 900; }
-  .sb-brand { padding: 8px 10px; }
-  .sb-logo { width:48px; height:48px; }
-  .sb-logo-img { width:40px; height:40px; }
+  .sidebar {
+    position: fixed; top: 0; left: calc(-1 * min(290px, 84vw));
+    width: min(290px, 84vw); height: 100vh;
+    transition: left .22s ease; z-index: 1000;
+  }
+  .app-shell.sidebar-open .sidebar { left: 0; }
+  .app-shell.sidebar-open::after {
+    content: ''; position: fixed; inset: 0;
+    background: rgba(11,61,46,.45); z-index: 900;
+  }
+  /* Clear the floating button. */
+  .sb-brand { padding: 14px 14px 14px 64px; }
+  #sb-toggle {
+    position: fixed; top: 14px; left: 14px; z-index: 1100;
+    width: 42px; height: 42px; margin: 0; border-radius: 9px;
+    background: var(--forest); box-shadow: 0 3px 12px rgba(0,0,0,.22);
+  }
+  .main-area { padding: 68px 18px 48px; }
 }
 
-/* Hamburger toggle button (visible on desktop and mobile) */
-#sb-toggle { display: inline-flex; align-items:center; justify-content:center; background: transparent; border: none; color: #fff; font-size: 20px; padding: 6px; cursor: pointer; margin-right:8px; }
-
-.main-area { flex: 1 1 auto; padding: 36px 44px 60px; min-width: 0; }
-@media (max-width: 900px) { .main-area { padding: 24px 20px; } }
-
-/* Responsive adjustments: move sidebar to top on small screens */
-@media (max-width: 800px) {
-  .app-shell { flex-direction: column; }
-  .sidebar { width: 100%; height: auto; position: relative; display: flex; flex-direction: row; align-items: center; padding: 8px 10px; }
-  .sb-brand { padding: 8px 10px; gap: 8px; }
-  .sb-nav { display: flex; gap: 8px; padding: 8px; overflow-x: auto; }
-  .nav-item { white-space: nowrap; flex: 0 0 auto; }
-  .sb-name, .sb-sub { display: none; }
-  .main-area { padding-top: 12px; }
+.main-area {
+  flex: 1 1 auto; min-width: 0; width: 100%; max-width: 1280px;
+  margin: 0 auto; padding: 36px 44px 60px;
 }
+@media (max-width: 900px) { .main-area { padding: 28px 20px 48px; } }
 
 /* ── Page head ── */
 .page-head { margin-bottom: 24px; }
@@ -158,6 +222,7 @@ code { font-family: "Menlo","Consolas","Courier New",monospace; font-size: 12px;
 /* ── Cards ── */
 .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; margin-bottom: 18px; overflow: hidden; }
 .card-inner { padding: 22px 24px; }
+.card-table { overflow-x: auto; }   /* must come after .card */
 .card h3 { font-family: -apple-system,"Segoe UI",sans-serif; font-size: 14px; font-weight: 600; margin-bottom: 14px; color: var(--ink); }
 
 /* ── Tables ── */
@@ -198,7 +263,7 @@ tr:hover td { background: #fafcfa; }
 .stat-label { font-family: -apple-system,"Segoe UI",sans-serif; font-size: 12px; color: var(--ink-faint); }
 
 /* ── Two-col layout ── */
-.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
 @media (max-width: 800px) { .two-col { grid-template-columns: 1fr; } }
 
 /* ── Quick actions ── */
@@ -210,7 +275,7 @@ tr:hover td { background: #fafcfa; }
 }
 .qa-btn:hover { background: var(--leaf-tint); border-color: var(--leaf); }
 
-/* ── Permission matrix table ── */
+/* ── Permission matrix ── */
 .perm-table { font-size: 12.5px; }
 .perm-table th { font-size: 10.5px; text-align: center; }
 .perm-cell { text-align: center; }
@@ -223,33 +288,33 @@ tr:hover td { background: #fafcfa; }
   padding: 12px 0; border-bottom: 1px solid var(--line); gap: 16px;
 }
 .cfg-row:last-child { border-bottom: none; }
-.cfg-label { flex: 1; }
+.cfg-label { flex: 1; min-width: 0; }
 .cfg-label strong { display: block; font-family: -apple-system,"Segoe UI",sans-serif; font-size: 13.5px; margin-bottom: 2px; }
 .cfg-label .meta { font-size: 11.5px; }
 .cfg-control { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .cfg-control input[type=text], .cfg-control input[type=number], .cfg-control select {
   font-family: -apple-system,"Segoe UI",sans-serif; font-size: 13px; padding: 6px 10px;
   border: 1px solid var(--line); border-radius: 5px; background: var(--card); color: var(--ink);
-  max-width: 180px;
+  max-width: 180px; width: 100%;
 }
 
 /* ── Toggle switch ── */
-.toggle-wrap { position: relative; display: inline-block; width: 40px; height: 22px; cursor: pointer; }
+.toggle-wrap { position: relative; display: inline-block; width: 40px; height: 22px; cursor: pointer; flex-shrink: 0; }
 .toggle-wrap input { opacity: 0; width: 0; height: 0; position: absolute; }
-.toggle-slider {
-  position: absolute; inset: 0; background: var(--line); border-radius: 22px; transition: background .2s;
-}
+.toggle-slider { position: absolute; inset: 0; background: var(--line); border-radius: 22px; transition: background .2s; }
 .toggle-slider::after {
   content: ''; position: absolute; width: 16px; height: 16px; left: 3px; top: 3px;
   background: #fff; border-radius: 50%; transition: transform .2s;
 }
 .toggle-wrap input:checked + .toggle-slider { background: var(--leaf); }
 .toggle-wrap input:checked + .toggle-slider::after { transform: translateX(18px); }
+.toggle-wrap input:focus-visible + .toggle-slider { outline: 2px solid var(--leaf); outline-offset: 2px; }
 
 /* ── Inline select ── */
 .inline-select {
   font-family: -apple-system,"Segoe UI",sans-serif; font-size: 12px; padding: 4px 7px;
   border: 1px solid var(--line); border-radius: 5px; background: var(--card); color: var(--ink);
+  max-width: 150px;
 }
 
 /* ── Detail list ── */
@@ -257,17 +322,24 @@ tr:hover td { background: #fafcfa; }
 .detail-list dt { font-size: 11.5px; font-weight: 700; color: var(--ink-faint); text-transform: uppercase; letter-spacing: .04em; margin-top: 12px; }
 .detail-list dd { font-size: 14px; margin-top: 3px; }
 
-/* ── Toast ── */
+/* ── Toasts (stack instead of overlapping) ── */
+#toast-stack {
+  position: fixed; bottom: 24px; right: 24px; z-index: 999;
+  display: flex; flex-direction: column; gap: 10px; align-items: flex-end;
+  pointer-events: none;
+}
 .toast {
-  position: fixed; bottom: 24px; right: 24px; background: var(--forest); color: #fff;
+  background: var(--forest); color: #fff;
   padding: 12px 18px; border-radius: 8px; font-family: -apple-system,"Segoe UI",sans-serif;
-  font-size: 13px; box-shadow: 0 6px 24px rgba(0,0,0,.18); z-index: 999; animation: slideUp .2s ease;
+  font-size: 13px; box-shadow: 0 6px 24px rgba(0,0,0,.18); animation: slideUp .2s ease;
+  max-width: 340px;
 }
 .toast.error { background: var(--danger); }
 @keyframes slideUp { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@media (max-width: 600px) { #toast-stack { left: 16px; right: 16px; bottom: 16px; align-items: stretch; } .toast { max-width: none; } }
 
 /* ── AI & Data Intelligence ── */
-.ai-grid { display: grid; grid-template-columns: 1.25fr 0.75fr; gap: 18px; margin-bottom: 18px; }
+.ai-grid { display: grid; grid-template-columns: 1.25fr 0.75fr; gap: 18px; margin-bottom: 18px; align-items: start; }
 .ai-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 18px; }
 .ai-card-head h3 { margin: 0 0 4px; }
 .ai-status { font: 12px -apple-system,"Segoe UI",sans-serif; color: var(--ok); white-space: nowrap; }
