@@ -1218,6 +1218,1094 @@
     }
     .topbar-btn:hover { background: #1f6b4c; transform: scale(1.05); }
 
+    /* --- HEADER & LANGUAGE TOGGLE --- */
+    header {
+      background: var(--white);
+      border-bottom: 1px solid var(--line);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    }
+    .nav {
+      height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--deep);
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 18px;
+    }
+    .brand small { display: block; font-size: 10px; letter-spacing: .15em; color: var(--muted); font-weight: 500; }
+    .links { display: flex; align-items: center; gap: 28px; font-size: 15px; color: var(--muted); font-weight: 500; }
+    .links a { transition: var(--transition); position: relative; }
+    .links a:hover { color: var(--forest); }
+    .links a::after {
+      content: ''; position: absolute; bottom: -4px; left: 0; width: 0; height: 2px;
+      background: var(--forest); transition: var(--transition);
+    }
+    .links a:hover::after { width: 100%; }
+
+    /* Language Toggle */
+    .lang-toggle {
+      display: flex;
+      background: #edf7ef;
+      border-radius: 20px;
+      padding: 4px;
+      gap: 4px;
+    }
+    .lang-btn {
+      padding: 6px 12px;
+      border: none;
+      background: transparent;
+      border-radius: 16px;
+      font-weight: 700;
+      font-size: 12px;
+      cursor: pointer;
+      color: var(--muted);
+      transition: var(--transition);
+    }
+    .lang-btn.active {
+      background: var(--forest);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(13, 104, 69, 0.3);
+    }
+
+    /* --- HERO SECTION --- */
+    .hero {
+      position: relative;
+      padding: 120px 0 140px;
+      background: linear-gradient(rgba(7, 59, 44, 0.85), rgba(7, 59, 44, 0.7)), url('https://images.unsplash.com/photo-1511497584788-876760111969?auto=format&fit=crop&q=80') center/cover no-repeat;
+      color: #fff;
+      overflow: hidden;
+    }
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 60px;
+      align-items: center;
+    }
+    .kicker {
+      font-size: 12px; letter-spacing: .2em; text-transform: uppercase;
+      color: #7dd3a8; font-weight: 700; margin-bottom: 20px;
+    }
+    .hero h1 {
+      font-size: clamp(40px, 5vw, 64px);
+      line-height: 1.1; margin: 0 0 24px; color: #fff;
+    }
+    .hero p {
+      margin: 0 0 32px; max-width: 56ch; color: #dcefe5;
+      font-size: 18px; line-height: 1.7;
+    }
+    .hero .actions { display: flex; gap: 16px; flex-wrap: wrap; }
+    
+    /* Hero Floating Features */
+    .hero-features { display: flex; flex-direction: column; gap: 16px; }
+    .hero-feature {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      padding: 16px 20px;
+      display: flex; align-items: center; gap: 16px;
+      transition: var(--transition);
+    }
+    .hero-feature:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateX(-10px);
+    }
+    .hero-feature-icon {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: rgba(125, 211, 168, 0.2);
+      display: grid; place-items: center; font-size: 20px; color: #7dd3a8;
+    }
+    .hero-feature-text h4 { margin: 0 0 4px; font-size: 16px; }
+    .hero-feature-text p { margin: 0; font-size: 13px; color: #b8d8c8; line-height: 1.4; }
+
+    /* --- SECTION STYLES --- */
+    section { padding: 90px 0; }
+    .section-bg { background: #fff; }
+    .heading { max-width: 650px; margin-bottom: 50px; }
+    .heading h2 { margin: 0; font-size: clamp(32px, 3vw, 44px); line-height: 1.15; color: var(--deep); }
+    .heading p { margin-top: 16px; color: var(--muted); font-size: 17px; }
+
+    /* --- SERVICES GRID & CARDS --- */
+    .cards-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    .card {
+      background: #fff; border: 1px solid var(--line); border-radius: 16px;
+      padding: 32px; transition: var(--transition);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+      position: relative;
+      overflow: hidden;
+    }
+    .card:hover {
+      transform: translateY(-8px);
+      box-shadow: var(--shadow);
+      border-color: var(--forest);
+    }
+    
+    /* Standard Card Content */
+    .card-content {
+      position: relative;
+      z-index: 10; /* Highest z-index to stay above water */
+    }
+    .card .icon {
+      width: 54px; height: 54px; border-radius: 12px;
+      background: #edf7ef; display: grid; place-items: center;
+      font-size: 24px; margin-bottom: 20px; color: var(--forest);
+    }
+    .card h3 { margin: 0 0 12px; color: var(--deep); font-size: 20px; }
+    .card p { margin: 0 0 20px; color: var(--muted); font-size: 15px; }
+    .card a { color: var(--forest); font-weight: 700; font-size: 14px; display: inline-flex; align-items: center; gap: 6px; transition: var(--transition); }
+    .card a:hover { gap: 10px; color: var(--deep); }
+
+    /* --- BLUE ECONOMY REALISTIC WATER & FISH ANIMATION --- */
+    .card-blue-economy {
+      padding-bottom: 180px; /* Make room for the water */
+      background: linear-gradient(180deg, #ffffff 0%, #eef7f9 100%);
+      transition: var(--transition);
+    }
+    .card-blue-economy:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 15px 35px rgba(14, 122, 138, 0.15);
+      border-color: #0e7a8a;
+    }
+
+    /* Transparent text with white glow for readability over water */
+    .card-blue-economy .card-content {
+      background: transparent; /* Fully transparent to reveal water */
+      padding: 0; /* Remove padding to let water flow naturally */
+    }
+
+    .card-blue-economy h3 {
+      font-weight: 800;
+      color: #042f3a; /* Deep navy blue */
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.95), 0 0 20px rgba(255, 255, 255, 0.8), 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .card-blue-economy p {
+      font-weight: 600;
+      color: #1a4a55; /* Dark teal */
+      text-shadow: 0 0 8px rgba(255, 255, 255, 0.95), 0 0 15px rgba(255, 255, 255, 0.8), 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .card-blue-economy a {
+      font-weight: 800;
+      color: #0e7a8a; /* Vibrant teal */
+      font-size: 15px;
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.95), 0 0 20px rgba(255, 255, 255, 0.8);
+    }
+    .card-blue-economy a:hover {
+      color: #064b5a;
+    }
+    
+    /* The Water Container */
+    .water {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 55%; /* Fills more than half the card */
+      background: 
+        radial-gradient(circle at 20% 80%, rgba(255,255,255,0.1) 2px, transparent 2px),
+        radial-gradient(circle at 70% 60%, rgba(255,255,255,0.15) 3px, transparent 3px),
+        radial-gradient(circle at 40% 90%, rgba(255,255,255,0.08) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(14,122,138,0.9) 0%, rgba(6,75,90,0.98) 100%);
+      background-size: 100px 100px, 150px 150px, 80px 80px, 100% 100%;
+      z-index: 2;
+      transition: height 0.8s cubic-bezier(0.25, 0.8, 0.25, 1);
+      box-shadow: inset 0 15px 30px rgba(255, 255, 255, 0.2);
+    }
+    .card-blue-economy:hover .water {
+      height: 65%; /* Water rises on hover */
+    }
+
+    /* Wave Layer 1 (Back - Stronger) */
+    .water::before {
+      content: "";
+      position: absolute;
+      top: -30px;
+      left: 0;
+      width: 200%;
+      height: 50px;
+      background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none"><path d="M0,60 C200,140 400,0 600,60 C800,120 1000,0 1200,60 L1200,120 L0,120 Z" fill="%230e7a8a"/></svg>') repeat-x;
+      background-size: 50% 100%;
+      animation: waveMove 12s linear infinite reverse;
+      opacity: 0.9;
+      z-index: 1;
+    }
+
+    /* Wave Layer 2 (Front - Stronger & Faster) */
+    .water::after {
+      content: "";
+      position: absolute;
+      top: -25px;
+      left: 0;
+      width: 200%;
+      height: 40px;
+      background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none"><path d="M0,80 C200,20 400,140 600,80 C800,20 1000,140 1200,80 L1200,120 L0,120 Z" fill="%23064b5a"/></svg>') repeat-x;
+      background-size: 50% 100%;
+      animation: waveMove 8s linear infinite;
+      opacity: 0.8;
+      z-index: 3;
+    }
+
+    @keyframes waveMove {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    /* --- FISH ANIMATIONS --- */
+    .fish {
+      position: absolute;
+      background-repeat: no-repeat;
+      background-size: contain;
+      z-index: 2; /* Between the two waves */
+      opacity: 0.9;
+    }
+
+    /* Fish 1 - Medium, Fast, Swimming Right */
+    .fish-1 {
+      width: 45px;
+      height: 25px;
+      top: 30%;
+      left: -50px;
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 50"><path d="M20,25 Q40,10 60,25 Q40,40 20,25 Z" fill="%23ffffff" opacity="0.8"/><path d="M20,25 L10,15 L10,35 Z" fill="%23ffffff" opacity="0.8"/><circle cx="45" cy="20" r="2" fill="%23064b5a"/></svg>');
+      animation: swimRight 8s linear infinite;
+    }
+
+    /* Fish 2 - Large, Slow, Swimming Left */
+    .fish-2 {
+      width: 70px;
+      height: 35px;
+      top: 60%;
+      right: -80px;
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 50"><path d="M80,25 Q60,10 40,25 Q60,40 80,25 Z" fill="%2334E0A1" opacity="0.7"/><path d="M80,25 L90,15 L90,35 Z" fill="%2334E0A1" opacity="0.7"/><circle cx="55" cy="20" r="2" fill="%23064b5a"/></svg>');
+      animation: swimLeft 14s linear infinite;
+    }
+
+    /* Fish 3 - Small, Medium Speed, Swimming Right */
+    .fish-3 {
+      width: 30px;
+      height: 15px;
+      top: 75%;
+      left: -30px;
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 50"><path d="M20,25 Q40,10 60,25 Q40,40 20,25 Z" fill="%23a0d8ef" opacity="0.9"/><path d="M20,25 L10,15 L10,35 Z" fill="%23a0d8ef" opacity="0.9"/><circle cx="45" cy="20" r="2" fill="%23064b5a"/></svg>');
+      animation: swimRight 10s linear infinite 2s; /* Added delay */
+    }
+
+    @keyframes swimRight {
+      0% { left: -10%; transform: translateY(0) scaleX(1); }
+      50% { transform: translateY(-10px) scaleX(1); }
+      100% { left: 110%; transform: translateY(0) scaleX(1); }
+    }
+
+    @keyframes swimLeft {
+      0% { right: -10%; transform: translateY(0) scaleX(1); }
+      50% { transform: translateY(10px) scaleX(1); }
+      100% { right: 110%; transform: translateY(0) scaleX(1); }
+    }
+
+    /* --- IMPACT STATS --- */
+    .impact-section {
+      background: linear-gradient(135deg, var(--deep) 0%, var(--forest) 100%);
+      color: #fff;
+      position: relative;
+      overflow: hidden;
+    }
+    .impact-section::before {
+      content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: url('data:image/svg+xml;utf8,<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="M10 10 Q 30 20 50 10 T 90 10" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="2"/></svg>');
+      opacity: 0.5;
+    }
+    .impact-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; position: relative; z-index: 1; }
+    .impact-card {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 16px;
+      padding: 30px;
+      transition: var(--transition);
+    }
+    .impact-card:hover { background: rgba(255,255,255,0.15); transform: translateY(-5px); }
+    .metric { font-size: 48px; font-weight: 800; color: #7dd3a8; margin-bottom: 12px; line-height: 1; }
+    .impact-card h3 { margin: 0 0 8px; font-size: 20px; }
+    .impact-card p { margin: 0; color: #b8d8c8; font-size: 15px; }
+
+    /* --- NEWS & PROJECTS GRID --- */
+    .projects-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    .project-card {
+      background: #fff; border-radius: 16px; overflow: hidden;
+      border: 1px solid var(--line); transition: var(--transition);
+    }
+    .project-card:hover { transform: translateY(-6px); box-shadow: var(--shadow); }
+    .project-img { width: 100%; height: 200px; object-fit: cover; display: block; transition: var(--transition); }
+    .project-card:hover .project-img { transform: scale(1.05); }
+    .project-content { padding: 24px; }
+    .project-tag { 
+      display: inline-block; padding: 4px 12px; border-radius: 20px; 
+      background: #edf7ef; color: var(--forest); font-size: 12px; font-weight: 700; margin-bottom: 12px;
+    }
+    .project-content h3 { margin: 0 0 8px; font-size: 18px; color: var(--deep); }
+    .project-loc { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+
+    /* --- WHY CHOOSE US --- */
+    .why-choose-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
+    .why-choose-image {
+      border-radius: 20px; overflow: hidden; position: relative;
+      box-shadow: var(--shadow);
+    }
+    .why-choose-image img { width: 100%; display: block; }
+    .why-choose-overlay {
+      position: absolute; bottom: 0; left: 0; width: 100%;
+      background: linear-gradient(transparent, rgba(7,59,44,0.9));
+      padding: 40px 30px 30px; color: #fff;
+    }
+    .why-choose-overlay h3 { margin: 0; font-size: 24px; font-style: italic; font-weight: 400; }
+    .why-features-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 40px; }
+    .why-feature h4 { margin: 0 0 8px; font-size: 18px; color: var(--deep); display: flex; align-items: center; gap: 10px; }
+    .why-feature h4 .icon { color: var(--forest); font-size: 20px; }
+    .why-feature p { margin: 0; color: var(--muted); font-size: 15px; }
+
+    /* --- BOTTOM CTA & FOOTER --- */
+    .bottom-cta {
+      background: var(--deep); color: #fff; padding: 60px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .bottom-cta .container { display: flex; justify-content: space-between; align-items: center; gap: 30px; }
+    .bottom-cta h2 { margin: 0; font-size: clamp(24px, 2.5vw, 36px); }
+    .bottom-cta p { margin: 8px 0 0; color: #b8d8c8; font-size: 18px; }
+
+    /* --- FOOTER: LAND WITH TREES --- */
+    footer {
+      position: relative;
+      background: linear-gradient(180deg, #0d1a12 0%, #1a2b1f 100%);
+      color: #dcefe5;
+      padding: 90px 0 180px; /* Extra padding at bottom for the trees */
+      overflow: hidden;
+    }
+    
+    /* Tree Layer 1 (Background) */
+    footer::before {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 150px;
+      background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 200" preserveAspectRatio="none"><path d="M0,200 L0,100 Q30,80 60,100 T120,100 T180,100 Q210,60 240,100 T300,100 T360,100 Q390,70 420,100 T480,100 T540,100 Q570,40 600,100 T660,100 T720,100 Q750,80 780,100 T840,100 T900,100 Q930,50 960,100 T1020,100 T1080,100 Q1110,70 1140,100 T1200,100 L1200,200 Z" fill="%230a1a12" opacity="0.8"/></svg>') repeat-x;
+      background-size: 800px 150px;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* Tree Layer 2 (Foreground) */
+    footer::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 100px;
+      background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 200" preserveAspectRatio="none"><path d="M0,200 L0,120 Q40,90 80,120 T160,120 Q200,80 240,120 T320,120 T400,120 Q440,60 480,120 T560,120 T640,120 Q680,90 720,120 T800,120 T880,120 Q920,70 960,120 T1040,120 T1120,120 Q1160,90 1200,120 L1200,200 Z" fill="%23052a1f" opacity="0.95"/></svg>') repeat-x;
+      background-size: 600px 100px;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    /* Ensure footer content sits above the trees */
+    .footer-content {
+      position: relative;
+      z-index: 10;
+    }
+    .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1.5fr; gap: 40px; margin-bottom: 50px; }
+    .footer-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; color: #fff; font-weight: 700; text-transform: uppercase; }
+    .footer-col h4 { color: #fff; margin: 0 0 20px; font-size: 16px; }
+    .footer-col ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; }
+    .footer-col ul a { transition: var(--transition); color: #a3c4b5; }
+    .footer-col ul a:hover { color: #fff; padding-left: 4px; }
+    .newsletter-form { display: flex; margin-top: 16px; }
+    .newsletter-form input {
+      flex: 1; padding: 12px 16px; border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.05); border-radius: 8px 0 0 8px; color: #fff; outline: none;
+    }
+    .newsletter-form input::placeholder { color: #6a8f7d; }
+    .newsletter-form button {
+      padding: 12px 20px; background: var(--forest); color: #fff; border: none;
+      border-radius: 0 8px 8px 0; font-weight: 700; cursor: pointer; transition: var(--transition);
+    }
+    .newsletter-form button:hover { background: #1f8a5f; }
+    .footer-bottom {
+      border-top: 1px solid rgba(255,255,255,0.1); padding-top: 24px;
+      display: flex; justify-content: space-between; align-items: center; font-size: 13px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.5); /* Make text readable over trees */
+    }
+    .footer-bottom a { color: #a3c4b5; transition: var(--transition); }
+    .footer-bottom a:hover { color: #fff; }
+
+    /* --- PARTNERS SECTION --- */
+    .partners-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; text-align: center; }
+    .partner-logo {
+      background: #fff; border: 1px solid var(--line); border-radius: 12px;
+      padding: 30px 20px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 12px; transition: var(--transition); filter: grayscale(100%); opacity: 0.7;
+    }
+    .partner-logo:hover { filter: grayscale(0%); opacity: 1; transform: translateY(-4px); box-shadow: var(--shadow); }
+    .partner-logo span { font-weight: 700; color: var(--deep); font-size: 14px; }
+
+    /* --- RESPONSIVE --- */
+    @media (max-width: 1024px) {
+      .hero-grid, .why-choose-grid { grid-template-columns: 1fr; }
+      .hero-features { flex-direction: row; flex-wrap: wrap; }
+      .hero-feature { flex: 1 1 200px; }
+      .cards-grid, .impact-grid, .projects-grid, .partners-grid { grid-template-columns: repeat(2, 1fr); }
+      .footer-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 768px) {
+      .topbar .container { flex-direction: column; text-align: center; gap: 10px; }
+      .topbar-info { flex-direction: column; gap: 5px; }
+      .nav { flex-direction: column; height: auto; padding: 20px 0; gap: 15px; }
+      .links { flex-wrap: wrap; justify-content: center; gap: 15px; }
+      .hero { padding: 80px 0; text-align: center; }
+      .hero .actions { justify-content: center; }
+      .hero-features { justify-content: center; }
+      .cards-grid, .impact-grid, .projects-grid, .why-features-grid, .partners-grid { grid-template-columns: 1fr; }
+      .bottom-cta .container { flex-direction: column; text-align: center; }
+      .footer-grid { grid-template-columns: 1fr; gap: 30px; }
+      .footer-bottom { flex-direction: column; gap: 15px; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="container">
+      <div class="topbar-info">
+        <span>🌿 <span data-i18n="top_identity">Public Identity & Transparency</span></span>
+        <span>📧 info@kabonix.org</span>
+        <span>📍 Dar es Salaam, Tanzania</span>
+      </div>
+      <a href="#contact" class="topbar-btn" data-i18n="top_partner">Partner With Us →</a>
+    </div>
+  </div>
+
+  <!-- HEADER -->
+  <header>
+    <div class="container nav">
+      <a class="brand" href="#home">
+        <!-- Using relative path ./assets/logo.png -->
+        <img src="./assets/logo.png" alt="Kabonix Foundation logo">
+        <span>Kabonix<small>Foundation</small></span>
+      </a>
+      <nav class="links" aria-label="Main navigation">
+        <a href="#about" data-i18n="nav_about">About</a>
+        <a href="#programmes" data-i18n="nav_programmes">Programmes</a>
+        <a href="#news" data-i18n="nav_news">News & Events</a>
+        <a href="#impact" data-i18n="nav_impact">Impact</a>
+        <a href="#partners" data-i18n="nav_partners">Partners</a>
+        <a href="#contact" data-i18n="nav_contact">Contact</a>
+      </nav>
+      <div style="display: flex; align-items: center; gap: 16px;">
+        <!-- Language Toggle -->
+        <div class="lang-toggle">
+          <button class="lang-btn active" data-lang="en" onclick="setLanguage('en')">EN</button>
+          <button class="lang-btn" data-lang="sw" onclick="setLanguage('sw')">SW</button>
+        </div>
+        <a class="btn primary portal-link" id="portal-link" href="/portal" data-i18n="btn_portal">Open portal</a>
+      </div>
+    </div>
+  </header>
+
+  <main id="home">
+
+    <!-- HERO SECTION -->
+    <section class="hero">
+      <div class="container hero-grid">
+        <div class="reveal">
+          <div class="kicker" data-i18n="hero_kicker">Foundation Website</div>
+          <h1 data-i18n="hero_title">The Foundation's public identity & transparency window.</h1>
+          <p data-i18n="hero_sub">Visited by donors, partners, government and the communities it serves. Discover our commitment to climate and the blue economy.</p>
+          <div class="actions">
+            <a class="btn primary" href="#about" data-i18n="btn_learn">Learn About Us</a>
+            <a class="btn outline portal-link" href="/portal" style="background:transparent; color:#fff; border-color:rgba(255,255,255,0.5);" data-i18n="btn_signin">Sign in to the portal</a>
+          </div>
+        </div>
+        <div class="hero-features reveal reveal-delay-2">
+          <div class="hero-feature">
+            <div class="hero-feature-icon">🌍</div>
+            <div class="hero-feature-text">
+              <h4 data-i18n="feat_climate_title">Climate Focus</h4>
+              <p data-i18n="feat_climate_desc">Driving sustainable environmental solutions.</p>
+            </div>
+          </div>
+          <div class="hero-feature">
+            <div class="hero-feature-icon">🌊</div>
+            <div class="hero-feature-text">
+              <h4 data-i18n="feat_blue_title">Blue Economy</h4>
+              <p data-i18n="feat_blue_desc">Protecting our oceans and marine resources.</p>
+            </div>
+          </div>
+          <div class="hero-feature">
+            <div class="hero-feature-icon">🤝</div>
+            <div class="hero-feature-text">
+              <h4 data-i18n="feat_comm_title">Community First</h4>
+              <p data-i18n="feat_comm_desc">Empowering the people we serve.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ABOUT / PROGRAMMES SECTION -->
+    <section id="about" class="section-bg">
+      <div class="container">
+        <div class="heading reveal">
+          <div class="kicker" data-i18n="about_kicker">About Kabonix</div>
+          <h2 data-i18n="about_title">Our Programmes & Focus Areas</h2>
+          <p data-i18n="about_sub">Kabonix Foundation is dedicated to climate resilience and the sustainable blue economy. We work hand-in-hand with communities to create lasting impact.</p>
+        </div>
+        <div class="cards-grid">
+          <article class="card reveal">
+            <div class="card-content">
+              <div class="icon">🌱</div>
+              <h3 data-i18n="card_climate_title">Climate Action</h3>
+              <p data-i18n="card_climate_desc">Implementing projects that mitigate climate change and build resilient ecosystems.</p>
+              <a href="#programmes" data-i18n="card_climate_link">Explore Programmes →</a>
+            </div>
+          </article>
+          
+          <!-- BLUE ECONOMY CARD WITH TRANSPARENT TEXT AND WATER -->
+          <article class="card card-blue-economy reveal reveal-delay-1">
+            <div class="card-content">
+              <div class="icon">🐟</div>
+              <h3 data-i18n="card_blue_title">Blue Economy</h3>
+              <p data-i18n="card_blue_desc">Promoting sustainable use of ocean resources for economic growth and improved livelihoods.</p>
+              <a href="#programmes" data-i18n="card_blue_link">Explore Programmes →</a>
+            </div>
+            
+            <!-- The Water Element and Fish -->
+            <div class="water">
+              <div class="fish fish-1"></div>
+              <div class="fish fish-2"></div>
+              <div class="fish fish-3"></div>
+            </div>
+          </article>
+          
+          <article class="card reveal reveal-delay-2">
+            <div class="card-content">
+              <div class="icon">🏛️</div>
+              <h3 data-i18n="card_gov_title">Governance & Transparency</h3>
+              <p data-i18n="card_gov_desc">Ensuring accountability to our donors, partners, and the communities we serve.</p>
+              <a href="#impact" data-i18n="card_gov_link">View Our Impact →</a>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- IMPACT STORIES SECTION -->
+    <section id="impact" class="impact-section">
+      <div class="container">
+        <div class="heading reveal" style="color:#fff;">
+          <div class="kicker" style="color: #7dd3a8;" data-i18n="impact_kicker">Impact Stories</div>
+          <h2 style="color:#fff;" data-i18n="impact_title">Results Highlights</h2>
+          <p style="color:#b8d8c8;" data-i18n="impact_sub">Real numbers. Real change. See how your support translates into measurable impact.</p>
+        </div>
+        <div class="impact-grid">
+          <article class="impact-card reveal">
+            <div class="metric">1.2k</div>
+            <h3 data-i18n="impact_1_title">Households Empowered</h3>
+            <p data-i18n="impact_1_desc">Tracked across community and livelihood improvement programmes.</p>
+          </article>
+          <article class="impact-card reveal reveal-delay-1">
+            <div class="metric">48k</div>
+            <h3 data-i18n="impact_2_title">CO₂e Tonnes Reduced</h3>
+            <p data-i18n="impact_2_desc">Carbon and ecosystem impact measured through monitored project reporting.</p>
+          </article>
+          <article class="impact-card reveal reveal-delay-2">
+            <div class="metric">28</div>
+            <h3 data-i18n="impact_3_title">Project Sites</h3>
+            <p data-i18n="impact_3_desc">Mapped and managed through integrated site-level monitoring workflows.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- NEWS & EVENTS SECTION -->
+    <section id="news" class="section-bg">
+      <div class="container">
+        <div class="heading reveal">
+          <div class="kicker" data-i18n="news_kicker">News & Events</div>
+          <h2 data-i18n="news_title">Latest Updates & Publications</h2>
+          <p data-i18n="news_sub">Stay informed about our latest projects, upcoming events, and published reports.</p>
+        </div>
+        <div class="projects-grid">
+          <div class="project-card reveal">
+            <img src="https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&q=80" alt="News" class="project-img">
+            <div class="project-content">
+              <span class="project-tag" data-i18n="news_tag_1">Press Release</span>
+              <h3 data-i18n="news_1_title">Kabonix Launches New Blue Economy Initiative</h3>
+              <div class="project-loc" data-i18n="news_1_date">📅 October 2026</div>
+            </div>
+          </div>
+          <div class="project-card reveal reveal-delay-1">
+            <img src="https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&q=80" alt="Event" class="project-img">
+            <div class="project-content">
+              <span class="project-tag" data-i18n="news_tag_2">Upcoming Event</span>
+              <h3 data-i18n="news_2_title">Annual Donor & Partner Appreciation Gala</h3>
+              <div class="project-loc" data-i18n="news_2_date">📅 November 15, 2026</div>
+            </div>
+          </div>
+          <div class="project-card reveal reveal-delay-2">
+            <img src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&q=80" alt="Publication" class="project-img">
+            <div class="project-content">
+              <span class="project-tag" data-i18n="news_tag_3">Publication</span>
+              <h3 data-i18n="news_3_title">2025 Annual Impact & Transparency Report</h3>
+              <div class="project-loc" data-i18n="news_3_date">📄 Download PDF</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PARTNERS & DONORS SECTION -->
+    <section id="partners" style="background: var(--cream);">
+      <div class="container">
+        <div class="heading reveal" style="text-align: center; margin: 0 auto 50px;">
+          <div class="kicker" data-i18n="partners_kicker">Partners & Donors</div>
+          <h2 data-i18n="partners_title">Recognition & Collaboration</h2>
+          <p data-i18n="partners_sub">We are grateful for the support of our partners and donors who make our work possible.</p>
+        </div>
+        <div class="partners-grid">
+          <div class="partner-logo reveal">
+            <span data-i18n="partner_1">🌍 Global Climate Fund</span>
+          </div>
+          <div class="partner-logo reveal reveal-delay-1">
+            <span data-i18n="partner_2">🏛️ Ministry of Environment</span>
+          </div>
+          <div class="partner-logo reveal reveal-delay-2">
+            <span data-i18n="partner_3">🌊 Blue Ocean Alliance</span>
+          </div>
+          <div class="partner-logo reveal reveal-delay-3">
+            <span data-i18n="partner_4">🤝 Community Trust</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- BOTTOM CTA -->
+    <section class="bottom-cta" id="contact">
+      <div class="container">
+        <div class="reveal">
+          <h2 data-i18n="cta_title">Partner with Kabonix Foundation.</h2>
+          <p data-i18n="cta_sub">Contact us to discuss how we can work together for a sustainable future.</p>
+        </div>
+        <a class="btn primary portal-link reveal reveal-delay-1" href="/portal" data-i18n="cta_btn">Contact Us</a>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="container footer-content">
+      <div class="footer-grid">
+        <div class="footer-col">
+          <div class="footer-brand">
+            <!-- Using relative path ./assets/logo.png -->
+            <img src="./assets/logo.png" alt="Kabonix Foundation logo">
+            <span>Kabonix<small>Foundation</small></span>
+          </div>
+          <p style="margin-bottom: 20px;" data-i18n="footer_desc">The Foundation's public identity and transparency window — visited by donors, partners, government and the communities it serves.</p>
+        </div>
+        <div class="footer-col">
+          <h4 data-i18n="footer_quick">Quick Links</h4>
+          <ul>
+            <li><a href="#about" data-i18n="nav_about">About</a></li>
+            <li><a href="#programmes" data-i18n="nav_programmes">Programmes</a></li>
+            <li><a href="#news" data-i18n="nav_news">News & Events</a></li>
+            <li><a href="#impact" data-i18n="nav_impact">Impact</a></li>
+            <li><a href="#partners" data-i18n="nav_partners">Partners</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4 data-i18n="footer_focus">Focus Areas</h4>
+          <ul>
+            <li><a href="#" data-i18n="card_climate_title">Climate Action</a></li>
+            <li><a href="#" data-i18n="card_blue_title">Blue Economy</a></li>
+            <li><a href="#" data-i18n="feat_comm_title">Community Empowerment</a></li>
+            <li><a href="#" data-i18n="card_gov_title">Governance</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4 data-i18n="footer_newsletter">Subscribe to Our Newsletter</h4>
+          <p data-i18n="footer_newsletter_sub">Get the latest updates on our projects, news and sustainability tips.</p>
+          <form class="newsletter-form" onsubmit="event.preventDefault(); alert('Subscribed successfully!');">
+            <input type="email" placeholder="Your email address" required data-i18n="footer_email_placeholder">
+            <button type="submit" data-i18n="footer_subscribe_btn">Subscribe →</button>
+          </form>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span data-i18n="footer_rights">© 2026 Kabonix Foundation. All rights reserved.</span>
+        <div style="display: flex; gap: 20px;">
+          <a href="#" data-i18n="footer_privacy">Privacy Policy</a>
+          <a href="#" data-i18n="footer_terms">Terms & Conditions</a>
+          <a href="#" data-i18n="footer_transparency">Transparency Report</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- JAVASCRIPT FOR BILINGUAL SUPPORT, SCROLL ANIMATIONS & PORTAL LINK -->
+  <script>
+    // Translation Dictionary
+    const translations = {
+      en: {
+        top_identity: "Public Identity & Transparency",
+        top_partner: "Partner With Us →",
+        nav_about: "About",
+        nav_programmes: "Programmes",
+        nav_news: "News & Events",
+        nav_impact: "Impact",
+        nav_partners: "Partners",
+        nav_contact: "Contact",
+        btn_portal: "Open portal",
+        hero_kicker: "Foundation Website",
+        hero_title: "The Foundation's public identity & transparency window.",
+        hero_sub: "Visited by donors, partners, government and the communities it serves. Discover our commitment to climate and the blue economy.",
+        btn_learn: "Learn About Us",
+        btn_signin: "Sign in to the portal",
+        feat_climate_title: "Climate Focus",
+        feat_climate_desc: "Driving sustainable environmental solutions.",
+        feat_blue_title: "Blue Economy",
+        feat_blue_desc: "Protecting our oceans and marine resources.",
+        feat_comm_title: "Community First",
+        feat_comm_desc: "Empowering the people we serve.",
+        about_kicker: "About Kabonix",
+        about_title: "Our Programmes & Focus Areas",
+        about_sub: "Kabonix Foundation is dedicated to climate resilience and the sustainable blue economy. We work hand-in-hand with communities to create lasting impact.",
+        card_climate_title: "Climate Action",
+        card_climate_desc: "Implementing projects that mitigate climate change and build resilient ecosystems.",
+        card_climate_link: "Explore Programmes →",
+        card_blue_title: "Blue Economy",
+        card_blue_desc: "Promoting sustainable use of ocean resources for economic growth and improved livelihoods.",
+        card_blue_link: "Explore Programmes →",
+        card_gov_title: "Governance & Transparency",
+        card_gov_desc: "Ensuring accountability to our donors, partners, and the communities we serve.",
+        card_gov_link: "View Our Impact →",
+        impact_kicker: "Impact Stories",
+        impact_title: "Results Highlights",
+        impact_sub: "Real numbers. Real change. See how your support translates into measurable impact.",
+        impact_1_title: "Households Empowered",
+        impact_1_desc: "Tracked across community and livelihood improvement programmes.",
+        impact_2_title: "CO₂e Tonnes Reduced",
+        impact_2_desc: "Carbon and ecosystem impact measured through monitored project reporting.",
+        impact_3_title: "Project Sites",
+        impact_3_desc: "Mapped and managed through integrated site-level monitoring workflows.",
+        news_kicker: "News & Events",
+        news_title: "Latest Updates & Publications",
+        news_sub: "Stay informed about our latest projects, upcoming events, and published reports.",
+        news_tag_1: "Press Release",
+        news_1_title: "Kabonix Launches New Blue Economy Initiative",
+        news_1_date: "📅 October 2026",
+        news_tag_2: "Upcoming Event",
+        news_2_title: "Annual Donor & Partner Appreciation Gala",
+        news_2_date: "📅 November 15, 2026",
+        news_tag_3: "Publication",
+        news_3_title: "2025 Annual Impact & Transparency Report",
+        news_3_date: "📄 Download PDF",
+        partners_kicker: "Partners & Donors",
+        partners_title: "Recognition & Collaboration",
+        partners_sub: "We are grateful for the support of our partners and donors who make our work possible.",
+        partner_1: "🌍 Global Climate Fund",
+        partner_2: "🏛️ Ministry of Environment",
+        partner_3: "🌊 Blue Ocean Alliance",
+        partner_4: "🤝 Community Trust",
+        cta_title: "Partner with Kabonix Foundation.",
+        cta_sub: "Contact us to discuss how we can work together for a sustainable future.",
+        cta_btn: "Contact Us",
+        footer_desc: "The Foundation's public identity and transparency window — visited by donors, partners, government and the communities it serves.",
+        footer_quick: "Quick Links",
+        footer_focus: "Focus Areas",
+        footer_newsletter: "Subscribe to Our Newsletter",
+        footer_newsletter_sub: "Get the latest updates on our projects, news and sustainability tips.",
+        footer_email_placeholder: "Your email address",
+        footer_subscribe_btn: "Subscribe →",
+        footer_rights: "© 2026 Kabonix Foundation. All rights reserved.",
+        footer_privacy: "Privacy Policy",
+        footer_terms: "Terms & Conditions",
+        footer_transparency: "Transparency Report"
+      },
+      sw: {
+        top_identity: "Utambulisho wa Umma na Uwazi",
+        top_partner: "Shirikiana Nasi →",
+        nav_about: "Kuhusu",
+        nav_programmes: "Programu",
+        nav_news: "Habari na Matukio",
+        nav_impact: "Athari",
+        nav_partners: "Washirika",
+        nav_contact: "Wasiliana",
+        btn_portal: "Fungua lango",
+        hero_kicker: "Tovuti ya Foundation",
+        hero_title: "Dirisha la utambulisho wa umma na uwazi wa Foundation.",
+        hero_sub: "Inatembelewa na wafadhili, washirika, serikali na jamii inayohudumia. Gundua kujitolea kwetu kwa hali ya hewa na uchumi wa bluu.",
+        btn_learn: "Jifunze Kuhusu Sisi",
+        btn_signin: "Ingia kwenye lango",
+        feat_climate_title: "Mwelekeo wa Hali ya Hewa",
+        feat_climate_desc: "Kuendesha suluhisho endelevu za mazingira.",
+        feat_blue_title: "Uchumi wa Bluu",
+        feat_blue_desc: "Kulinda bahari na rasilimali zetu za baharini.",
+        feat_comm_title: "Jamii Kwanza",
+        feat_comm_desc: "Kuwapa nguvu watu tunaowahudumia.",
+        about_kicker: "Kuhusu Kabonix",
+        about_title: "Programu Zetu na Maeneo ya Kipaumbele",
+        about_sub: "Kabonix Foundation imejitolea kwa ustahimilivu wa hali ya hewa na uchumi endelevu wa bluu. Tunafanya kazi bega kwa bega na jamii kuunda athari ya kudumu.",
+        card_climate_title: "Hatua za Hali ya Hewa",
+        card_climate_desc: "Kutekeleza miradi inayopunguza mabadiliko ya hali ya hewa na kujenga mifumo ikolojia imara.",
+        card_climate_link: "Chunguza Programu →",
+        card_blue_title: "Uchumi wa Bluu",
+        card_blue_desc: "Kukuza matumizi endelevu ya rasilimali za bahari kwa ukuaji wa uchumi na maisha bora.",
+        card_blue_link: "Chunguza Programu →",
+        card_gov_title: "Utawala na Uwazi",
+        card_gov_desc: "Kuhakikisha uwajibikaji kwa wafadhili wetu, washirika, na jamii tunazohudumia.",
+        card_gov_link: "Tazama Athari Zetu →",
+        impact_kicker: "Hadithi za Athari",
+        impact_title: "Mambo Muhimu ya Matokeo",
+        impact_sub: "Nambari halisi. Mabadiliko halisi. Tazama jinsi msaada wako unavyogeuka kuwa athari inayoweza kupimwa.",
+        impact_1_title: "Kaya Zilizowezeshwa",
+        impact_1_desc: "Inafuatiliwa katika programu za uboreshaji wa jamii na maisha.",
+        impact_2_title: "Tani za CO₂e Zilizopunguzwa",
+        impact_2_desc: "Athari za kaboni na mifumo ikolojia hupimwa kupitia ripoti za miradi inayofuatiliwa.",
+        impact_3_title: "Maeneo ya Miradi",
+        impact_3_desc: "Yamechorwa na kusimamiwa kupitia mitiririko jumuishi ya ufuatiliaji wa maeneo.",
+        news_kicker: "Habari na Matukio",
+        news_title: "Habari na Machapisho ya Hivi Karibuni",
+        news_sub: "Kaa na habari kuhusu miradi yetu ya hivi karibuni, matukio yajayo, na ripoti zilizochapishwa.",
+        news_tag_1: "Tangazo la Vyombo vya Habari",
+        news_1_title: "Kabonix Yazindua Mpango Mpya wa Uchumi wa Bluu",
+        news_1_date: "📅 Oktoba 2026",
+        news_tag_2: "Tukio Linalokuja",
+        news_2_title: "Gala ya Kila Mwaka ya Kuwathamini Wafadhili na Washirika",
+        news_2_date: "📅 Novemba 15, 2026",
+        news_tag_3: "Chapisho",
+        news_3_title: "Ripoti ya Athari na Uwazi ya Mwaka 2025",
+        news_3_date: "📄 Pakua PDF",
+        partners_kicker: "Washirika na Wafadhili",
+        partners_title: "Utambuzi na Ushirikiano",
+        partners_sub: "Tunashukuru kwa msaada wa washirika na wafadhili wetu ambao hufanya kazi yetu iwezekane.",
+        partner_1: "🌍 Mfuko wa Kimataifa wa Hali ya Hewa",
+        partner_2: "🏛️ Wizara ya Mazingira",
+        partner_3: "🌊 Muungano wa Bahari ya Bluu",
+        partner_4: "🤝 Trust ya Jamii",
+        cta_title: "Shirikiana na Kabonix Foundation.",
+        cta_sub: "Wasiliana nasi ili kujadili jinsi tunaweza kufanya kazi pamoja kwa mustakabali endelevu.",
+        cta_btn: "Wasiliana Nasi",
+        footer_desc: "Dirisha la utambulisho wa umma na uwazi wa Foundation — linatembelewa na wafadhili, washirika, serikali na jamii inayohudumia.",
+        footer_quick: "Viungo vya Haraka",
+        footer_focus: "Maeneo ya Kipaumbele",
+        footer_newsletter: "Jiunge na Jarida letu",
+        footer_newsletter_sub: "Pata habari za hivi karibuni kuhusu miradi yetu, habari na vidokezo vya uendelevu.",
+        footer_email_placeholder: "Barua pepe yako",
+        footer_subscribe_btn: "Jiunge →",
+        footer_rights: "© 2026 Kabonix Foundation. Haki zote zimehifadhiwa.",
+        footer_privacy: "Sera ya Faragha",
+        footer_terms: "Masharti na Vigezo",
+        footer_transparency: "Ripoti ya Uwazi"
+      }
+    };
+
+    let currentLang = localStorage.getItem('kabonix_lang') || 'en';
+
+    function setLanguage(lang) {
+      currentLang = lang;
+      localStorage.setItem('kabonix_lang', lang);
+      
+      // Update toggle button states
+      document.querySelectorAll('.lang-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.lang === lang);
+      });
+
+      // Update all elements with data-i18n attribute
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (translations[lang] && translations[lang][key]) {
+          // Handle placeholder attributes for inputs
+          if (el.tagName === 'INPUT' && el.hasAttribute('placeholder')) {
+            el.setAttribute('placeholder', translations[lang][key]);
+          } else {
+            el.textContent = translations[lang][key];
+          }
+        }
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // Initialize language
+      setLanguage(currentLang);
+
+      // Intersection Observer for Scroll Animations
+      const reveals = document.querySelectorAll('.reveal');
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+          }
+        });
+      }, {
+        threshold: 0.1,
+        rootMargin: "0px 0px -50px 0px"
+      });
+
+      reveals.forEach(reveal => observer.observe(reveal));
+
+      // Portal Link Configuration
+      const configuredPortal = document.querySelector('meta[name="portal-url"]')?.content;
+      if (configuredPortal) {
+        document.querySelectorAll('.portal-link').forEach(link => { 
+          link.href = configuredPortal; 
+        });
+      }
+    });
+  </script>
+</body>
+</html><!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Kabonix Foundation - Public identity, transparency, and impact for donors, partners, government, and communities.">
+  <meta property="og:title" content="Kabonix Foundation">
+  <meta property="og:description" content="Foundation Website - About Kabonix, programmes, climate & blue-economy focus areas, news, events, and impact stories.">
+  <meta property="og:image" content="./assets/logo.png">
+  <link rel="icon" href="./assets/logo.png" type="image/png">
+  <title>Kabonix Foundation | Public Website</title>
+  <style>
+    /* --- CSS VARIABLES & RESET --- */
+    :root {
+      --forest: #0d6845;
+      --deep: #073b2c;
+      --ink: #17352d;
+      --muted: #60736c;
+      --cream: #f7f6f1;
+      --line: #dfe9e2;
+      --white: #ffffff;
+      --shadow: 0 10px 30px rgba(7, 59, 44, 0.08);
+      --transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--cream);
+      color: var(--ink);
+      font: 16px/1.6 Arial, Helvetica, sans-serif;
+      overflow-x: hidden;
+    }
+    a { text-decoration: none; color: inherit; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+
+    /* --- LOGO DEBUGGING STYLES --- */
+    .brand img, .footer-brand img {
+      width: 48px !important;
+      height: 48px !important;
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      object-fit: contain !important;
+      
+      /* DEBUG: Remove these 2 lines once the logo loads */
+      background-color: #ffcccc;
+      border: 3px solid red;
+    }
+
+    /* --- BUTTON ANIMATIONS --- */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 14px 28px;
+      border-radius: 8px;
+      font-weight: 700;
+      border: 1px solid transparent;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: var(--transition);
+      z-index: 1;
+    }
+    .btn::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 300%;
+      height: 300%;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      transition: transform 0.6s ease;
+      z-index: -1;
+    }
+    .btn:hover::after { transform: translate(-50%, -50%) scale(1); }
+    .btn:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px rgba(7, 59, 44, 0.2);
+    }
+    .btn:active {
+      transform: translateY(0);
+      box-shadow: 0 4px 8px rgba(7, 59, 44, 0.2);
+    }
+    .btn.primary { background: var(--forest); color: #fff; }
+    .btn.outline { border-color: var(--line); background: #fff; color: var(--deep); }
+    .btn.outline:hover { border-color: var(--forest); color: var(--forest); }
+
+    /* --- SCROLL REVEAL ANIMATIONS --- */
+    .reveal {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+    .reveal-delay-4 { transition-delay: 0.4s; }
+
+    /* --- TOPBAR --- */
+    .topbar {
+      background: var(--deep);
+      color: #dcefe5;
+      font-size: 13px;
+      padding: 10px 0;
+    }
+    .topbar .container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+    }
+    .topbar-info { display: flex; gap: 20px; }
+    .topbar-info span { display: flex; align-items: center; gap: 6px; }
+    .topbar-btn {
+      background: #2a8a63;
+      color: #fff;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 12px;
+      transition: var(--transition);
+    }
+    .topbar-btn:hover { background: #1f6b4c; transform: scale(1.05); }
+
     /* --- HEADER --- */
     header {
       background: var(--white);
