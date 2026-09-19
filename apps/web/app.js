@@ -50,7 +50,12 @@
       body: opts.body ? JSON.stringify(opts.body) : undefined,
     });
     const data = await res.json().catch(()=>({}));
-    if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+    if (!res.ok) {
+      const err = new Error(data.error || `Request failed (${res.status})`);
+      err.status = res.status;
+      err.body = data;
+      throw err;
+    }
     return data;
   }
   window.api = api;
@@ -88,6 +93,77 @@
     return [];
   }
 
+  // ── URL token handler (password reset / email verify) ───────────────────────
+  // These flows are triggered by links that arrive in an email. They land on
+  // the portal with ?resetToken=… or ?verifyToken=… and must be handled
+  // BEFORE the normal session bootstrap, because the user is not signed in.
+  async function handleUrlTokens() {
+    const params = new URLSearchParams(location.search);
+    const resetToken  = params.get('resetToken');
+    const verifyToken = params.get('verifyToken');
+    if (!resetToken && !verifyToken) return false;
+
+    // Strip the token from the address bar so a reload doesn't re-trigger.
+    history.replaceState(null, '', location.pathname);
+
+    if (verifyToken) {
+      root.innerHTML = `
+<div class="login-screen">
+  <div class="login-form-side">
+    <div class="login-card">
+      <h2>Verifying your email</h2>
+      <p class="sub">One moment…</p>
+      <div id="tok-msg" class="err-msg"></div>
+    </div>
+  </div>
+</div>`;
+      const msg = document.getElementById('tok-msg');
+      try {
+        await api('/auth/email/verify', { method: 'POST', body: { token: verifyToken } });
+        msg.innerHTML = '<span style="color:var(--ok)">✅ Your email address is verified. Redirecting to sign in…</span>';
+        setTimeout(() => render(), 1600);
+      } catch (e) {
+        msg.textContent = e.message;
+        setTimeout(() => render(), 4000);
+      }
+      return true;
+    }
+
+    // resetToken
+    root.innerHTML = `
+<div class="login-screen">
+  <div class="login-form-side">
+    <div class="login-card">
+      <h2>Set a new password</h2>
+      <p class="sub">Choose something at least 8 characters long.</p>
+      <div class="field"><label>New password</label><input id="tok-pw1" type="password" autocomplete="new-password"></div>
+      <div class="field"><label>Confirm new password</label><input id="tok-pw2" type="password" autocomplete="new-password"></div>
+      <button class="btn-primary" id="tok-submit">Update password</button>
+      <p class="hint"><a href="#" id="tok-back">← Back to sign in</a></p>
+      <div id="tok-msg" class="err-msg"></div>
+    </div>
+  </div>
+</div>`;
+    document.getElementById('tok-back').onclick = e => { e.preventDefault(); render(); };
+    const submit = async () => {
+      const pw1 = document.getElementById('tok-pw1').value;
+      const pw2 = document.getElementById('tok-pw2').value;
+      const msg = document.getElementById('tok-msg');
+      msg.textContent = '';
+      if (pw1.length < 8) return msg.textContent = 'Password must be at least 8 characters.';
+      if (pw1 !== pw2)     return msg.textContent = 'Passwords do not match.';
+      try {
+        await api('/auth/password/reset', { method: 'POST', body: { token: resetToken, newPassword: pw1 } });
+        msg.innerHTML = '<span style="color:var(--ok)">✅ Password updated. Redirecting to sign in…</span>';
+        setTimeout(() => render(), 1600);
+      } catch (e) { msg.textContent = e.message; }
+    };
+    document.getElementById('tok-submit').onclick = submit;
+    document.getElementById('tok-pw2').onkeydown = e => { if (e.key === 'Enter') submit(); };
+    return true;
+  }
+
+  // ── Session ────────────────────────────────────────────────────────────────
   async function tryRestoreSession() {
     if (!state.token) return render();
 
@@ -171,6 +247,7 @@
         <div class="field"><label>Email</label><input id="l-email" type="email" value="admin@kabonix.org"></div>
         <div class="field"><label>Password</label><input id="l-pw" type="password" value="ChangeMe123!"></div>
         <button class="btn-primary" id="login-btn">Sign in</button>
+        <p class="hint"><a href="#" id="forgot-link">Forgot your password?</a></p>
         <p class="hint">Seeded accounts: <strong>admin@kabonix.org</strong> (Super Admin) · <strong>amina@kabonix.org</strong> (Field Officer) — password: <strong>ChangeMe123!</strong></p>
       `}
       <div id="l-err" class="err-msg"></div>
@@ -188,6 +265,7 @@
     } else {
       document.getElementById('login-btn').onclick = doLogin;
       document.getElementById('l-pw').onkeydown = e => { if(e.key==='Enter') doLogin(); };
+      document.getElementById('forgot-link').onclick = e => { e.preventDefault(); renderForgotPassword(); };
     }
   }
 
@@ -200,6 +278,36 @@
       const d = await login(email, pw);
       if (d?.mfaRequired) renderLogin(d.challengeToken);
     } catch(e) { err.textContent = e.message; }
+  }
+
+  function renderForgotPassword() {
+    root.innerHTML = `
+<div class="login-screen">
+  <div class="login-form-side">
+    <div class="login-card">
+      <h2>Reset your password</h2>
+      <p class="sub">Enter your email address and we'll send a reset link.</p>
+      <div class="field"><label>Email</label><input id="fp-email" type="email" placeholder="you@kabonix.org"></div>
+      <button class="btn-primary" id="fp-submit">Send reset link</button>
+      <p class="hint"><a href="#" id="fp-back">← Back to sign in</a></p>
+      <div id="fp-msg" class="err-msg"></div>
+    </div>
+  </div>
+</div>`;
+    document.getElementById('fp-back').onclick = e => { e.preventDefault(); render(); };
+    document.getElementById('fp-submit').onclick = async () => {
+      const email = document.getElementById('fp-email').value.trim();
+      const msg   = document.getElementById('fp-msg');
+      msg.textContent = '';
+      if (!email) return msg.textContent = 'Please enter your email address.';
+      try {
+        const r = await api('/auth/password/forgot', { method: 'POST', body: { email } });
+        msg.innerHTML = `<span style="color:var(--ok)">${esc(r.message || 'If that email exists, a reset link has been sent.')}</span>`;
+      } catch (e) { msg.textContent = e.message; }
+    };
+    document.getElementById('fp-email').onkeydown = e => {
+      if (e.key === 'Enter') document.getElementById('fp-submit').click();
+    };
   }
 
   function shell(contentHtml, activeRoute) {
@@ -683,6 +791,7 @@
             <td class="meta">${esc(s.submitted_by_email)}</td>
             <td class="meta">${ago(s.submitted_at)}</td>
             <td class="action-cell">
+              <button class="btn-sm" data-history-sub="${s.id}">History</button>
               ${can('data_collection','approve') ? `<button class="btn-sm btn-danger" data-delete-sub="${s.id}">Delete</button>` : ''}
             </td>
           </tr>`).join('')}</tbody>
@@ -695,12 +804,54 @@
         const answers = {};
         for (const f of form.schema||[]) {
           const el = document.getElementById('f_'+f.id);
-          if (el) answers[f.id] = f.type==='number' ? (el.value?Number(el.value):undefined) : el.value;
+          if (!el) continue;
+          if (f.type === 'number') {
+            answers[f.id] = el.value === '' ? undefined : Number(el.value);
+          } else {
+            answers[f.id] = el.value;
+          }
         }
+
+        for (const f of form.schema||[]) {
+          const v = answers[f.id];
+          const empty = v === undefined || v === null || v === '';
+          if (f.required && empty) return toast(`${f.label} is required.`, true);
+          if (empty) continue;
+          if (f.type === 'number') {
+            if (f.integer && !Number.isInteger(v)) return toast(`${f.label} must be a whole number.`, true);
+            if (f.min != null && v < f.min)        return toast(`${f.label} must be at least ${f.min}.`, true);
+            if (f.max != null && v > f.max)        return toast(`${f.label} must be at most ${f.max}.`, true);
+          } else {
+            if (f.minLength != null && String(v).length < f.minLength)
+              return toast(`${f.label} must be at least ${f.minLength} characters.`, true);
+            if (f.maxLength != null && String(v).length > f.maxLength)
+              return toast(`${f.label} must be at most ${f.maxLength} characters.`, true);
+          }
+        }
+
         try {
           await api('/submissions',{method:'POST',body:{formKey:form.key,answers}});
           toast('Submission recorded.'); renderForms();
-        } catch(e) { toast(e.message, true); }
+        } catch(err) {
+          if (err.status === 409 && err.body?.duplicate) {
+            const d = err.body.duplicate;
+            const proceed = confirm(
+              `Possible duplicate beneficiary\n\n` +
+              `Existing record:\n` +
+              `  ${d.full_name} — ${d.village || 'no village'}\n` +
+              `  created ${new Date(d.created_at).toLocaleDateString('en-GB')}\n\n` +
+              `Is this a genuinely different person?\n` +
+              `Click OK to create a new record, or Cancel to stop.`
+            );
+            if (!proceed) return;
+            try {
+              await api('/submissions',{method:'POST',body:{formKey:form.key,answers,forceNew:true}});
+              toast('Submission recorded (confirmed as new).'); renderForms();
+            } catch(e2) { toast(e2.message, true); }
+            return;
+          }
+          toast(err.message, true);
+        }
       };
     }
 
@@ -711,17 +862,39 @@
         toast('Submission deleted.'); renderForms();
       } catch(e) { toast(e.message, true); }
     });
+
+    document.querySelectorAll('[data-history-sub]').forEach(btn => btn.onclick = async () => {
+      const id = Number(btn.dataset.historySub);
+      try {
+        const data = await api(`/submissions/${id}/revisions`);
+        const revs = data.revisions || [];
+        const lines = revs.map(r => {
+          const when = new Date(r.changed_at).toLocaleString('en-GB');
+          const who  = r.changed_by_name || 'unknown';
+          return `r${r.revision_no}  ${when}\n     ${who} — ${r.change_summary || '(no note)'}`;
+        }).join('\n\n');
+        alert(`Submission #${id} — ${revs.length} revision(s)\n\n${lines || 'No revisions recorded.'}`);
+      } catch(e) { toast(e.message, true); }
+    });
   }
 
   function fieldHtml(f) {
     const req = f.required ? 'required' : '';
-    if (f.type==='select') return `<div class="field"><label>${esc(f.label)}${f.required?' *':''}</label>
-      <select id="f_${f.id}" ${req}><option value="">Select…</option>
+    const attrs = [
+      f.minLength != null ? `minlength="${f.minLength}"` : '',
+      f.maxLength != null ? `maxlength="${f.maxLength}"` : '',
+      f.min != null       ? `min="${f.min}"`              : '',
+      f.max != null       ? `max="${f.max}"`              : '',
+      f.pattern           ? `pattern="${esc(f.pattern)}"` : '',
+    ].filter(Boolean).join(' ');
+
+    if (f.type === 'select') return `<div class="field"><label>${esc(f.label)}${f.required?' *':''}</label>
+      <select id="f_${f.id}" ${req}>${f.required?'':'<option value="">Select…</option>'}
       ${(f.options||[]).map(o=>`<option value="${esc(o)}">${esc(o)}</option>`).join('')}</select></div>`;
-    if (f.type==='textarea') return `<div class="field"><label>${esc(f.label)}${f.required?' *':''}</label>
-      <textarea id="f_${f.id}" ${req}></textarea></div>`;
+    if (f.type === 'textarea') return `<div class="field"><label>${esc(f.label)}${f.required?' *':''}</label>
+      <textarea id="f_${f.id}" ${req} ${attrs}></textarea></div>`;
     return `<div class="field"><label>${esc(f.label)}${f.required?' *':''}</label>
-      <input id="f_${f.id}" type="${f.type==='number'?'number':'text'}" ${req}></div>`;
+      <input id="f_${f.id}" type="${f.type==='number'?'number':'text'}" ${req} ${attrs}></div>`;
   }
 
   async function renderMessages() {
@@ -831,9 +1004,16 @@
   function forbidden() { return `<div class="card card-inner meta">You don't have permission to view this section. Contact your Foundation Admin to request access.</div>`; }
   function errBox(msg) { return `<div class="card card-inner" style="color:var(--danger)">${esc(msg)}</div>`; }
 
-  tryRestoreSession().catch(e => {
-    console.error('[app] boot failed:', e);
-    if (root) root.innerHTML = '<pre style="padding:24px;font:13px/1.5 Menlo,Consolas,monospace;color:#a4372c;white-space:pre-wrap">Boot failed: '
-      + (e?.stack || e?.message || String(e)) + '</pre>';
-  });
+  // ── Boot ────────────────────────────────────────────────────────────────────
+  (async () => {
+    try {
+      const handled = await handleUrlTokens();
+      if (handled) return;
+      await tryRestoreSession();
+    } catch (e) {
+      console.error('[app] boot failed:', e);
+      if (root) root.innerHTML = '<pre style="padding:24px;font:13px/1.5 Menlo,Consolas,monospace;color:#a4372c;white-space:pre-wrap">Boot failed: '
+        + (e?.stack || e?.message || String(e)) + '</pre>';
+    }
+  })();
 })();
