@@ -12,7 +12,6 @@
 
   const WEBSITE_URL = document.querySelector('meta[name="website-url"]')?.content || 'http://localhost:3001';
 
-  // Never let an uncaught error leave a blank page.
   window.addEventListener('error', e => {
     const r = document.getElementById('root');
     if (r && !r.innerHTML.trim()) {
@@ -36,8 +35,6 @@
     route: 'dashboard', routeParam: null,
   };
 
-  // Top-level `const` inside the IIFE does NOT become a window property, so
-  // expose everything the templates need explicitly.
   window.state = state;
 
   function lsGet(k)    { try { return localStorage.getItem(k); } catch { return (window.__m||{})[k]||null; } }
@@ -60,7 +57,6 @@
 
   function can(module, level) { return state.permissions.some(p=>p.module===module&&p.level===level); }
 
-  // Toasts stack instead of overlapping at the same fixed position.
   function toast(msg, isErr) {
     let stack = document.getElementById('toast-stack');
     if (!stack) {
@@ -86,19 +82,15 @@
     return new Date(ts).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
   }
 
-  // Normalise list-shaped API payloads ({ users:[…] } vs […]) so the UI never
-  // crashes on a shape change.
   function asArray(value, key) {
     if (Array.isArray(value)) return value;
     if (value && Array.isArray(value[key])) return value[key];
     return [];
   }
 
-  // ── Session ────────────────────────────────────────────────────────────────
   async function tryRestoreSession() {
     if (!state.token) return render();
 
-    // Something must be on screen while we verify the stored token.
     root.innerHTML = `
       <div style="display:grid;place-items:center;min-height:100vh;font:14px -apple-system,'Segoe UI',sans-serif;color:#5f6d5c">
         Loading…
@@ -136,9 +128,8 @@
     lsDel('kabonix_token'); render();
   }
 
-  // ── Router ─────────────────────────────────────────────────────────────────
   function nav(route, param) { state.route=route; state.routeParam=param||null; render(); }
-  window.nav = nav; // inline onclick handlers in the dashboard need this
+  window.nav = nav;
 
   function render() {
     if (!state.token||!state.user) return renderLogin();
@@ -155,7 +146,6 @@
     (views[state.route]||renderDashboard)();
   }
 
-  // ── Login ──────────────────────────────────────────────────────────────────
   function renderLogin(mfaChallenge) {
     root.innerHTML = `
 <div class="login-screen">
@@ -212,7 +202,6 @@
     } catch(e) { err.textContent = e.message; }
   }
 
-  // ── Shell ───────────────────────────────────────────────────────────────────
   function shell(contentHtml, activeRoute) {
     const items = [
       { key:'dashboard', icon:'◉', label:'Dashboard' },
@@ -248,7 +237,6 @@
     root.querySelectorAll('.nav-item[data-route]').forEach(el => el.onclick = e => { e.preventDefault(); nav(el.dataset.route); });
     document.getElementById('logout-btn').onclick = logout;
 
-    // Mobile drawer only — the desktop sidebar is always visible.
     const sbToggle = document.getElementById('sb-toggle');
     const appShell = document.querySelector('.app-shell');
     if (sbToggle && appShell) {
@@ -275,7 +263,6 @@
 
   function card(content, cls='') { return `<div class="card ${cls}">${content}</div>`; }
 
-  // ── Dashboard ──────────────────────────────────────────────────────────────
   async function renderDashboard() {
     shell(`${pageHead('Dashboard','Loading…')}`, 'dashboard');
     let stats = {};
@@ -320,7 +307,6 @@
     return out;
   }
 
-  // ── Staff & Users ───────────────────────────────────────────────────────────
   async function renderUsers() {
     shell(pageHead('Staff & Users','Manage team members, roles and account status.'), 'users');
     if (!can('admin','view')) return document.getElementById('main').insertAdjacentHTML('beforeend', forbidden());
@@ -420,7 +406,6 @@
     });
   }
 
-  // ── Roles & Permissions ────────────────────────────────────────────────────
   async function renderRoles() {
     shell(pageHead('Roles & Permissions', 'Loading…'), 'roles');
     if (!can('admin','view')) return document.getElementById('main').insertAdjacentHTML('beforeend', forbidden());
@@ -492,7 +477,6 @@
     });
   }
 
-  // ── System Config ──────────────────────────────────────────────────────────
   async function renderConfig() {
     shell(pageHead('System Configuration', 'Loading…'), 'config');
     if (!can('admin','view')) return document.getElementById('main').insertAdjacentHTML('beforeend', forbidden());
@@ -595,7 +579,6 @@
     return `<input type="${c.type==='number'?'number':'text'}" class="cfg-value" value="${esc(c.value)}">`;
   }
 
-  // ── Audit Log ───────────────────────────────────────────────────────────────
   async function renderAudit() {
     shell(pageHead('Audit Log','Full record of who changed what, and when.'), 'audit');
     if (!can('admin','view') && !can('data_collection','approve'))
@@ -666,7 +649,6 @@
     load();
   }
 
-  // ── M&E Forms ───────────────────────────────────────────────────────────────
   async function renderForms() {
     shell(pageHead('M&E Data Collection','Household Baseline Survey and field data submission.'), 'forms');
     let forms=[], submissions=[];
@@ -742,7 +724,6 @@
       <input id="f_${f.id}" type="${f.type==='number'?'number':'text'}" ${req}></div>`;
   }
 
-  // ── Contact Messages ────────────────────────────────────────────────────────
   async function renderMessages() {
     shell(pageHead('Contact Messages','Website enquiry inbox.'), 'messages');
     if (!can('admin','view')) return document.getElementById('main').insertAdjacentHTML('beforeend', forbidden());
@@ -783,7 +764,6 @@
     });
   }
 
-  // ── Profile / MFA setup ─────────────────────────────────────────────────────
   async function renderProfile() {
     shell(pageHead('My Profile','Account settings and two-factor authentication.'), 'profile');
     const u = state.user;
@@ -848,11 +828,9 @@
     }
   }
 
-  // ── Helpers ─────────────────────────────────────────────────────────────────
   function forbidden() { return `<div class="card card-inner meta">You don't have permission to view this section. Contact your Foundation Admin to request access.</div>`; }
   function errBox(msg) { return `<div class="card card-inner" style="color:var(--danger)">${esc(msg)}</div>`; }
 
-  // ── Boot ────────────────────────────────────────────────────────────────────
   tryRestoreSession().catch(e => {
     console.error('[app] boot failed:', e);
     if (root) root.innerHTML = '<pre style="padding:24px;font:13px/1.5 Menlo,Consolas,monospace;color:#a4372c;white-space:pre-wrap">Boot failed: '
