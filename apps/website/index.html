@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Kabonix Foundation Digital Ecosystem Platform for stronger programmes, communities, and measurable impact.">
+  <meta name="description" content="Kabonix Foundation - Public identity, transparency, and impact for donors, partners, government, and communities.">
   <meta property="og:title" content="Kabonix Foundation">
-  <meta property="og:description" content="Digital ecosystem platform for programme teams, field officers, and communities.">
+  <meta property="og:description" content="Foundation Website - About Kabonix, programmes, climate & blue-economy focus areas, news, events, and impact stories.">
   <meta property="og:image" content="./assets/logo.png">
   <link rel="icon" href="./assets/logo.png" type="image/png">
-  <title>Kabonix Foundation | Digital Ecosystem Platform</title>
+  <title>Kabonix Foundation | Public Website</title>
   <style>
     /* --- CSS VARIABLES & RESET --- */
     :root {
@@ -223,17 +223,25 @@
     .heading h2 { margin: 0; font-size: clamp(32px, 3vw, 44px); line-height: 1.15; color: var(--deep); }
     .heading p { margin-top: 16px; color: var(--muted); font-size: 17px; }
 
-    /* --- SERVICES GRID --- */
+    /* --- SERVICES GRID & CARDS --- */
     .cards-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
     .card {
       background: #fff; border: 1px solid var(--line); border-radius: 16px;
       padding: 32px; transition: var(--transition);
       box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+      position: relative;
+      overflow: hidden;
     }
     .card:hover {
       transform: translateY(-8px);
       box-shadow: var(--shadow);
       border-color: var(--forest);
+    }
+    
+    /* Standard Card Content */
+    .card-content {
+      position: relative;
+      z-index: 10; /* Highest z-index to stay above water */
     }
     .card .icon {
       width: 54px; height: 54px; border-radius: 12px;
@@ -244,6 +252,125 @@
     .card p { margin: 0 0 20px; color: var(--muted); font-size: 15px; }
     .card a { color: var(--forest); font-weight: 700; font-size: 14px; display: inline-flex; align-items: center; gap: 6px; transition: var(--transition); }
     .card a:hover { gap: 10px; color: var(--deep); }
+
+    /* --- BLUE ECONOMY REALISTIC WATER & FISH ANIMATION --- */
+    .card-blue-economy {
+      padding-bottom: 180px; /* Make room for the water */
+      background: linear-gradient(180deg, #ffffff 0%, #eef7f9 100%);
+      transition: var(--transition);
+    }
+    .card-blue-economy:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 15px 35px rgba(14, 122, 138, 0.15);
+      border-color: #0e7a8a;
+    }
+    
+    /* The Water Container */
+    .water {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 55%; /* Fills more than half the card */
+      background: 
+        radial-gradient(circle at 20% 80%, rgba(255,255,255,0.1) 2px, transparent 2px),
+        radial-gradient(circle at 70% 60%, rgba(255,255,255,0.15) 3px, transparent 3px),
+        radial-gradient(circle at 40% 90%, rgba(255,255,255,0.08) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(14,122,138,0.9) 0%, rgba(6,75,90,0.98) 100%);
+      background-size: 100px 100px, 150px 150px, 80px 80px, 100% 100%;
+      z-index: 2;
+      transition: height 0.8s cubic-bezier(0.25, 0.8, 0.25, 1);
+      box-shadow: inset 0 15px 30px rgba(255, 255, 255, 0.2);
+    }
+    .card-blue-economy:hover .water {
+      height: 65%; /* Water rises on hover */
+    }
+
+    /* Wave Layer 1 (Back - Stronger) */
+    .water::before {
+      content: "";
+      position: absolute;
+      top: -30px;
+      left: 0;
+      width: 200%;
+      height: 50px;
+      background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none"><path d="M0,60 C200,140 400,0 600,60 C800,120 1000,0 1200,60 L1200,120 L0,120 Z" fill="%230e7a8a"/></svg>') repeat-x;
+      background-size: 50% 100%;
+      animation: waveMove 12s linear infinite reverse;
+      opacity: 0.9;
+      z-index: 1;
+    }
+
+    /* Wave Layer 2 (Front - Stronger & Faster) */
+    .water::after {
+      content: "";
+      position: absolute;
+      top: -25px;
+      left: 0;
+      width: 200%;
+      height: 40px;
+      background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none"><path d="M0,80 C200,20 400,140 600,80 C800,20 1000,140 1200,80 L1200,120 L0,120 Z" fill="%23064b5a"/></svg>') repeat-x;
+      background-size: 50% 100%;
+      animation: waveMove 8s linear infinite;
+      opacity: 0.8;
+      z-index: 3;
+    }
+
+    @keyframes waveMove {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    /* --- FISH ANIMATIONS --- */
+    .fish {
+      position: absolute;
+      background-repeat: no-repeat;
+      background-size: contain;
+      z-index: 2; /* Between the two waves */
+      opacity: 0.9;
+    }
+
+    /* Fish 1 - Medium, Fast, Swimming Right */
+    .fish-1 {
+      width: 45px;
+      height: 25px;
+      top: 30%;
+      left: -50px;
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 50"><path d="M20,25 Q40,10 60,25 Q40,40 20,25 Z" fill="%23ffffff" opacity="0.8"/><path d="M20,25 L10,15 L10,35 Z" fill="%23ffffff" opacity="0.8"/><circle cx="45" cy="20" r="2" fill="%23064b5a"/></svg>');
+      animation: swimRight 8s linear infinite;
+    }
+
+    /* Fish 2 - Large, Slow, Swimming Left */
+    .fish-2 {
+      width: 70px;
+      height: 35px;
+      top: 60%;
+      right: -80px;
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 50"><path d="M80,25 Q60,10 40,25 Q60,40 80,25 Z" fill="%2334E0A1" opacity="0.7"/><path d="M80,25 L90,15 L90,35 Z" fill="%2334E0A1" opacity="0.7"/><circle cx="55" cy="20" r="2" fill="%23064b5a"/></svg>');
+      animation: swimLeft 14s linear infinite;
+    }
+
+    /* Fish 3 - Small, Medium Speed, Swimming Right */
+    .fish-3 {
+      width: 30px;
+      height: 15px;
+      top: 75%;
+      left: -30px;
+      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 50"><path d="M20,25 Q40,10 60,25 Q40,40 20,25 Z" fill="%23a0d8ef" opacity="0.9"/><path d="M20,25 L10,15 L10,35 Z" fill="%23a0d8ef" opacity="0.9"/><circle cx="45" cy="20" r="2" fill="%23064b5a"/></svg>');
+      animation: swimRight 10s linear infinite 2s; /* Added delay */
+    }
+
+    @keyframes swimRight {
+      0% { left: -10%; transform: translateY(0) scaleX(1); }
+      50% { transform: translateY(-10px) scaleX(1); }
+      100% { left: 110%; transform: translateY(0) scaleX(1); }
+    }
+
+    @keyframes swimLeft {
+      0% { right: -10%; transform: translateY(0) scaleX(1); }
+      50% { transform: translateY(10px) scaleX(1); }
+      100% { right: 110%; transform: translateY(0) scaleX(1); }
+    }
 
     /* --- IMPACT STATS --- */
     .impact-section {
@@ -270,7 +397,7 @@
     .impact-card h3 { margin: 0 0 8px; font-size: 20px; }
     .impact-card p { margin: 0; color: #b8d8c8; font-size: 15px; }
 
-    /* --- PROJECTS GRID --- */
+    /* --- NEWS & PROJECTS GRID --- */
     .projects-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
     .project-card {
       background: #fff; border-radius: 16px; overflow: hidden;
@@ -337,12 +464,22 @@
       display: flex; justify-content: space-between; align-items: center; font-size: 13px;
     }
 
+    /* --- PARTNERS SECTION --- */
+    .partners-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; text-align: center; }
+    .partner-logo {
+      background: #fff; border: 1px solid var(--line); border-radius: 12px;
+      padding: 30px 20px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 12px; transition: var(--transition); filter: grayscale(100%); opacity: 0.7;
+    }
+    .partner-logo:hover { filter: grayscale(0%); opacity: 1; transform: translateY(-4px); box-shadow: var(--shadow); }
+    .partner-logo span { font-weight: 700; color: var(--deep); font-size: 14px; }
+
     /* --- RESPONSIVE --- */
     @media (max-width: 1024px) {
       .hero-grid, .why-choose-grid { grid-template-columns: 1fr; }
       .hero-features { flex-direction: row; flex-wrap: wrap; }
       .hero-feature { flex: 1 1 200px; }
-      .cards-grid, .impact-grid, .projects-grid { grid-template-columns: repeat(2, 1fr); }
+      .cards-grid, .impact-grid, .projects-grid, .partners-grid { grid-template-columns: repeat(2, 1fr); }
       .footer-grid { grid-template-columns: 1fr 1fr; }
     }
     @media (max-width: 768px) {
@@ -353,7 +490,7 @@
       .hero { padding: 80px 0; text-align: center; }
       .hero .actions { justify-content: center; }
       .hero-features { justify-content: center; }
-      .cards-grid, .impact-grid, .projects-grid, .why-features-grid { grid-template-columns: 1fr; }
+      .cards-grid, .impact-grid, .projects-grid, .why-features-grid, .partners-grid { grid-template-columns: 1fr; }
       .bottom-cta .container { flex-direction: column; text-align: center; }
       .footer-grid { grid-template-columns: 1fr; gap: 30px; }
       .footer-bottom { flex-direction: column; gap: 15px; text-align: center; }
@@ -366,11 +503,11 @@
   <div class="topbar">
     <div class="container">
       <div class="topbar-info">
-        <span>🌿 Growing stronger communities</span>
+        <span>🌿 Public Identity & Transparency</span>
         <span>📧 info@kabonix.org</span>
         <span>📍 Dar es Salaam, Tanzania</span>
       </div>
-      <a href="#contact" class="topbar-btn">Free Consultation →</a>
+      <a href="#contact" class="topbar-btn">Partner With Us →</a>
     </div>
   </div>
 
@@ -384,8 +521,10 @@
       </a>
       <nav class="links" aria-label="Main navigation">
         <a href="#about">About</a>
-        <a href="#solutions">Solutions</a>
+        <a href="#programmes">Programmes</a>
+        <a href="#news">News & Events</a>
         <a href="#impact">Impact</a>
+        <a href="#partners">Partners</a>
         <a href="#contact">Contact</a>
       </nav>
       <a class="btn primary portal-link" id="portal-link" href="/portal">Open portal</a>
@@ -398,204 +537,172 @@
     <section class="hero">
       <div class="container hero-grid">
         <div class="reveal">
-          <div class="kicker">Kabonix Foundation</div>
-          <h1>Digital tools for a<br>greener, stronger future.</h1>
-          <p>We connect programme teams, field officers, and communities so good work becomes visible, accountable, and measurable.</p>
+          <div class="kicker">Foundation Website</div>
+          <h1>The Foundation's public identity & transparency window.</h1>
+          <p>Visited by donors, partners, government and the communities it serves. Discover our commitment to climate and the blue economy.</p>
           <div class="actions">
-            <a class="btn primary" href="#solutions">Explore the platform</a>
+            <a class="btn primary" href="#about">Learn About Us</a>
             <a class="btn outline portal-link" href="/portal" style="background:transparent; color:#fff; border-color:rgba(255,255,255,0.5);">Sign in to the portal</a>
           </div>
         </div>
         <div class="hero-features reveal reveal-delay-2">
           <div class="hero-feature">
-            <div class="hero-feature-icon">🌱</div>
+            <div class="hero-feature-icon">🌍</div>
             <div class="hero-feature-text">
-              <h4>Community-first</h4>
-              <p>Designed around the people delivering change.</p>
+              <h4>Climate Focus</h4>
+              <p>Driving sustainable environmental solutions.</p>
             </div>
           </div>
           <div class="hero-feature">
-            <div class="hero-feature-icon">📊</div>
+            <div class="hero-feature-icon">🌊</div>
             <div class="hero-feature-text">
-              <h4>Visible progress</h4>
-              <p>Structure monitoring information confidently.</p>
+              <h4>Blue Economy</h4>
+              <p>Protecting our oceans and marine resources.</p>
             </div>
           </div>
           <div class="hero-feature">
-            <div class="hero-feature-icon">🔒</div>
+            <div class="hero-feature-icon">🤝</div>
             <div class="hero-feature-text">
-              <h4>Responsible access</h4>
-              <p>Roles, permissions, and audit visibility.</p>
+              <h4>Community First</h4>
+              <p>Empowering the people we serve.</p>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ABOUT / SERVICES SECTION -->
+    <!-- ABOUT / PROGRAMMES SECTION -->
     <section id="about" class="section-bg">
       <div class="container">
         <div class="heading reveal">
-          <div class="kicker">About us</div>
-          <h2>Infrastructure for sustainable progress.</h2>
-          <p>Kabonix Foundation brings field work, programme administration, and impact learning into one practical ecosystem.</p>
+          <div class="kicker">About Kabonix</div>
+          <h2>Our Programmes & Focus Areas</h2>
+          <p>Kabonix Foundation is dedicated to climate resilience and the sustainable blue economy. We work hand-in-hand with communities to create lasting impact.</p>
         </div>
         <div class="cards-grid">
           <article class="card reveal">
-            <div class="icon">🌱</div>
-            <h3>Community-first</h3>
-            <p>Designed around the people and local teams delivering change on the ground.</p>
-            <a href="#solutions">Learn More →</a>
+            <div class="card-content">
+              <div class="icon">🌱</div>
+              <h3>Climate Action</h3>
+              <p>Implementing projects that mitigate climate change and build resilient ecosystems.</p>
+              <a href="#programmes">Explore Programmes →</a>
+            </div>
           </article>
-          <article class="card reveal reveal-delay-1">
-            <div class="icon">📊</div>
-            <h3>Visible progress</h3>
-            <p>Structure monitoring information so teams can coordinate and learn with confidence.</p>
-            <a href="#impact">Learn More →</a>
+          
+          <!-- BLUE ECONOMY CARD WITH REALISTIC WATER AND FISH -->
+          <article class="card card-blue-economy reveal reveal-delay-1">
+            <div class="card-content">
+              <div class="icon">🐟</div>
+              <h3>Blue Economy</h3>
+              <p>Promoting sustainable use of ocean resources for economic growth and improved livelihoods.</p>
+              <a href="#programmes">Explore Programmes →</a>
+            </div>
+            
+            <!-- The Water Element and Fish -->
+            <div class="water">
+              <div class="fish fish-1"></div>
+              <div class="fish fish-2"></div>
+              <div class="fish fish-3"></div>
+            </div>
           </article>
+          
           <article class="card reveal reveal-delay-2">
-            <div class="icon">🔒</div>
-            <h3>Responsible access</h3>
-            <p>Roles, permissions, and audit visibility support secure, accountable delivery.</p>
-            <a href="#contact">Learn More →</a>
+            <div class="card-content">
+              <div class="icon">🏛️</div>
+              <h3>Governance & Transparency</h3>
+              <p>Ensuring accountability to our donors, partners, and the communities we serve.</p>
+              <a href="#impact">View Our Impact →</a>
+            </div>
           </article>
         </div>
       </div>
     </section>
 
-    <!-- SOLUTIONS SECTION -->
-    <section id="solutions" style="background: var(--cream);">
-      <div class="container">
-        <div class="heading reveal">
-          <div class="kicker">What we deliver</div>
-          <h2>From planning to measurable impact.</h2>
-          <p>One clear workflow for programme oversight, data quality, and field accountability.</p>
-        </div>
-        <div class="cards-grid">
-          <article class="card reveal">
-            <div class="icon">📋</div>
-            <h3>Field data capture</h3>
-            <p>Collect household, project, and site data through structured forms that support better decisions.</p>
-            <a href="#">Learn More →</a>
-          </article>
-          <article class="card reveal reveal-delay-1">
-            <div class="icon">🌾</div>
-            <h3>Programme management</h3>
-            <p>Monitor milestones, assets, and delivery across climate, agriculture, and community programmes.</p>
-            <a href="#">Learn More →</a>
-          </article>
-          <article class="card reveal reveal-delay-2">
-            <div class="icon">📈</div>
-            <h3>Impact reporting</h3>
-            <p>Turn evidence into reports, narrative updates, and decision-ready summaries for stakeholders.</p>
-            <a href="#">Learn More →</a>
-          </article>
-          <article class="card reveal reveal-delay-3">
-            <div class="icon">🧭</div>
-            <h3>Governance</h3>
-            <p>Support transparent and accountable delivery with clear operating controls.</p>
-            <a href="#">Learn More →</a>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <!-- IMPACT STATS SECTION -->
+    <!-- IMPACT STORIES SECTION -->
     <section id="impact" class="impact-section">
       <div class="container">
         <div class="heading reveal" style="color:#fff;">
-          <div class="kicker" style="color: #7dd3a8;">Impact areas</div>
-          <h2 style="color:#fff;">Better information for better action.</h2>
-          <p style="color:#b8d8c8;">Our platform supports practical programme delivery across climate-resilient growth and local accountability.</p>
+          <div class="kicker" style="color: #7dd3a8;">Impact Stories</div>
+          <h2 style="color:#fff;">Results Highlights</h2>
+          <p style="color:#b8d8c8;">Real numbers. Real change. See how your support translates into measurable impact.</p>
         </div>
         <div class="impact-grid">
           <article class="impact-card reveal">
             <div class="metric">1.2k</div>
-            <h3>Field households</h3>
+            <h3>Households Empowered</h3>
             <p>Tracked across community and livelihood improvement programmes.</p>
           </article>
           <article class="impact-card reveal reveal-delay-1">
             <div class="metric">48k</div>
-            <h3>CO₂e tonnes</h3>
+            <h3>CO₂e Tonnes Reduced</h3>
             <p>Carbon and ecosystem impact measured through monitored project reporting.</p>
           </article>
           <article class="impact-card reveal reveal-delay-2">
             <div class="metric">28</div>
-            <h3>Project sites</h3>
+            <h3>Project Sites</h3>
             <p>Mapped and managed through integrated site-level monitoring workflows.</p>
           </article>
         </div>
       </div>
     </section>
 
-    <!-- PROJECTS SECTION -->
-    <section class="section-bg">
+    <!-- NEWS & EVENTS SECTION -->
+    <section id="news" class="section-bg">
       <div class="container">
         <div class="heading reveal">
-          <div class="kicker">Featured Projects</div>
-          <h2>Our Recent Projects</h2>
-          <p>Explore how Kabonix Foundation is making a tangible difference on the ground.</p>
+          <div class="kicker">News & Events</div>
+          <h2>Latest Updates & Publications</h2>
+          <p>Stay informed about our latest projects, upcoming events, and published reports.</p>
         </div>
         <div class="projects-grid">
           <div class="project-card reveal">
-            <img src="https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&q=80" alt="Environmental Impact" class="project-img">
+            <img src="https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&q=80" alt="News" class="project-img">
             <div class="project-content">
-              <span class="project-tag">EIA</span>
-              <h3>Environmental Impact Assessment</h3>
-              <div class="project-loc">📍 Arusha, Tanzania</div>
+              <span class="project-tag">Press Release</span>
+              <h3>Kabonix Launches New Blue Economy Initiative</h3>
+              <div class="project-loc">📅 October 2026</div>
             </div>
           </div>
           <div class="project-card reveal reveal-delay-1">
-            <img src="https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&q=80" alt="Waste Management" class="project-img">
+            <img src="https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&q=80" alt="Event" class="project-img">
             <div class="project-content">
-              <span class="project-tag">Recycling</span>
-              <h3>Waste Management Project</h3>
-              <div class="project-loc">📍 Dar es Salaam, Tanzania</div>
+              <span class="project-tag">Upcoming Event</span>
+              <h3>Annual Donor & Partner Appreciation Gala</h3>
+              <div class="project-loc">📅 November 15, 2026</div>
             </div>
           </div>
           <div class="project-card reveal reveal-delay-2">
-            <img src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&q=80" alt="Water Conservation" class="project-img">
+            <img src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&q=80" alt="Publication" class="project-img">
             <div class="project-content">
-              <span class="project-tag">Water Mgmt</span>
-              <h3>Water Conservation Project</h3>
-              <div class="project-loc">📍 Mbeya, Tanzania</div>
+              <span class="project-tag">Publication</span>
+              <h3>2025 Annual Impact & Transparency Report</h3>
+              <div class="project-loc">📄 Download PDF</div>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- WHY CHOOSE US SECTION -->
-    <section style="background: var(--cream);">
-      <div class="container why-choose-grid">
-        <div class="why-choose-image reveal">
-          <img src="https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&q=80" alt="Planting a tree">
-          <div class="why-choose-overlay">
-            <h3>Healthy Planet<br>Brighter Future</h3>
-          </div>
+    <!-- PARTNERS & DONORS SECTION -->
+    <section id="partners" style="background: var(--cream);">
+      <div class="container">
+        <div class="heading reveal" style="text-align: center; margin: 0 auto 50px;">
+          <div class="kicker">Partners & Donors</div>
+          <h2>Recognition & Collaboration</h2>
+          <p>We are grateful for the support of our partners and donors who make our work possible.</p>
         </div>
-        <div class="reveal reveal-delay-1">
-          <div class="kicker">Why Choose Us</div>
-          <h2 style="margin: 0 0 16px; font-size: 36px; color: var(--deep);">Your Partner in Environmental Excellence</h2>
-          <p style="color: var(--muted); margin-bottom: 0;">We combine technical expertise with community-driven approaches to deliver lasting, measurable impact.</p>
-          
-          <div class="why-features-grid">
-            <div class="why-feature">
-              <h4><span class="icon">🌿</span> Sustainable Approach</h4>
-              <p>Solutions designed around long-term environmental responsibility.</p>
-            </div>
-            <div class="why-feature">
-              <h4><span class="icon">⚙️</span> Technical Expertise</h4>
-              <p>Qualified professionals and evidence-based environmental practices.</p>
-            </div>
-            <div class="why-feature">
-              <h4><span class="icon">🛡️</span> Regulatory Compliance</h4>
-              <p>Helping organisations meet applicable environmental requirements.</p>
-            </div>
-            <div class="why-feature">
-              <h4><span class="icon">👥</span> Community Impact</h4>
-              <p>Creating solutions that benefit both people and ecosystems.</p>
-            </div>
+        <div class="partners-grid">
+          <div class="partner-logo reveal">
+            <span>🌍 Global Climate Fund</span>
+          </div>
+          <div class="partner-logo reveal reveal-delay-1">
+            <span>🏛️ Ministry of Environment</span>
+          </div>
+          <div class="partner-logo reveal reveal-delay-2">
+            <span>🌊 Blue Ocean Alliance</span>
+          </div>
+          <div class="partner-logo reveal reveal-delay-3">
+            <span>🤝 Community Trust</span>
           </div>
         </div>
       </div>
@@ -605,10 +712,10 @@
     <section class="bottom-cta" id="contact">
       <div class="container">
         <div class="reveal">
-          <h2>Build a stronger future together.</h2>
-          <p>Coordinate action, evidence, and progress with Kabonix.</p>
+          <h2>Partner with Kabonix Foundation.</h2>
+          <p>Contact us to discuss how we can work together for a sustainable future.</p>
         </div>
-        <a class="btn primary portal-link reveal reveal-delay-1" href="/portal">Open the portal</a>
+        <a class="btn primary portal-link reveal reveal-delay-1" href="/portal">Contact Us</a>
       </div>
     </section>
 
@@ -624,26 +731,25 @@
             <img src="./assets/logo.png" alt="Kabonix Foundation logo">
             <span>Kabonix<small>Foundation</small></span>
           </div>
-          <p style="margin-bottom: 20px;">Digital Ecosystem Platform for stronger programmes, communities, and measurable impact.</p>
+          <p style="margin-bottom: 20px;">The Foundation's public identity and transparency window — visited by donors, partners, government and the communities it serves.</p>
         </div>
         <div class="footer-col">
           <h4>Quick Links</h4>
           <ul>
-            <li><a href="#home">Home</a></li>
-            <li><a href="#about">About Us</a></li>
-            <li><a href="#solutions">Solutions</a></li>
-            <li><a href="#impact">Impact</a></li>
-            <li><a href="#contact">Contact</a></li>
+            <li><a href="#about">About Kabonix</a></li>
+            <li><a href="#programmes">Programmes</a></li>
+            <li><a href="#news">News & Events</a></li>
+            <li><a href="#impact">Impact Stories</a></li>
+            <li><a href="#partners">Partners & Donors</a></li>
           </ul>
         </div>
         <div class="footer-col">
-          <h4>Our Services</h4>
+          <h4>Focus Areas</h4>
           <ul>
-            <li><a href="#">Environmental Consultancy</a></li>
-            <li><a href="#">Impact Assessment</a></li>
-            <li><a href="#">Waste Management</a></li>
-            <li><a href="#">Water Management</a></li>
-            <li><a href="#">Conservation</a></li>
+            <li><a href="#">Climate Action</a></li>
+            <li><a href="#">Blue Economy</a></li>
+            <li><a href="#">Community Empowerment</a></li>
+            <li><a href="#">Governance</a></li>
           </ul>
         </div>
         <div class="footer-col">
@@ -660,6 +766,7 @@
         <div style="display: flex; gap: 20px;">
           <a href="#">Privacy Policy</a>
           <a href="#">Terms & Conditions</a>
+          <a href="#">Transparency Report</a>
         </div>
       </div>
     </div>
