@@ -34,6 +34,700 @@
     a { text-decoration: none; color: inherit; }
     .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
 
+    /* --- LOGO DEBUGGING STYLES --- */
+    .brand img, .footer-brand img {
+      width: 48px !important;
+      height: 48px !important;
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      object-fit: contain !important;
+      
+      /* DEBUG: Remove these 2 lines once the logo loads */
+      background-color: #ffcccc;
+      border: 3px solid red;
+    }
+
+    /* --- BUTTON ANIMATIONS --- */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 14px 28px;
+      border-radius: 8px;
+      font-weight: 700;
+      border: 1px solid transparent;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: var(--transition);
+      z-index: 1;
+    }
+    .btn::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 300%;
+      height: 300%;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      transition: transform 0.6s ease;
+      z-index: -1;
+    }
+    .btn:hover::after { transform: translate(-50%, -50%) scale(1); }
+    .btn:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px rgba(7, 59, 44, 0.2);
+    }
+    .btn:active {
+      transform: translateY(0);
+      box-shadow: 0 4px 8px rgba(7, 59, 44, 0.2);
+    }
+    .btn.primary { background: var(--forest); color: #fff; }
+    .btn.outline { border-color: var(--line); background: #fff; color: var(--deep); }
+    .btn.outline:hover { border-color: var(--forest); color: var(--forest); }
+
+    /* --- SCROLL REVEAL ANIMATIONS --- */
+    .reveal {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+    .reveal-delay-4 { transition-delay: 0.4s; }
+
+    /* --- TOPBAR --- */
+    .topbar {
+      background: var(--deep);
+      color: #dcefe5;
+      font-size: 13px;
+      padding: 10px 0;
+    }
+    .topbar .container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+    }
+    .topbar-info { display: flex; gap: 20px; }
+    .topbar-info span { display: flex; align-items: center; gap: 6px; }
+    .topbar-btn {
+      background: #2a8a63;
+      color: #fff;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 12px;
+      transition: var(--transition);
+    }
+    .topbar-btn:hover { background: #1f6b4c; transform: scale(1.05); }
+
+    /* --- HEADER --- */
+    header {
+      background: var(--white);
+      border-bottom: 1px solid var(--line);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    }
+    .nav {
+      height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--deep);
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 18px;
+    }
+    .brand small { display: block; font-size: 10px; letter-spacing: .15em; color: var(--muted); font-weight: 500; }
+    .links { display: flex; align-items: center; gap: 28px; font-size: 15px; color: var(--muted); font-weight: 500; }
+    .links a { transition: var(--transition); position: relative; }
+    .links a:hover { color: var(--forest); }
+    .links a::after {
+      content: ''; position: absolute; bottom: -4px; left: 0; width: 0; height: 2px;
+      background: var(--forest); transition: var(--transition);
+    }
+    .links a:hover::after { width: 100%; }
+
+    /* --- HERO SECTION --- */
+    .hero {
+      position: relative;
+      padding: 120px 0 140px;
+      background: linear-gradient(rgba(7, 59, 44, 0.85), rgba(7, 59, 44, 0.7)), url('https://images.unsplash.com/photo-1511497584788-876760111969?auto=format&fit=crop&q=80') center/cover no-repeat;
+      color: #fff;
+      overflow: hidden;
+    }
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 60px;
+      align-items: center;
+    }
+    .kicker {
+      font-size: 12px; letter-spacing: .2em; text-transform: uppercase;
+      color: #7dd3a8; font-weight: 700; margin-bottom: 20px;
+    }
+    .hero h1 {
+      font-size: clamp(40px, 5vw, 64px);
+      line-height: 1.1; margin: 0 0 24px; color: #fff;
+    }
+    .hero p {
+      margin: 0 0 32px; max-width: 56ch; color: #dcefe5;
+      font-size: 18px; line-height: 1.7;
+    }
+    .hero .actions { display: flex; gap: 16px; flex-wrap: wrap; }
+    
+    /* Hero Floating Features */
+    .hero-features { display: flex; flex-direction: column; gap: 16px; }
+    .hero-feature {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      padding: 16px 20px;
+      display: flex; align-items: center; gap: 16px;
+      transition: var(--transition);
+    }
+    .hero-feature:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateX(-10px);
+    }
+    .hero-feature-icon {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: rgba(125, 211, 168, 0.2);
+      display: grid; place-items: center; font-size: 20px; color: #7dd3a8;
+    }
+    .hero-feature-text h4 { margin: 0 0 4px; font-size: 16px; }
+    .hero-feature-text p { margin: 0; font-size: 13px; color: #b8d8c8; line-height: 1.4; }
+
+    /* --- SECTION STYLES --- */
+    section { padding: 90px 0; }
+    .section-bg { background: #fff; }
+    .heading { max-width: 650px; margin-bottom: 50px; }
+    .heading h2 { margin: 0; font-size: clamp(32px, 3vw, 44px); line-height: 1.15; color: var(--deep); }
+    .heading p { margin-top: 16px; color: var(--muted); font-size: 17px; }
+
+    /* --- SERVICES GRID --- */
+    .cards-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    .card {
+      background: #fff; border: 1px solid var(--line); border-radius: 16px;
+      padding: 32px; transition: var(--transition);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+    }
+    .card:hover {
+      transform: translateY(-8px);
+      box-shadow: var(--shadow);
+      border-color: var(--forest);
+    }
+    .card .icon {
+      width: 54px; height: 54px; border-radius: 12px;
+      background: #edf7ef; display: grid; place-items: center;
+      font-size: 24px; margin-bottom: 20px; color: var(--forest);
+    }
+    .card h3 { margin: 0 0 12px; color: var(--deep); font-size: 20px; }
+    .card p { margin: 0 0 20px; color: var(--muted); font-size: 15px; }
+    .card a { color: var(--forest); font-weight: 700; font-size: 14px; display: inline-flex; align-items: center; gap: 6px; transition: var(--transition); }
+    .card a:hover { gap: 10px; color: var(--deep); }
+
+    /* --- IMPACT STATS --- */
+    .impact-section {
+      background: linear-gradient(135deg, var(--deep) 0%, var(--forest) 100%);
+      color: #fff;
+      position: relative;
+      overflow: hidden;
+    }
+    .impact-section::before {
+      content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: url('data:image/svg+xml;utf8,<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="M10 10 Q 30 20 50 10 T 90 10" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="2"/></svg>');
+      opacity: 0.5;
+    }
+    .impact-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; position: relative; z-index: 1; }
+    .impact-card {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 16px;
+      padding: 30px;
+      transition: var(--transition);
+    }
+    .impact-card:hover { background: rgba(255,255,255,0.15); transform: translateY(-5px); }
+    .metric { font-size: 48px; font-weight: 800; color: #7dd3a8; margin-bottom: 12px; line-height: 1; }
+    .impact-card h3 { margin: 0 0 8px; font-size: 20px; }
+    .impact-card p { margin: 0; color: #b8d8c8; font-size: 15px; }
+
+    /* --- PROJECTS GRID --- */
+    .projects-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    .project-card {
+      background: #fff; border-radius: 16px; overflow: hidden;
+      border: 1px solid var(--line); transition: var(--transition);
+    }
+    .project-card:hover { transform: translateY(-6px); box-shadow: var(--shadow); }
+    .project-img { width: 100%; height: 200px; object-fit: cover; display: block; transition: var(--transition); }
+    .project-card:hover .project-img { transform: scale(1.05); }
+    .project-content { padding: 24px; }
+    .project-tag { 
+      display: inline-block; padding: 4px 12px; border-radius: 20px; 
+      background: #edf7ef; color: var(--forest); font-size: 12px; font-weight: 700; margin-bottom: 12px;
+    }
+    .project-content h3 { margin: 0 0 8px; font-size: 18px; color: var(--deep); }
+    .project-loc { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+
+    /* --- WHY CHOOSE US --- */
+    .why-choose-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
+    .why-choose-image {
+      border-radius: 20px; overflow: hidden; position: relative;
+      box-shadow: var(--shadow);
+    }
+    .why-choose-image img { width: 100%; display: block; }
+    .why-choose-overlay {
+      position: absolute; bottom: 0; left: 0; width: 100%;
+      background: linear-gradient(transparent, rgba(7,59,44,0.9));
+      padding: 40px 30px 30px; color: #fff;
+    }
+    .why-choose-overlay h3 { margin: 0; font-size: 24px; font-style: italic; font-weight: 400; }
+    .why-features-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 40px; }
+    .why-feature h4 { margin: 0 0 8px; font-size: 18px; color: var(--deep); display: flex; align-items: center; gap: 10px; }
+    .why-feature h4 .icon { color: var(--forest); font-size: 20px; }
+    .why-feature p { margin: 0; color: var(--muted); font-size: 15px; }
+
+    /* --- BOTTOM CTA & FOOTER --- */
+    .bottom-cta {
+      background: var(--deep); color: #fff; padding: 60px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .bottom-cta .container { display: flex; justify-content: space-between; align-items: center; gap: 30px; }
+    .bottom-cta h2 { margin: 0; font-size: clamp(24px, 2.5vw, 36px); }
+    .bottom-cta p { margin: 8px 0 0; color: #b8d8c8; font-size: 18px; }
+
+    footer { background: #052a1f; color: #a3c4b5; padding: 70px 0 30px; font-size: 14px; }
+    .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1.5fr; gap: 40px; margin-bottom: 50px; }
+    .footer-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; color: #fff; font-weight: 700; text-transform: uppercase; }
+    .footer-col h4 { color: #fff; margin: 0 0 20px; font-size: 16px; }
+    .footer-col ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; }
+    .footer-col ul a { transition: var(--transition); }
+    .footer-col ul a:hover { color: #fff; padding-left: 4px; }
+    .newsletter-form { display: flex; margin-top: 16px; }
+    .newsletter-form input {
+      flex: 1; padding: 12px 16px; border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.05); border-radius: 8px 0 0 8px; color: #fff; outline: none;
+    }
+    .newsletter-form input::placeholder { color: #6a8f7d; }
+    .newsletter-form button {
+      padding: 12px 20px; background: var(--forest); color: #fff; border: none;
+      border-radius: 0 8px 8px 0; font-weight: 700; cursor: pointer; transition: var(--transition);
+    }
+    .newsletter-form button:hover { background: #1f8a5f; }
+    .footer-bottom {
+      border-top: 1px solid rgba(255,255,255,0.1); padding-top: 24px;
+      display: flex; justify-content: space-between; align-items: center; font-size: 13px;
+    }
+
+    /* --- RESPONSIVE --- */
+    @media (max-width: 1024px) {
+      .hero-grid, .why-choose-grid { grid-template-columns: 1fr; }
+      .hero-features { flex-direction: row; flex-wrap: wrap; }
+      .hero-feature { flex: 1 1 200px; }
+      .cards-grid, .impact-grid, .projects-grid { grid-template-columns: repeat(2, 1fr); }
+      .footer-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 768px) {
+      .topbar .container { flex-direction: column; text-align: center; gap: 10px; }
+      .topbar-info { flex-direction: column; gap: 5px; }
+      .nav { flex-direction: column; height: auto; padding: 20px 0; gap: 15px; }
+      .links { flex-wrap: wrap; justify-content: center; gap: 15px; }
+      .hero { padding: 80px 0; text-align: center; }
+      .hero .actions { justify-content: center; }
+      .hero-features { justify-content: center; }
+      .cards-grid, .impact-grid, .projects-grid, .why-features-grid { grid-template-columns: 1fr; }
+      .bottom-cta .container { flex-direction: column; text-align: center; }
+      .footer-grid { grid-template-columns: 1fr; gap: 30px; }
+      .footer-bottom { flex-direction: column; gap: 15px; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="container">
+      <div class="topbar-info">
+        <span>🌿 Growing stronger communities</span>
+        <span>📧 info@kabonix.org</span>
+        <span>📍 Dar es Salaam, Tanzania</span>
+      </div>
+      <a href="#contact" class="topbar-btn">Free Consultation →</a>
+    </div>
+  </div>
+
+  <!-- HEADER -->
+  <header>
+    <div class="container nav">
+      <a class="brand" href="#home">
+        <!-- Using relative path ./assets/logo.png -->
+        <img src="./assets/logo.png" alt="Kabonix Foundation logo">
+        <span>Kabonix<small>Foundation</small></span>
+      </a>
+      <nav class="links" aria-label="Main navigation">
+        <a href="#about">About</a>
+        <a href="#solutions">Solutions</a>
+        <a href="#impact">Impact</a>
+        <a href="#contact">Contact</a>
+      </nav>
+      <a class="btn primary portal-link" id="portal-link" href="/portal">Open portal</a>
+    </div>
+  </header>
+
+  <main id="home">
+
+    <!-- HERO SECTION -->
+    <section class="hero">
+      <div class="container hero-grid">
+        <div class="reveal">
+          <div class="kicker">Kabonix Foundation</div>
+          <h1>Digital tools for a<br>greener, stronger future.</h1>
+          <p>We connect programme teams, field officers, and communities so good work becomes visible, accountable, and measurable.</p>
+          <div class="actions">
+            <a class="btn primary" href="#solutions">Explore the platform</a>
+            <a class="btn outline portal-link" href="/portal" style="background:transparent; color:#fff; border-color:rgba(255,255,255,0.5);">Sign in to the portal</a>
+          </div>
+        </div>
+        <div class="hero-features reveal reveal-delay-2">
+          <div class="hero-feature">
+            <div class="hero-feature-icon">🌱</div>
+            <div class="hero-feature-text">
+              <h4>Community-first</h4>
+              <p>Designed around the people delivering change.</p>
+            </div>
+          </div>
+          <div class="hero-feature">
+            <div class="hero-feature-icon">📊</div>
+            <div class="hero-feature-text">
+              <h4>Visible progress</h4>
+              <p>Structure monitoring information confidently.</p>
+            </div>
+          </div>
+          <div class="hero-feature">
+            <div class="hero-feature-icon">🔒</div>
+            <div class="hero-feature-text">
+              <h4>Responsible access</h4>
+              <p>Roles, permissions, and audit visibility.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ABOUT / SERVICES SECTION -->
+    <section id="about" class="section-bg">
+      <div class="container">
+        <div class="heading reveal">
+          <div class="kicker">About us</div>
+          <h2>Infrastructure for sustainable progress.</h2>
+          <p>Kabonix Foundation brings field work, programme administration, and impact learning into one practical ecosystem.</p>
+        </div>
+        <div class="cards-grid">
+          <article class="card reveal">
+            <div class="icon">🌱</div>
+            <h3>Community-first</h3>
+            <p>Designed around the people and local teams delivering change on the ground.</p>
+            <a href="#solutions">Learn More →</a>
+          </article>
+          <article class="card reveal reveal-delay-1">
+            <div class="icon">📊</div>
+            <h3>Visible progress</h3>
+            <p>Structure monitoring information so teams can coordinate and learn with confidence.</p>
+            <a href="#impact">Learn More →</a>
+          </article>
+          <article class="card reveal reveal-delay-2">
+            <div class="icon">🔒</div>
+            <h3>Responsible access</h3>
+            <p>Roles, permissions, and audit visibility support secure, accountable delivery.</p>
+            <a href="#contact">Learn More →</a>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- SOLUTIONS SECTION -->
+    <section id="solutions" style="background: var(--cream);">
+      <div class="container">
+        <div class="heading reveal">
+          <div class="kicker">What we deliver</div>
+          <h2>From planning to measurable impact.</h2>
+          <p>One clear workflow for programme oversight, data quality, and field accountability.</p>
+        </div>
+        <div class="cards-grid">
+          <article class="card reveal">
+            <div class="icon">📋</div>
+            <h3>Field data capture</h3>
+            <p>Collect household, project, and site data through structured forms that support better decisions.</p>
+            <a href="#">Learn More →</a>
+          </article>
+          <article class="card reveal reveal-delay-1">
+            <div class="icon">🌾</div>
+            <h3>Programme management</h3>
+            <p>Monitor milestones, assets, and delivery across climate, agriculture, and community programmes.</p>
+            <a href="#">Learn More →</a>
+          </article>
+          <article class="card reveal reveal-delay-2">
+            <div class="icon">📈</div>
+            <h3>Impact reporting</h3>
+            <p>Turn evidence into reports, narrative updates, and decision-ready summaries for stakeholders.</p>
+            <a href="#">Learn More →</a>
+          </article>
+          <article class="card reveal reveal-delay-3">
+            <div class="icon">🧭</div>
+            <h3>Governance</h3>
+            <p>Support transparent and accountable delivery with clear operating controls.</p>
+            <a href="#">Learn More →</a>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- IMPACT STATS SECTION -->
+    <section id="impact" class="impact-section">
+      <div class="container">
+        <div class="heading reveal" style="color:#fff;">
+          <div class="kicker" style="color: #7dd3a8;">Impact areas</div>
+          <h2 style="color:#fff;">Better information for better action.</h2>
+          <p style="color:#b8d8c8;">Our platform supports practical programme delivery across climate-resilient growth and local accountability.</p>
+        </div>
+        <div class="impact-grid">
+          <article class="impact-card reveal">
+            <div class="metric">1.2k</div>
+            <h3>Field households</h3>
+            <p>Tracked across community and livelihood improvement programmes.</p>
+          </article>
+          <article class="impact-card reveal reveal-delay-1">
+            <div class="metric">48k</div>
+            <h3>CO₂e tonnes</h3>
+            <p>Carbon and ecosystem impact measured through monitored project reporting.</p>
+          </article>
+          <article class="impact-card reveal reveal-delay-2">
+            <div class="metric">28</div>
+            <h3>Project sites</h3>
+            <p>Mapped and managed through integrated site-level monitoring workflows.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- PROJECTS SECTION -->
+    <section class="section-bg">
+      <div class="container">
+        <div class="heading reveal">
+          <div class="kicker">Featured Projects</div>
+          <h2>Our Recent Projects</h2>
+          <p>Explore how Kabonix Foundation is making a tangible difference on the ground.</p>
+        </div>
+        <div class="projects-grid">
+          <div class="project-card reveal">
+            <img src="https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&q=80" alt="Environmental Impact" class="project-img">
+            <div class="project-content">
+              <span class="project-tag">EIA</span>
+              <h3>Environmental Impact Assessment</h3>
+              <div class="project-loc">📍 Arusha, Tanzania</div>
+            </div>
+          </div>
+          <div class="project-card reveal reveal-delay-1">
+            <img src="https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&q=80" alt="Waste Management" class="project-img">
+            <div class="project-content">
+              <span class="project-tag">Recycling</span>
+              <h3>Waste Management Project</h3>
+              <div class="project-loc">📍 Dar es Salaam, Tanzania</div>
+            </div>
+          </div>
+          <div class="project-card reveal reveal-delay-2">
+            <img src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&q=80" alt="Water Conservation" class="project-img">
+            <div class="project-content">
+              <span class="project-tag">Water Mgmt</span>
+              <h3>Water Conservation Project</h3>
+              <div class="project-loc">📍 Mbeya, Tanzania</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- WHY CHOOSE US SECTION -->
+    <section style="background: var(--cream);">
+      <div class="container why-choose-grid">
+        <div class="why-choose-image reveal">
+          <img src="https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&q=80" alt="Planting a tree">
+          <div class="why-choose-overlay">
+            <h3>Healthy Planet<br>Brighter Future</h3>
+          </div>
+        </div>
+        <div class="reveal reveal-delay-1">
+          <div class="kicker">Why Choose Us</div>
+          <h2 style="margin: 0 0 16px; font-size: 36px; color: var(--deep);">Your Partner in Environmental Excellence</h2>
+          <p style="color: var(--muted); margin-bottom: 0;">We combine technical expertise with community-driven approaches to deliver lasting, measurable impact.</p>
+          
+          <div class="why-features-grid">
+            <div class="why-feature">
+              <h4><span class="icon">🌿</span> Sustainable Approach</h4>
+              <p>Solutions designed around long-term environmental responsibility.</p>
+            </div>
+            <div class="why-feature">
+              <h4><span class="icon">⚙️</span> Technical Expertise</h4>
+              <p>Qualified professionals and evidence-based environmental practices.</p>
+            </div>
+            <div class="why-feature">
+              <h4><span class="icon">🛡️</span> Regulatory Compliance</h4>
+              <p>Helping organisations meet applicable environmental requirements.</p>
+            </div>
+            <div class="why-feature">
+              <h4><span class="icon">👥</span> Community Impact</h4>
+              <p>Creating solutions that benefit both people and ecosystems.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- BOTTOM CTA -->
+    <section class="bottom-cta" id="contact">
+      <div class="container">
+        <div class="reveal">
+          <h2>Build a stronger future together.</h2>
+          <p>Coordinate action, evidence, and progress with Kabonix.</p>
+        </div>
+        <a class="btn primary portal-link reveal reveal-delay-1" href="/portal">Open the portal</a>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-col">
+          <div class="footer-brand">
+            <!-- Using relative path ./assets/logo.png -->
+            <img src="./assets/logo.png" alt="Kabonix Foundation logo">
+            <span>Kabonix<small>Foundation</small></span>
+          </div>
+          <p style="margin-bottom: 20px;">Digital Ecosystem Platform for stronger programmes, communities, and measurable impact.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Quick Links</h4>
+          <ul>
+            <li><a href="#home">Home</a></li>
+            <li><a href="#about">About Us</a></li>
+            <li><a href="#solutions">Solutions</a></li>
+            <li><a href="#impact">Impact</a></li>
+            <li><a href="#contact">Contact</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Our Services</h4>
+          <ul>
+            <li><a href="#">Environmental Consultancy</a></li>
+            <li><a href="#">Impact Assessment</a></li>
+            <li><a href="#">Waste Management</a></li>
+            <li><a href="#">Water Management</a></li>
+            <li><a href="#">Conservation</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Subscribe to Our Newsletter</h4>
+          <p>Get the latest updates on our projects, news and sustainability tips.</p>
+          <form class="newsletter-form" onsubmit="event.preventDefault(); alert('Subscribed successfully!');">
+            <input type="email" placeholder="Your email address" required>
+            <button type="submit">Subscribe →</button>
+          </form>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© 2026 Kabonix Foundation. All rights reserved.</span>
+        <div style="display: flex; gap: 20px;">
+          <a href="#">Privacy Policy</a>
+          <a href="#">Terms & Conditions</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- JAVASCRIPT FOR SCROLL ANIMATIONS & PORTAL LINK -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const reveals = document.querySelectorAll('.reveal');
+      
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+          }
+        });
+      }, {
+        threshold: 0.1,
+        rootMargin: "0px 0px -50px 0px"
+      });
+
+      reveals.forEach(reveal => observer.observe(reveal));
+
+      const configuredPortal = document.querySelector('meta[name="portal-url"]')?.content;
+      if (configuredPortal) {
+        document.querySelectorAll('.portal-link').forEach(link => { 
+          link.href = configuredPortal; 
+        });
+      }
+    });
+  </script>
+</body>
+</html><!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Kabonix Foundation Digital Ecosystem Platform for stronger programmes, communities, and measurable impact.">
+  <meta property="og:title" content="Kabonix Foundation">
+  <meta property="og:description" content="Digital ecosystem platform for programme teams, field officers, and communities.">
+  <meta property="og:image" content="./assets/logo.png">
+  <link rel="icon" href="./assets/logo.png" type="image/png">
+  <title>Kabonix Foundation | Digital Ecosystem Platform</title>
+  <style>
+    /* --- CSS VARIABLES & RESET --- */
+    :root {
+      --forest: #0d6845;
+      --deep: #073b2c;
+      --ink: #17352d;
+      --muted: #60736c;
+      --cream: #f7f6f1;
+      --line: #dfe9e2;
+      --white: #ffffff;
+      --shadow: 0 10px 30px rgba(7, 59, 44, 0.08);
+      --transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--cream);
+      color: var(--ink);
+      font: 16px/1.6 Arial, Helvetica, sans-serif;
+      overflow-x: hidden;
+    }
+    a { text-decoration: none; color: inherit; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+
     /* --- BUTTON ANIMATIONS --- */
     .btn {
       display: inline-flex;
