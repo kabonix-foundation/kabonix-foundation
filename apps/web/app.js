@@ -12,8 +12,6 @@
 
   const WEBSITE_URL = document.querySelector('meta[name="website-url"]')?.content || 'http://localhost:3001';
 
-  // Demo mode: only pre-fill seeded credentials and show the "seeded accounts"
-  // hint when explicitly enabled, or when running on a dev host.
   const DEMO_MODE =
     document.querySelector('meta[name="demo-mode"]')?.content === 'true' ||
     ['localhost', '127.0.0.1', '0.0.0.0'].includes(location.hostname);
@@ -39,7 +37,7 @@
     token: lsGet('kabonix_token'),
     user: null, roles: [], permissions: [],
     route: 'dashboard', routeParam: null,
-    mfaChallenge: null,   // set by doLogin when the API returns mfaRequired
+    mfaChallenge: null,
   };
 
   window.state = state;
@@ -51,15 +49,10 @@
   const root = document.getElementById('root');
 
   // ── Render sequencing ──────────────────────────────────────────────────────
-  // Every render() bumps this counter. Async view functions capture the value
-  // at start and bail out after each await if a newer render has begun. This
-  // stops a slow response from overwriting a page the user has already left.
   let renderSeq = 0;
   function isStale(seq) { return seq !== renderSeq; }
 
   async function api(path, opts = {}) {
-    // __silent401 is used by the boot probe so a failed session check does not
-    // trigger a second render (the caller handles the redirect itself).
     const { __silent401, ...fetchOpts } = opts;
     const res = await fetch(API + path, {
       ...fetchOpts,
@@ -69,7 +62,6 @@
     const data = await res.json().catch(()=>({}));
     if (!res.ok) {
       if (res.status === 401 && state.token && !__silent401) {
-        // Session expired or revoked — drop it and send the user to sign-in.
         state.token = null; state.user = null; state.roles = []; state.permissions = [];
         lsDel('kabonix_token');
         render();
@@ -83,9 +75,7 @@
   }
   window.api = api;
 
-  // [FIX] Extension surface. ai.js (and any future drop-in module) registers
-  // views and nav items through this object instead of fighting app.js for
-  // #main and the sidebar with a MutationObserver.
+  // Extension surface — ai.js and any future drop-in module registers here.
   const extraViews    = {};
   const extraNavItems = [];
   window.__kabonix = Object.freeze({
@@ -135,14 +125,13 @@
     return [];
   }
 
-  // ── URL token handler (password reset / email verify) ───────────────────────
+  // ── URL token handler ─────────────────────────────────────────────────────
   async function handleUrlTokens() {
     const params = new URLSearchParams(location.search);
     const resetToken  = params.get('resetToken');
     const verifyToken = params.get('verifyToken');
     if (!resetToken && !verifyToken) return false;
 
-    // Strip only the token(s) from the address bar — keep any other query params.
     const url = new URL(location.href);
     url.searchParams.delete('resetToken');
     url.searchParams.delete('verifyToken');
@@ -173,7 +162,6 @@
       return true;
     }
 
-    // resetToken
     root.innerHTML = `
 <div class="login-screen">
   <div class="login-form-side">
@@ -263,7 +251,7 @@
       forms:     renderForms,
       messages:  renderMessages,
       profile:   renderProfile,
-      ...extraViews,          // [FIX] extension views (e.g. ai.js)
+      ...extraViews,
     };
     (views[state.route]||renderDashboard)(seq);
   }
@@ -360,7 +348,6 @@
   }
 
   // ── Layout ────────────────────────────────────────────────────────────────
-  // Delegated, one-time listeners — never re-attached per render.
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') document.querySelector('.app-shell')?.classList.remove('sidebar-open');
   });
@@ -383,8 +370,6 @@
       can('admin','view') && { key:'config', icon:'⚙️', label:'System Config' },
       can('admin','view') && { key:'messages', icon:'✉️', label:'Contact Messages' },
       (can('admin','view')||can('data_collection','approve')) && { key:'audit', icon:'📜', label:'Audit Log' },
-      // [FIX] Extension nav items — canAccess() is re-evaluated every render,
-      // so permission / login changes take effect immediately.
       ...extraNavItems
         .filter(i => i.canAccess())
         .map(i => ({ key: i.key, icon: i.icon, label: i.label })),
@@ -883,11 +868,14 @@
         <h3 style="padding:22px 24px 0">Recent submissions (${submissions.length})</h3>
         ${!submissions.length ? `<p class="meta" style="padding:12px 24px 22px">No submissions yet.</p>` : `
         <table>
-          <thead><tr><th>Beneficiary</th><th>Village</th><th>Programme</th><th>Submitted by</th><th>When</th><th></th></tr></thead>
+          <thead><tr><th>Beneficiary</th><th>Village</th><th>Programme</th><th>Location</th><th>Submitted by</th><th>When</th><th></th></tr></thead>
           <tbody>${submissions.map(s=>`<tr>
             <td>${esc(s.answers?.beneficiary_name||'—')}</td>
             <td>${esc(s.answers?.village||'—')}</td>
             <td>${esc(s.answers?.programme_area||'—')}</td>
+            <td class="meta">${(s.answers?.gps_lat != null && s.answers?.gps_lng != null)
+                                ? `${Number(s.answers.gps_lat).toFixed(4)}, ${Number(s.answers.gps_lng).toFixed(4)}`
+                                : '—'}</td>
             <td class="meta">${esc(s.submitted_by_email)}</td>
             <td class="meta">${ago(s.submitted_at)}</td>
             <td class="action-cell">
@@ -898,11 +886,27 @@
         </table>`}
       </div>`;
 
+    // Initialise any map pickers now that the form HTML is in the DOM.
+    if (typeof window.__mapPickerScan === 'function') {
+      requestAnimationFrame(() => window.__mapPickerScan());
+    }
+
     if (form && canCreate) {
       document.getElementById('me-form').onsubmit = async e => {
         e.preventDefault();
         const answers = {};
+
         for (const f of form.schema||[]) {
+          // Map fields have no single input element — the picker stores the
+          // value in window.__meMapPickers. We write to gps_lat/gps_lng so the
+          // backend wire format is unchanged.
+          if (f.type === 'map') {
+            const picker = window.__meMapPickers?.get?.(f.id);
+            const val = picker?.getValue?.();
+            if (val) { answers.gps_lat = val.lat; answers.gps_lng = val.lng; }
+            continue;
+          }
+
           const el = document.getElementById('f_'+f.id);
           if (!el) continue;
           if (f.type === 'number') {
@@ -913,6 +917,13 @@
         }
 
         for (const f of form.schema||[]) {
+          if (f.type === 'map') {
+            if (f.required && (answers.gps_lat == null || answers.gps_lng == null)) {
+              return toast(`${f.label} is required — tap the map to place a pin.`, true);
+            }
+            continue;
+          }
+
           const v = answers[f.id];
           const empty = v === undefined || v === null || v === '';
           if (f.required && empty) return toast(`${f.label} is required.`, true);
@@ -987,6 +998,19 @@
       f.max != null       ? `max="${f.max}"`              : '',
       f.pattern           ? `pattern="${esc(f.pattern)}"` : '',
     ].filter(Boolean).join(' ');
+
+    if (f.type === 'map') {
+      return `<div class="field field-map field-map-wide">
+        <label>${esc(f.label)}${f.required?' *':''}</label>
+        <p class="meta" style="margin-bottom:8px">Tap the map to drop a pin, drag the pin to fine-tune, or use your device's GPS.</p>
+        <div class="map-picker" id="f_${f.id}_map" data-field="${f.id}"></div>
+        <div class="map-tools">
+          <button type="button" class="btn-sm" data-map-locate>📍 Use my location</button>
+          <button type="button" class="btn-sm" data-map-clear>Clear</button>
+          <span class="map-readout" data-map-readout>No location selected</span>
+        </div>
+      </div>`;
+    }
 
     if (f.type === 'select') {
       const ph = `<option value="" ${f.required ? 'disabled selected' : ''}>Select…</option>`;
@@ -1092,10 +1116,6 @@
       document.getElementById('setup-mfa-btn').onclick = async () => {
         try {
           const d = await api('/auth/mfa/setup',{method:'POST',body:{}});
-          // NOTE: the otpauth:// URI embeds the shared TOTP secret. We do NOT
-          // ship it to a third-party QR service. Either generate the QR
-          // locally (e.g. the `qrcode` npm package) or let the user type the
-          // key — which is what we do here.
           document.getElementById('mfa-setup-area').innerHTML = `
             <div style="margin-top:16px">
               <p class="meta">Enter this key manually in your authenticator app:</p>
