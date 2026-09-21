@@ -1,14 +1,6 @@
 // i18n.js — shared language state and UI translation for the Kabonix portal.
 // The public website and the staff portal are deployed as separate origins, so
 // portal links carry ?lang=en|sw while localStorage keeps the choice locally.
-//
-// [FIX] The MutationObserver no longer fires a full-document text walk on every
-// single DOM mutation. Three changes:
-//   1. rAF coalescing — many mutations in one frame = one walk.
-//   2. English fast-path — when lang === 'en' and nothing is currently
-//      translated, skip the walk entirely (the common case).
-//   3. The switcher-install check is cheap and stays in the observer, but the
-//      expensive translateDocument() work is what we deferred.
 (() => {
   const STORAGE_KEY = 'kabonix_lang';
   const valid = lang => lang === 'sw' ? 'sw' : 'en';
@@ -159,10 +151,17 @@
     'Beneficiary full name':'Jina kamili la mnufaika',
     'Programme area':'Eneo la programu',
     'Household size':'Ukubwa wa kaya',
-    'GPS latitude':'Latitudo ya GPS',
-    'GPS longitude':'Longitudo ya GPS',
     'Climate-smart Agriculture':'Kilimo kinachozingatia hali ya hewa',
     'Youth & Women Entrepreneurship':'Ujasiriamali wa Vijana na Wanawake',
+    'Location':'Mahali',
+
+    // Map picker
+    'Site location':'Mahali pa tovuti',
+    "Tap the map to drop a pin, drag the pin to fine-tune, or use your device's GPS.":'Gusa ramani kuweka alama, vuta alama kurekebisha, au tumia GPS ya kifaa chako.',
+    '📍 Use my location':'📍 Tumia mahali pangu',
+    'Clear':'Safisha',
+    'No location selected':'Hakuna mahali palipochaguliwa',
+    'Locating…':'Inatafuta…',
 
     // Messages
     'Website enquiry inbox.':'Kikasha cha maswali kutoka kwenye tovuti.',
@@ -185,9 +184,7 @@
     'MFA is active. Enter your current code to disable it.':'MFA imewashwa. Ingiza msimbo wako wa sasa ili kuizima.',
     'Current authentication code':'Msimbo wa sasa wa uthibitishaji',
     'Disable MFA':'Zima MFA',
-    'Scan the QR code (or copy the key) into your authenticator app, then enter the 6-digit code to confirm.':'Changanua msimbo wa QR (au nakili ufunguo) kwenye programu yako ya uthibitishaji, kisha ingiza msimbo wa tarakimu 6 kuthibitisha.',
     'Set up MFA':'Sanidi MFA',
-    'Scan with your authenticator app, or enter the key manually:':'Changanua kwa programu yako ya uthibitishaji, au ingiza ufunguo wewe mwenyewe:',
     'Enter the 6-digit code to confirm':'Ingiza msimbo wa tarakimu 6 kuthibitisha',
     'Enable MFA':'Washa MFA',
 
@@ -250,7 +247,7 @@
     'Submission deleted.':'Uwasilishaji umefutwa.',
     'MFA disabled.':'MFA imezimwa.',
     'MFA enabled!':'MFA imewashwa!',
-    'You don\'t have permission to view this section. Contact your Foundation Admin to request access.':'Huna ruhusa ya kuona sehemu hii. Wasiliana na Msimamizi wa Foundation kuomba ufikiaji.',
+    "You don't have permission to view this section. Contact your Foundation Admin to request access.":"Huna ruhusa ya kuona sehemu hii. Wasiliana na Msimamizi wa Foundation kuomba ufikiaji.",
   };
 
   const patternTranslations = [
@@ -300,10 +297,6 @@
     }
   }
 
-  // [FIX] Tracks whether the DOM currently contains Swahili text. When lang is
-  // English and this is false, translateDocument() returns immediately — no
-  // TreeWalker, no attribute sweep. This is the common case for English users,
-  // and turns ~5 full-body walks per render into zero.
   let hasTranslated = false;
 
   function updateSwitcherUi() {
@@ -327,9 +320,6 @@
   function translateDocument() {
     document.documentElement.lang = currentLang;
 
-    // [FIX] Fast path. Nothing to do when English is active and the DOM is
-    // already in English. Only the (cheap) switcher/brand-link maintenance
-    // runs, so per-render cost is effectively zero.
     if (currentLang === 'en' && !hasTranslated) {
       updateSwitcherUi();
       updateBrandLinks();
@@ -350,9 +340,6 @@
 
     document.querySelectorAll('[placeholder],[aria-label],[title]').forEach(translateAttributes);
 
-    // If we're on Swahili, keep hasTranslated true so future renders still
-    // walk. If we're on English and nothing changed, drop the flag so the
-    // fast path can kick in on the next call.
     hasTranslated = anyChanged || currentLang === 'sw';
 
     updateSwitcherUi();
@@ -402,15 +389,11 @@
     withLang,
   });
 
-  // Translate alerts/confirms too, because these messages are not DOM nodes.
   const nativeAlert = window.alert.bind(window);
   const nativeConfirm = window.confirm.bind(window);
   window.alert = message => nativeAlert(window.KabonixI18n.t(String(message)));
   window.confirm = message => nativeConfirm(window.KabonixI18n.t(String(message)));
 
-  // [FIX] rAF-coalesced observer. Many mutations in one frame = one pass.
-  // Never schedule twice. The switcher install stays in the observer because
-  // it's a cheap getElementById on the rare path where it's missing.
   let i18nScheduled = false;
   const observer = new MutationObserver(() => {
     if (!document.getElementById('kbx-language-switcher')) installSwitcher();
@@ -421,8 +404,6 @@
       translateDocument();
     });
   });
-  // Watches childList only. Watching characterData here would create a
-  // feedback loop because translateDocument() itself changes text nodes.
   observer.observe(document.body, { childList: true, subtree: true });
 
   if (document.readyState === 'loading') {
