@@ -50,15 +50,6 @@ http.createServer((req, res) => {
   }
 
   fs.readFile(filePath, (err, content) => {
-    // Keep deployments that omit the raster asset working by serving the
-    // checked-in vector mark for the legacy logo.png URL.
-    if (err && filePath.endsWith(`${path.sep}assets${path.sep}logo.png`)) {
-      return fs.readFile(path.join(__dirname, 'assets', 'kabonix-logo.svg'), (svgErr, svg) => {
-        if (svgErr) { res.writeHead(404); return res.end('Not found'); }
-        res.writeHead(200, { 'Content-Type': MIME['.svg'], 'Cache-Control': 'public, max-age=3600' });
-        res.end(svg);
-      });
-    }
     if (err) { res.writeHead(404); return res.end('Not found'); }
     const ext = path.extname(filePath);
     let body = content;

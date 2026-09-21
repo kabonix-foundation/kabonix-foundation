@@ -379,7 +379,10 @@
     installSwitcher();
     translateDocument();
   });
-  observer.observe(observeTarget, { childList: true, subtree: true, characterData: true });
+  // Observe structural DOM changes only. Watching characterData here creates a
+  // feedback loop because translateDocument() itself changes text nodes; on a
+  // large portal this can trigger repeated full-document scans and lock the UI.
+  observer.observe(observeTarget, { childList: true, subtree: true });
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => { installSwitcher(); translateDocument(); }, { once: true });

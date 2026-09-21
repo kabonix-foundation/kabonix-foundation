@@ -22,20 +22,20 @@ body {
 a { text-decoration: none; color: inherit; }
 .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
 
-/* --- LOGO DEBUGGING STYLES --- */
+/* --- OFFICIAL LOGO --- */
 .brand img, .footer-brand img {
-  width: 48px !important;
-  height: 48px !important;
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  object-fit: contain !important;
-  
-  /* DEBUG: Remove these 2 lines once the logo loads */
-  background-color: #ffcccc;
-  border: 3px solid red;
+  width: 76px;
+  height: 76px;
+  flex: 0 0 76px;
+  display: block;
+  visibility: visible;
+  opacity: 1;
+  object-fit: contain;
+  object-position: center;
+  background: #fff;
+  border: 0;
+  border-radius: 0;
 }
-
 /* --- BUTTON ANIMATIONS --- */
 .btn {
   display: inline-flex;
@@ -567,7 +567,7 @@ footer::after {
   z-index: 10;
 }
 .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1.5fr; gap: 40px; margin-bottom: 50px; }
-.footer-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; color: #fff; font-weight: 700; text-transform: uppercase; }
+.footer-brand { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; color: #fff; font-weight: 700; text-transform: uppercase; }
 .footer-col h4 { color: #fff; margin: 0 0 20px; font-size: 16px; }
 .footer-col ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; }
 .footer-col ul a { transition: var(--transition); color: #a3c4b5; }

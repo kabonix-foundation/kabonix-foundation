@@ -59,11 +59,9 @@ code { font-family: "Menlo","Consolas","Courier New",monospace; font-size: 12px;
   content: "";
   order: 0;
   display: block;
-  width: 120px; height: 120px;
+  width: 150px; height: 150px;
   margin: 0 0 28px;
-  border-radius: 50%;
-  border: 3px solid rgba(255,255,255,.78);
-  background: #fff url('./assets/logo.png') center / 110px 96px no-repeat;
+  background: #fff url('./assets/logo.png') center / contain no-repeat;
   box-shadow: 0 12px 30px rgba(0,0,0,.16);
 }
 .login-visual .mark {
@@ -135,13 +133,13 @@ code { font-family: "Menlo","Consolas","Courier New",monospace; font-size: 12px;
   padding: 16px 14px; border-bottom: 1px solid rgba(255,255,255,.08);
 }
 .sb-brand > div { min-width: 0; }
-.sb-brand-link { display: flex; align-items: center; text-decoration: none; flex-shrink: 0; border-radius: 50%; }
+.sb-brand-link { display: flex; align-items: center; text-decoration: none; flex-shrink: 0; border-radius: 8px; }
 .sb-logo {
-  width: 40px; height: 40px; flex-shrink: 0;
-  background: #fff; border-radius: 50%;
+  width: 60px; height: 60px; flex-shrink: 0;
+  background: #fff; border-radius: 8px;
   display: grid; place-items: center; overflow: hidden;
 }
-.sb-logo-img { width: 34px; height: 34px; border-radius: 50%; object-fit: contain; display: block; }
+.sb-logo-img { width: 56px; height: 56px; object-fit: contain; object-position: center; display: block; }
 .sb-name { font-family: -apple-system,"Segoe UI",sans-serif; font-size: 12.5px; font-weight: 700; letter-spacing: .06em; color: #fff; line-height: 1.15; white-space: nowrap; }
 .sb-sub  { font-family: -apple-system,"Segoe UI",sans-serif; font-size: 9px; color: #7aaa8e; letter-spacing: .07em; white-space: nowrap; }
 

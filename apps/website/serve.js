@@ -64,8 +64,6 @@ http.createServer((req, res) => {
         content
           .toString()
           .replace('<head>', `<head>${META_INJECT}`)
-          .replaceAll('./assets/logo.png', './assets/kabonix-logo.svg')
-          .replaceAll('/assets/logo.png', '/assets/kabonix-logo.svg')
           .replaceAll('../web/', escapeAttribute(PORTAL_URL))
       );
     }
