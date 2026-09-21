@@ -1,6 +1,4 @@
-// app.js — Kabonix Foundation Staff Portal (Sprint 01–03)
-// Wrapped in a guard so an accidental double-include does not throw
-// "redeclaration of const" and blank the page.
+// app.js — Kabonix Foundation Staff Portal
 (() => {
   if (window.__kabonixAppLoaded) {
     console.warn('[app] already loaded — skipping duplicate');
@@ -48,7 +46,6 @@
 
   const root = document.getElementById('root');
 
-  // ── Render sequencing ──────────────────────────────────────────────────────
   let renderSeq = 0;
   function isStale(seq) { return seq !== renderSeq; }
 
@@ -75,7 +72,6 @@
   }
   window.api = api;
 
-  // Extension surface — ai.js and any future drop-in module registers here.
   const extraViews    = {};
   const extraNavItems = [];
   window.__kabonix = Object.freeze({
@@ -125,7 +121,6 @@
     return [];
   }
 
-  // ── URL token handler ─────────────────────────────────────────────────────
   async function handleUrlTokens() {
     const params = new URLSearchParams(location.search);
     const resetToken  = params.get('resetToken');
@@ -195,7 +190,6 @@
     return true;
   }
 
-  // ── Session ────────────────────────────────────────────────────────────────
   async function tryRestoreSession() {
     if (!state.token) return render();
 
@@ -283,6 +277,7 @@
         <div class="field"><label>Password</label><input id="l-pw" type="password" ${DEMO_MODE?'value="ChangeMe123!"':''}></div>
         <button class="btn-primary" id="login-btn">Sign in</button>
         <p class="hint"><a href="#" id="forgot-link">Forgot your password?</a></p>
+        <p class="hint">New to the platform? <a href="#" id="register-link">Create an account</a></p>
         ${DEMO_MODE ? `<p class="hint">Seeded accounts: <strong>admin@kabonix.org</strong> (Super Admin) · <strong>amina@kabonix.org</strong> (Field Officer) — password: <strong>ChangeMe123!</strong></p>` : ''}
       `}
       <div id="l-err" class="err-msg"></div>
@@ -303,6 +298,7 @@
       document.getElementById('login-btn').onclick = doLogin;
       document.getElementById('l-pw').onkeydown = e => { if(e.key==='Enter') doLogin(); };
       document.getElementById('forgot-link').onclick = e => { e.preventDefault(); renderForgotPassword(); };
+      document.getElementById('register-link').onclick = e => { e.preventDefault(); renderRegister(); };
     }
   }
 
@@ -315,6 +311,62 @@
       const d = await login(email, pw);
       if (d?.mfaRequired) { state.mfaChallenge = d.challengeToken; renderLogin(); }
     } catch(e) { err.textContent = e.message; }
+  }
+
+  function renderRegister() {
+    root.innerHTML = `
+<div class="login-screen">
+  <div class="login-visual">
+    <div class="mark">KABONIX FOUNDATION</div>
+    <h1>Join the platform</h1>
+    <p>Register as a staff member or field officer. An administrator will review your request before your account is activated.</p>
+    <div class="login-pills">
+      <span>🌊 Blue Economy</span><span>🌱 Carbon</span><span>⚡ Renewable Energy</span><span>👩‍💼 Youth & Women</span>
+    </div>
+  </div>
+  <div class="login-form-side">
+    <div class="login-card">
+      <h2>Create an account</h2>
+      <p class="sub">You'll be able to sign in once an administrator approves your request.</p>
+      <div class="field"><label>Full name</label><input id="reg-name" type="text" autocomplete="name" placeholder="Jane Doe"></div>
+      <div class="field"><label>Email</label><input id="reg-email" type="email" autocomplete="email" placeholder="jane@example.org"></div>
+      <div class="field"><label>Password</label><input id="reg-pw" type="password" autocomplete="new-password"></div>
+      <div class="field"><label>Confirm password</label><input id="reg-pw2" type="password" autocomplete="new-password"></div>
+      <button class="btn-primary" id="reg-submit">Create account</button>
+      <p class="hint"><a href="#" id="reg-back">← Back to sign in</a></p>
+      <div id="reg-msg" class="err-msg"></div>
+    </div>
+  </div>
+</div>`;
+
+    document.getElementById('reg-back').onclick = e => { e.preventDefault(); render(); };
+
+    const submit = async () => {
+      const name = document.getElementById('reg-name').value.trim();
+      const email = document.getElementById('reg-email').value.trim();
+      const pw1 = document.getElementById('reg-pw').value;
+      const pw2 = document.getElementById('reg-pw2').value;
+      const msg = document.getElementById('reg-msg');
+      msg.textContent = '';
+      msg.style.color = '';
+
+      if (!name) return msg.textContent = 'Please enter your full name.';
+      if (!email) return msg.textContent = 'Please enter your email address.';
+      if (pw1.length < 8) return msg.textContent = 'Password must be at least 8 characters.';
+      if (pw1 !== pw2) return msg.textContent = 'Passwords do not match.';
+
+      try {
+        const r = await api('/auth/register', { method: 'POST', body: { name, email, password: pw1 } });
+        msg.style.color = 'var(--ok)';
+        msg.textContent = r.message || 'Registration submitted. An administrator will review your request.';
+        document.getElementById('reg-submit').disabled = true;
+      } catch (e) {
+        msg.textContent = e.message;
+      }
+    };
+
+    document.getElementById('reg-submit').onclick = submit;
+    document.getElementById('reg-pw2').onkeydown = e => { if (e.key === 'Enter') submit(); };
   }
 
   function renderForgotPassword() {
@@ -347,7 +399,6 @@
     };
   }
 
-  // ── Layout ────────────────────────────────────────────────────────────────
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') document.querySelector('.app-shell')?.classList.remove('sidebar-open');
   });
@@ -429,6 +480,16 @@
         ${statCard('Audit events (24h)',stats.auditEventsToday ?? '—', '📜')}
         ${statCard('New enquiries',    stats.newContactMessages ?? '—', '✉️')}
       </div>
+      ${stats.pendingApprovals ? `
+      <div class="card card-inner" style="border-color:var(--sand);background:var(--sand-tint);margin-bottom:18px">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+          <div>
+            <strong style="color:#7a5610">⏳ ${stats.pendingApprovals} registration${stats.pendingApprovals>1?'s':''} awaiting approval</strong>
+            <p class="meta" style="margin-top:4px">New staff have registered and are waiting for you to review them.</p>
+          </div>
+          ${can('admin','view') ? `<button class="btn-primary" onclick="nav('users')">Review on Staff &amp; Users</button>` : ''}
+        </div>
+      </div>` : ''}
       <div class="two-col">
         ${card(`<h3>Your access</h3>
           <p class="meta">${esc(roleNames)}</p>
@@ -457,6 +518,12 @@
     return out;
   }
 
+  function userStatusCell(u) {
+    if (u.approval_status === 'pending')  return '<span class="badge badge-new">Pending approval</span>';
+    if (u.approval_status === 'rejected') return '<span class="badge" style="background:#f3f5f1;color:#7a5610">Rejected</span>';
+    return `<span class="status-dot ${u.is_active?'active':'inactive'}"></span>${u.is_active?'Active':'Inactive'}`;
+  }
+
   async function renderUsers(seq) {
     if (!can('admin','view')) {
       shell(pageHead('Staff & Users'), 'users');
@@ -475,11 +542,41 @@
     }
     if (isStale(seq)) return;
 
+    const pending = users.filter(u => u.approval_status === 'pending');
+
     document.getElementById('main').innerHTML = `
-      ${pageHead('Staff & Users', `${users.length} accounts · ${users.filter(u=>u.is_active).length} active`)}
+      ${pageHead('Staff & Users', `${users.length} accounts · ${users.filter(u=>u.is_active).length} active · ${pending.length} awaiting approval`)}
+      ${pending.length ? `
+      <div class="card card-inner" style="margin-bottom:18px;border-color:var(--sand);background:var(--sand-tint)">
+        <h3 style="color:#7a5610">⏳ ${pending.length} registration${pending.length>1?'s':''} awaiting approval</h3>
+        <p class="meta" style="margin-bottom:14px">These people registered themselves. Assign a role and approve, or reject the request.</p>
+        <table class="mini-table">
+          <thead><tr><th>Name</th><th>Email</th><th>Registered</th><th>Assign role</th><th></th></tr></thead>
+          <tbody>
+            ${pending.map(u => `<tr data-pending-uid="${u.id}">
+              <td><strong>${esc(u.name)}</strong></td>
+              <td class="meta">${esc(u.email)}</td>
+              <td class="meta">${ago(u.created_at)}</td>
+              <td>
+                <select class="inline-select" id="approve-role-${u.id}">
+                  <option value="">No role yet</option>
+                  ${roles.map(r=>`<option value="${esc(r.key)}">${esc(r.name)}</option>`).join('')}
+                </select>
+              </td>
+              <td class="action-cell">
+                ${can('admin','approve') ? `
+                  <button class="btn-sm btn-ok" data-approve-user="${u.id}">Approve</button>
+                  <button class="btn-sm btn-danger" data-reject-user="${u.id}">Reject</button>
+                ` : '<span class="meta">Requires admin:approve</span>'}
+              </td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>` : ''}
       ${can('admin','create') ? `
       <div class="card card-inner" style="margin-bottom:18px">
         <h3>Invite new staff member</h3>
+        <p class="meta" style="margin-bottom:14px">Admin-invited users skip approval — they can sign in immediately with the temporary password.</p>
         <div class="form-row">
           <div class="field"><label>Full name</label><input id="inv-name" placeholder="Jane Doe"></div>
           <div class="field"><label>Email</label><input id="inv-email" type="email" placeholder="jane@kabonix.org"></div>
@@ -499,659 +596,20 @@
           <tbody id="users-tbody">
             ${users.map(u => {
               const userRoles = u.roles || [];
+              const isPending = u.approval_status === 'pending';
+              const isRejected = u.approval_status === 'rejected';
               return `<tr data-uid="${u.id}">
               <td><strong>${esc(u.name)}</strong></td>
               <td class="meta">${esc(u.email)}</td>
               <td>${userRoles.map(r=>`<span class="badge badge-role">${esc(r.name)}</span>`).join(' ')||'<span class="meta">none</span>'}</td>
-              <td><span class="status-dot ${u.is_active?'active':'inactive'}"></span>${u.is_active?'Active':'Inactive'}</td>
+              <td>${userStatusCell(u)}</td>
               <td>${u.mfa_enabled?'✅ On':'⬜ Off'}</td>
               <td class="meta">${ago(u.last_active)}</td>
               <td class="action-cell">
-                ${can('admin','edit') ? `
-                <select class="inline-select" data-uid="${u.id}" id="role-sel-${u.id}">
-                  ${roles.map(r=>`<option value="${esc(r.key)}" ${userRoles.some(ur=>ur.key===r.key)?'selected':''}>${esc(r.name)}</option>`).join('')}
-                </select>
-                <button class="btn-sm" data-assign="${u.id}">Assign</button>
-                ${u.is_active && u.id!==state.user.id ? `<button class="btn-sm btn-danger" data-deactivate="${u.id}">Deactivate</button>` : ''}
-                ${!u.is_active ? `<button class="btn-sm btn-ok" data-reactivate="${u.id}">Reactivate</button>` : ''}
-                ${can('admin','approve') && u.id!==state.user.id ? `<button class="btn-sm btn-danger" data-delete-user="${u.id}">Delete</button>` : ''}
-                ` : ''}
-              </td>
-            </tr>`; }).join('')}
-          </tbody>
-        </table>
-      </div>`;
-
-    if (can('admin','create')) {
-      document.getElementById('invite-btn').onclick = async () => {
-        const name  = document.getElementById('inv-name').value.trim();
-        const email = document.getElementById('inv-email').value.trim();
-        const role  = document.getElementById('inv-role').value;
-        try {
-          await api('/admin/users/invite',{method:'POST',body:{name,email,roleKey:role||undefined}});
-          toast('Invitation sent — check the API console for the dev email link.');
-          renderUsers(++renderSeq);
-        } catch(e) { toast(e.message, true); }
-      };
-    }
-
-    document.querySelectorAll('[data-assign]').forEach(btn => btn.onclick = async () => {
-      const uid = Number(btn.dataset.assign);
-      const roleKey = document.getElementById(`role-sel-${uid}`).value;
-      try { await api(`/admin/users/${uid}/roles`,{method:'PUT',body:{roleKeys:[roleKey]}}); toast('Role updated.'); renderUsers(++renderSeq); }
-      catch(e) { toast(e.message, true); }
-    });
-    document.querySelectorAll('[data-deactivate]').forEach(btn => btn.onclick = async () => {
-      if (!confirm('Deactivate this user? Their active sessions will be revoked.')) return;
-      try { await api(`/admin/users/${btn.dataset.deactivate}/deactivate`,{method:'POST',body:{}}); toast('User deactivated.'); renderUsers(++renderSeq); }
-      catch(e) { toast(e.message, true); }
-    });
-    document.querySelectorAll('[data-reactivate]').forEach(btn => btn.onclick = async () => {
-      try { await api(`/admin/users/${btn.dataset.reactivate}/reactivate`,{method:'POST',body:{}}); toast('User reactivated.'); renderUsers(++renderSeq); }
-      catch(e) { toast(e.message, true); }
-    });
-    document.querySelectorAll('[data-delete-user]').forEach(btn => btn.onclick = async () => {
-      const uid = Number(btn.dataset.deleteUser);
-      const row = document.querySelector(`tr[data-uid="${uid}"]`);
-      const name = row?.querySelector('strong')?.textContent || `user #${uid}`;
-      if (!confirm(`Permanently delete ${name}? This cannot be undone.\n\nIf they hold M&E data you'll be asked to deactivate instead.`)) return;
-      try {
-        await api(`/admin/users/${uid}`, { method: 'DELETE' });
-        toast('User deleted.'); renderUsers(++renderSeq);
-      } catch(e) { toast(e.message, true); }
-    });
-  }
-
-  async function renderRoles(seq) {
-    if (!can('admin','view')) {
-      shell(pageHead('Roles & Permissions'), 'roles');
-      return document.getElementById('main').insertAdjacentHTML('beforeend', forbidden());
-    }
-    shell(pageHead('Roles & Permissions', 'Loading…'), 'roles');
-
-    let data = { roles:[], modules:[], levels:[] };
-    try { data = await api('/admin/roles'); }
-    catch(e) {
-      if (isStale(seq)) return;
-      return document.getElementById('main').insertAdjacentHTML('beforeend', errBox(e.message));
-    }
-    if (isStale(seq)) return;
-
-    const roles   = asArray(data, 'roles');
-    const modules = Array.isArray(data?.modules) ? data.modules : [];
-    const levels  = Array.isArray(data?.levels)  ? data.levels  : [];
-
-    document.getElementById('main').innerHTML = `
-      ${pageHead('Roles & Permissions', `${roles.length} roles · tick cells to grant a permission · click Save to apply`)}
-      ${can('admin','create') ? `
-      <div class="card card-inner" style="margin-bottom:18px">
-        <h3>Create new role</h3>
-        <div class="form-row">
-          <div class="field"><label>Key (lowercase, underscores)</label><input id="r-key" placeholder="e.g. data_analyst"></div>
-          <div class="field"><label>Display name</label><input id="r-name" placeholder="Data Analyst"></div>
-          <div class="field"><label>Description</label><input id="r-desc" placeholder="Optional"></div>
-          <div class="field" style="align-self:flex-end"><button class="btn-primary" id="create-role-btn">Create role</button></div>
-        </div>
-      </div>` : ''}
-      ${roles.map(role => {
-        const permSet = new Set((role.permissions||[]).map(p=>`${p.module}:${p.level}`));
-        return `<div class="card card-table" style="margin-bottom:16px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding:22px 24px 0">
-            <div><strong>${esc(role.name)}</strong> <span class="meta">${esc(role.key)}</span></div>
-            ${can('admin','approve') ? `<button class="btn-primary btn-sm" data-save-role="${role.id}">Save permissions</button>` : ''}
-          </div>
-          <table class="perm-table">
-            <thead><tr><th>Module</th>${levels.map(l=>`<th>${esc(l)}</th>`).join('')}</tr></thead>
-            <tbody>
-              ${modules.map(mod=>`<tr>
-                <td class="mod-name">${esc(mod)}</td>
-                ${levels.map(lev=>`<td class="perm-cell">
-                  <input type="checkbox" data-role="${role.id}" data-mod="${esc(mod)}" data-lev="${esc(lev)}"
-                    ${permSet.has(`${mod}:${lev}`) ? 'checked' : ''}
-                    ${can('admin','approve') ? '' : 'disabled'}>
-                </td>`).join('')}
-              </tr>`).join('')}
-            </tbody>
-          </table>
-        </div>`;
-      }).join('')}`;
-
-    if (can('admin','create')) {
-      document.getElementById('create-role-btn').onclick = async () => {
-        try {
-          await api('/admin/roles',{method:'POST',body:{
-            key: document.getElementById('r-key').value.trim(),
-            name: document.getElementById('r-name').value.trim(),
-            description: document.getElementById('r-desc').value.trim()||undefined,
-          }});
-          toast('Role created.'); renderRoles(++renderSeq);
-        } catch(e) { toast(e.message, true); }
-      };
-    }
-
-    document.querySelectorAll('[data-save-role]').forEach(btn => btn.onclick = async () => {
-      const roleId = Number(btn.dataset.saveRole);
-      const perms = [...document.querySelectorAll(`input[data-role="${roleId}"]:checked`)]
-        .map(cb=>({ module: cb.dataset.mod, level: cb.dataset.lev }));
-      try {
-        await api(`/admin/roles/${roleId}/permissions`,{method:'PUT',body:{permissions:perms}});
-        toast(`Permissions saved (${perms.length} granted).`);
-      } catch(e) { toast(e.message, true); }
-    });
-  }
-
-  async function renderConfig(seq) {
-    if (!can('admin','view')) {
-      shell(pageHead('System Configuration'), 'config');
-      return document.getElementById('main').insertAdjacentHTML('beforeend', forbidden());
-    }
-    shell(pageHead('System Configuration', 'Loading…'), 'config');
-
-    let cfg=[], prefs={};
-    try {
-      cfg = asArray(await api('/admin/config'), 'config');
-      prefs = await api('/admin/notifications/preferences').catch(()=>({}));
-    } catch(e) {
-      if (isStale(seq)) return;
-      return document.getElementById('main').insertAdjacentHTML('beforeend', errBox(e.message));
-    }
-    if (isStale(seq)) return;
-
-    document.getElementById('main').innerHTML = `
-      ${pageHead('System Configuration', 'Platform-wide settings managed by Foundation admin — no developer required.')}
-      <div class="two-col">
-        <div>
-          <div class="card card-inner">
-            <h3>Platform settings</h3>
-            ${cfg.map(c => `<div class="cfg-row" data-key="${esc(c.key)}">
-              <div class="cfg-label">
-                <strong>${esc(c.label)}</strong>
-                ${c.description ? `<span class="meta">${esc(c.description)}</span>` : ''}
-              </div>
-              <div class="cfg-control">
-                ${cfgControl(c)}
-                ${can('admin','edit') ? `<button class="btn-sm" data-cfg="${esc(c.key)}">Save</button>` : ''}
-              </div>
-            </div>`).join('')}
-          </div>
-        </div>
-        <div>
-          <div class="card card-inner">
-            <h3>My notification preferences</h3>
-            <p class="meta" style="margin-bottom:14px">These apply to your account only.</p>
-            ${[
-              ['email',    '✉️', 'Email notifications'],
-              ['sms',      '📱', 'SMS notifications'],
-              ['whatsapp', '💬', 'WhatsApp notifications'],
-              ['in_app',   '🔔', 'In-app notifications'],
-            ].map(([k,icon,label])=>`
-              <div class="cfg-row">
-                <div class="cfg-label"><strong>${icon} ${label}</strong></div>
-                <div class="cfg-control">
-                  <label class="toggle-wrap">
-                    <input type="checkbox" class="pref-toggle" data-pref="${k}" ${prefs[k]?'checked':''}>
-                    <span class="toggle-slider"></span>
-                  </label>
-                </div>
-              </div>`).join('')}
-            <div style="margin-top:16px">
-              <button class="btn-primary" id="save-prefs-btn">Save preferences</button>
-            </div>
-          </div>
-          <div class="card card-inner" style="margin-top:16px">
-            <h3>Migration status</h3>
-            <p class="meta">Applied SQL migrations tracked in <code>schema_migrations</code>.</p>
-            <div id="migration-list" style="margin-top:10px">Loading…</div>
-          </div>
-        </div>
-      </div>`;
-
-    renderMigrationStatus();
-
-    if (can('admin','edit')) {
-      document.querySelectorAll('[data-cfg]').forEach(btn => btn.onclick = async () => {
-        const key = btn.dataset.cfg;
-        const row = document.querySelector(`.cfg-row[data-key="${key}"]`);
-        const ctrl = row.querySelector('.cfg-value');
-        const value = ctrl.type === 'checkbox' ? String(ctrl.checked) : ctrl.value;
-
-        if (ctrl.type === 'number') {
-          if (value === '' || Number.isNaN(Number(value))) {
-            return toast(`${key} must be a number.`, true);
-          }
-        }
-
-        try {
-          await api(`/admin/config/${key}`,{method:'PATCH',body:{value}});
-          toast(`${key} saved.`);
-        } catch(e) { toast(e.message, true); }
-      });
-    }
-
-    document.getElementById('save-prefs-btn').onclick = async () => {
-      const nextPrefs = {
-        email:    document.querySelector('[data-pref="email"]').checked,
-        sms:      document.querySelector('[data-pref="sms"]').checked,
-        whatsapp: document.querySelector('[data-pref="whatsapp"]').checked,
-        in_app:   document.querySelector('[data-pref="in_app"]').checked,
-        subscriptions: ['approval_required','submission_flagged','project_milestone_due','system_alert'],
-      };
-      try { await api('/admin/notifications/preferences',{method:'PUT',body:nextPrefs}); toast('Notification preferences saved.'); }
-      catch(e) { toast(e.message, true); }
-    };
-  }
-
-  async function renderMigrationStatus() {
-    const el = document.getElementById('migration-list');
-    if (!el) return;
-    try {
-      const stats = await api('/admin/stats');
-      if (!document.body.contains(el)) return;
-      el.innerHTML = `<span class="badge badge-ok">✓ ${esc(String(stats.migrationsApplied))} migrations applied</span>`;
-    } catch { el.textContent = 'Could not load.'; }
-  }
-
-  function cfgControl(c) {
-    if (c.type === 'boolean') return `<label class="toggle-wrap"><input type="checkbox" class="cfg-value" ${c.value==='true'?'checked':''}><span class="toggle-slider"></span></label>`;
-    if (c.type === 'select')  return `<select class="cfg-value">${(c.options||'').split(',').map(o=>`<option value="${esc(o.trim())}" ${c.value===o.trim()?'selected':''}>${esc(o.trim())}</option>`).join('')}</select>`;
-    if (c.type === 'number')  return `<input type="number" class="cfg-value" value="${esc(c.value)}"${c.min!=null?` min="${esc(c.min)}"`:''}${c.max!=null?` max="${esc(c.max)}"`:''}>`;
-    return `<input type="text" class="cfg-value" value="${esc(c.value)}">`;
-  }
-
-  async function renderAudit(seq) {
-    if (!can('admin','view') && !can('data_collection','approve')) {
-      shell(pageHead('Audit Log'), 'audit');
-      return document.getElementById('main').insertAdjacentHTML('beforeend', forbidden());
-    }
-    shell(pageHead('Audit Log','Loading…'), 'audit');
-
-    const filters = { action:'', entity:'', from:'', to:'' };
-    let data = { rows:[], total:0 };
-
-    function renderTable() {
-      const tbody = document.getElementById('audit-tbody');
-      if (!tbody) return;
-      if (!data.rows.length) {
-        tbody.innerHTML = `<tr><td colspan="6" class="meta" style="text-align:center;padding:24px">No records match the current filters.</td></tr>`;
-        const c = document.getElementById('audit-count'); if (c) c.textContent = `0 of ${data.total} events`;
-        return;
-      }
-      tbody.innerHTML = data.rows.map(r=>`<tr>
-        <td class="meta">${esc(new Date(r.created_at).toLocaleString(window.KabonixI18n?.locale?.() || 'en-GB'))}</td>
-        <td>${esc(r.user_email||'—')}</td>
-        <td><span class="badge badge-action">${esc(r.action)}</span></td>
-        <td>${esc(r.entity)}${r.entity_id?` <span class="meta">#${esc(String(r.entity_id))}</span>`:''}</td>
-        <td class="meta">${esc(r.detail||'—')}</td>
-      </tr>`).join('');
-      document.getElementById('audit-count').textContent = `${data.rows.length} of ${data.total} events`;
-    }
-
-    async function load() {
-      const qs = new URLSearchParams({ limit:200, ...Object.fromEntries(Object.entries(filters).filter(([,v])=>v)) });
-      const mySeq = renderSeq;
-      const result = await api(`/admin/audit?${qs}`).catch(()=>({ rows:[], total:0 }));
-      if (mySeq !== renderSeq) return;
-      data = result;
-      renderTable();
-    }
-
-    document.getElementById('main').innerHTML = `
-      ${pageHead('Audit Log', 'Every create, edit, delete, login and permission-denied event is recorded here.')}
-      <div class="card card-inner" style="margin-bottom:16px">
-        <div class="form-row">
-          <div class="field"><label>Action</label>
-            <select id="f-action">
-              <option value="">All actions</option>
-              ${['login','login_failed','logout','create','edit','delete','approve','export','permission_denied','mfa_enabled','mfa_disabled','token_reuse_detected','password_reset_requested','email_verified']
-                .map(a=>`<option value="${a}">${a}</option>`).join('')}
-            </select>
-          </div>
-          <div class="field"><label>Entity type</label>
-            <input id="f-entity" placeholder="e.g. user, me_submission">
-          </div>
-          <div class="field"><label>From</label><input type="date" id="f-from"></div>
-          <div class="field"><label>To</label><input type="date" id="f-to"></div>
-          <div class="field" style="align-self:flex-end">
-            <button class="btn-primary" id="filter-btn">Apply filters</button>
-          </div>
-        </div>
-      </div>
-      <div class="card card-table">
-        <div style="display:flex;justify-content:space-between;margin-bottom:10px;padding:22px 24px 0">
-          <span class="meta" id="audit-count">Loading…</span>
-          <button class="btn-sm" id="refresh-btn">↻ Refresh</button>
-        </div>
-        <table>
-          <thead><tr><th>Timestamp</th><th>User</th><th>Action</th><th>Entity</th><th>Detail</th></tr></thead>
-          <tbody id="audit-tbody"><tr><td colspan="6" class="meta" style="text-align:center;padding:24px">Loading…</td></tr></tbody>
-        </table>
-      </div>`;
-
-    document.getElementById('filter-btn').onclick = () => {
-      filters.action = document.getElementById('f-action').value;
-      filters.entity = document.getElementById('f-entity').value.trim();
-      filters.from   = document.getElementById('f-from').value;
-      filters.to     = document.getElementById('f-to').value;
-      load();
-    };
-    document.getElementById('refresh-btn').onclick = load;
-    load();
-  }
-
-  async function renderForms(seq) {
-    shell(pageHead('M&E Data Collection','Loading…'), 'forms');
-
-    let forms=[], submissions=[];
-    try {
-      forms       = asArray(await api('/forms'), 'forms');
-      submissions = asArray(await api('/submissions'), 'submissions');
-    } catch(e) {
-      if (isStale(seq)) return;
-      return document.getElementById('main').insertAdjacentHTML('beforeend', errBox(e.message));
-    }
-    if (isStale(seq)) return;
-
-    const form = forms[0];
-    const canCreate = can('data_collection','create');
-
-    document.getElementById('main').innerHTML = `
-      ${pageHead('M&E Data Collection', form ? form.description : 'No forms available.')}
-      ${form && canCreate ? `
-      <div class="card card-inner" style="margin-bottom:18px">
-        <h3>${esc(form.title)}</h3>
-        <form id="me-form" novalidate>
-          <div class="form-grid">${(form.schema||[]).map(fieldHtml).join('')}</div>
-          <button class="btn-primary" type="submit">Submit survey</button>
-        </form>
-      </div>` : form ? `<div class="card card-inner" style="margin-bottom:18px"><p class="meta">Your role can view submissions but not create new ones.</p></div>` : ''}
-      <div class="card card-table">
-        <h3 style="padding:22px 24px 0">Recent submissions (${submissions.length})</h3>
-        ${!submissions.length ? `<p class="meta" style="padding:12px 24px 22px">No submissions yet.</p>` : `
-        <table>
-          <thead><tr><th>Beneficiary</th><th>Village</th><th>Programme</th><th>Location</th><th>Submitted by</th><th>When</th><th></th></tr></thead>
-          <tbody>${submissions.map(s=>`<tr>
-            <td>${esc(s.answers?.beneficiary_name||'—')}</td>
-            <td>${esc(s.answers?.village||'—')}</td>
-            <td>${esc(s.answers?.programme_area||'—')}</td>
-            <td class="meta">${(s.answers?.gps_lat != null && s.answers?.gps_lng != null)
-                                ? `${Number(s.answers.gps_lat).toFixed(4)}, ${Number(s.answers.gps_lng).toFixed(4)}`
-                                : '—'}</td>
-            <td class="meta">${esc(s.submitted_by_email)}</td>
-            <td class="meta">${ago(s.submitted_at)}</td>
-            <td class="action-cell">
-              <button class="btn-sm" data-history-sub="${s.id}">History</button>
-              ${can('data_collection','approve') ? `<button class="btn-sm btn-danger" data-delete-sub="${s.id}">Delete</button>` : ''}
-            </td>
-          </tr>`).join('')}</tbody>
-        </table>`}
-      </div>`;
-
-    // Initialise any map pickers now that the form HTML is in the DOM.
-    if (typeof window.__mapPickerScan === 'function') {
-      requestAnimationFrame(() => window.__mapPickerScan());
-    }
-
-    if (form && canCreate) {
-      document.getElementById('me-form').onsubmit = async e => {
-        e.preventDefault();
-        const answers = {};
-
-        for (const f of form.schema||[]) {
-          // Map fields have no single input element — the picker stores the
-          // value in window.__meMapPickers. We write to gps_lat/gps_lng so the
-          // backend wire format is unchanged.
-          if (f.type === 'map') {
-            const picker = window.__meMapPickers?.get?.(f.id);
-            const val = picker?.getValue?.();
-            if (val) { answers.gps_lat = val.lat; answers.gps_lng = val.lng; }
-            continue;
-          }
-
-          const el = document.getElementById('f_'+f.id);
-          if (!el) continue;
-          if (f.type === 'number') {
-            answers[f.id] = el.value === '' ? undefined : Number(el.value);
-          } else {
-            answers[f.id] = el.value;
-          }
-        }
-
-        for (const f of form.schema||[]) {
-          if (f.type === 'map') {
-            if (f.required && (answers.gps_lat == null || answers.gps_lng == null)) {
-              return toast(`${f.label} is required — tap the map to place a pin.`, true);
-            }
-            continue;
-          }
-
-          const v = answers[f.id];
-          const empty = v === undefined || v === null || v === '';
-          if (f.required && empty) return toast(`${f.label} is required.`, true);
-          if (empty) continue;
-          if (f.type === 'number') {
-            if (f.integer && !Number.isInteger(v)) return toast(`${f.label} must be a whole number.`, true);
-            if (f.min != null && v < f.min)        return toast(`${f.label} must be at least ${f.min}.`, true);
-            if (f.max != null && v > f.max)        return toast(`${f.label} must be at most ${f.max}.`, true);
-          } else {
-            if (f.minLength != null && String(v).length < f.minLength)
-              return toast(`${f.label} must be at least ${f.minLength} characters.`, true);
-            if (f.maxLength != null && String(v).length > f.maxLength)
-              return toast(`${f.label} must be at most ${f.maxLength} characters.`, true);
-          }
-        }
-
-        try {
-          await api('/submissions',{method:'POST',body:{formKey:form.key,answers}});
-          toast('Submission recorded.'); renderForms(++renderSeq);
-        } catch(err) {
-          if (err.status === 409 && err.body?.duplicate) {
-            const d = err.body.duplicate;
-            const proceed = confirm(
-              `Possible duplicate beneficiary\n\n` +
-              `Existing record:\n` +
-              `  ${d.full_name} — ${d.village || 'no village'}\n` +
-              `  created ${new Date(d.created_at).toLocaleDateString(window.KabonixI18n?.locale?.() || 'en-GB')}\n\n` +
-              `Is this a genuinely different person?\n` +
-              `Click OK to create a new record, or Cancel to stop.`
-            );
-            if (!proceed) return;
-            try {
-              await api('/submissions',{method:'POST',body:{formKey:form.key,answers,forceNew:true}});
-              toast('Submission recorded (confirmed as new).'); renderForms(++renderSeq);
-            } catch(e2) { toast(e2.message, true); }
-            return;
-          }
-          toast(err.message, true);
-        }
-      };
-    }
-
-    document.querySelectorAll('[data-delete-sub]').forEach(btn => btn.onclick = async () => {
-      if (!confirm('Delete this M&E submission? This cannot be undone.')) return;
-      try {
-        await api(`/submissions/${btn.dataset.deleteSub}`, { method: 'DELETE' });
-        toast('Submission deleted.'); renderForms(++renderSeq);
-      } catch(e) { toast(e.message, true); }
-    });
-
-    document.querySelectorAll('[data-history-sub]').forEach(btn => btn.onclick = async () => {
-      const id = Number(btn.dataset.historySub);
-      try {
-        const data = await api(`/submissions/${id}/revisions`);
-        const revs = data.revisions || [];
-        const lines = revs.map(r => {
-          const when = new Date(r.changed_at).toLocaleString(window.KabonixI18n?.locale?.() || 'en-GB');
-          const who  = r.changed_by_name || 'unknown';
-          return `r${r.revision_no}  ${when}\n     ${who} — ${r.change_summary || '(no note)'}`;
-        }).join('\n\n');
-        alert(`Submission #${id} — ${revs.length} revision(s)\n\n${lines || 'No revisions recorded.'}`);
-      } catch(e) { toast(e.message, true); }
-    });
-  }
-
-  function fieldHtml(f) {
-    const req = f.required ? 'required' : '';
-    const attrs = [
-      f.minLength != null ? `minlength="${f.minLength}"` : '',
-      f.maxLength != null ? `maxlength="${f.maxLength}"` : '',
-      f.min != null       ? `min="${f.min}"`              : '',
-      f.max != null       ? `max="${f.max}"`              : '',
-      f.pattern           ? `pattern="${esc(f.pattern)}"` : '',
-    ].filter(Boolean).join(' ');
-
-    if (f.type === 'map') {
-      return `<div class="field field-map field-map-wide">
-        <label>${esc(f.label)}${f.required?' *':''}</label>
-        <p class="meta" style="margin-bottom:8px">Tap the map to drop a pin, drag the pin to fine-tune, or use your device's GPS.</p>
-        <div class="map-picker" id="f_${f.id}_map" data-field="${f.id}"></div>
-        <div class="map-tools">
-          <button type="button" class="btn-sm" data-map-locate>📍 Use my location</button>
-          <button type="button" class="btn-sm" data-map-clear>Clear</button>
-          <span class="map-readout" data-map-readout>No location selected</span>
-        </div>
-      </div>`;
-    }
-
-    if (f.type === 'select') {
-      const ph = `<option value="" ${f.required ? 'disabled selected' : ''}>Select…</option>`;
-      return `<div class="field"><label>${esc(f.label)}${f.required?' *':''}</label>
-        <select id="f_${f.id}" ${req}>${ph}
-        ${(f.options||[]).map(o=>`<option value="${esc(o)}">${esc(o)}</option>`).join('')}</select></div>`;
-    }
-    if (f.type === 'textarea') return `<div class="field"><label>${esc(f.label)}${f.required?' *':''}</label>
-      <textarea id="f_${f.id}" ${req} ${attrs}></textarea></div>`;
-    return `<div class="field"><label>${esc(f.label)}${f.required?' *':''}</label>
-      <input id="f_${f.id}" type="${f.type==='number'?'number':'text'}" ${req} ${attrs}></div>`;
-  }
-
-  async function renderMessages(seq) {
-    if (!can('admin','view')) {
-      shell(pageHead('Contact Messages'), 'messages');
-      return document.getElementById('main').insertAdjacentHTML('beforeend', forbidden());
-    }
-    shell(pageHead('Contact Messages','Loading…'), 'messages');
-
-    let msgs=[];
-    try { msgs = asArray(await api('/admin/contact-messages'), 'messages'); }
-    catch(e) {
-      if (isStale(seq)) return;
-      return document.getElementById('main').insertAdjacentHTML('beforeend', errBox(e.message));
-    }
-    if (isStale(seq)) return;
-
-    const statusColor = { new:'badge-new', read:'badge-role', replied:'badge-ok', archived:'meta' };
-
-    document.getElementById('main').innerHTML = `
-      ${pageHead('Contact Messages', `${msgs.filter(m=>m.status==='new').length} new · ${msgs.length} total`)}
-      <div class="card card-table">
-        <table>
-          <thead><tr><th>From</th><th>Organisation</th><th>Subject</th><th>Status</th><th>Received</th><th>Actions</th></tr></thead>
-          <tbody>
-            ${msgs.map(m=>`<tr>
-              <td><strong>${esc(m.full_name)}</strong><br><span class="meta">${esc(m.email)}</span></td>
-              <td class="meta">${esc(m.organisation||'—')}</td>
-              <td>${esc(m.subject)}<br><span class="meta">${esc((m.message||'').slice(0,80))}${(m.message||'').length>80?'…':''}</span></td>
-              <td><span class="badge ${esc(statusColor[m.status]||'')}">${esc(m.status)}</span></td>
-              <td class="meta">${ago(m.created_at)}</td>
-              <td class="action-cell">
-                ${['read','replied','archived'].map(s=>
-                  s!==m.status ? `<button class="btn-sm" data-msg="${m.id}" data-status="${esc(s)}">${esc(s)}</button>` : ''
-                ).join('')}
-              </td>
-            </tr>`).join('')}
-          </tbody>
-        </table>
-      </div>`;
-
-    document.querySelectorAll('[data-msg]').forEach(btn => btn.onclick = async () => {
-      try {
-        await api(`/admin/contact-messages/${btn.dataset.msg}/status`,{method:'PATCH',body:{status:btn.dataset.status}});
-        toast(`Marked as ${btn.dataset.status}.`); renderMessages(++renderSeq);
-      } catch(e) { toast(e.message, true); }
-    });
-  }
-
-  async function renderProfile() {
-    shell(pageHead('My Profile','Account settings and two-factor authentication.'), 'profile');
-    const u = state.user;
-
-    document.getElementById('main').innerHTML = `
-      ${pageHead('My Profile')}
-      <div class="two-col">
-        <div class="card card-inner">
-          <h3>Account details</h3>
-          <dl class="detail-list">
-            <dt>Name</dt><dd>${esc(u.name)}</dd>
-            <dt>Email</dt><dd>${esc(u.email)}</dd>
-            <dt>Email verified</dt><dd>${u.emailVerified?'✅ Yes':'⚠️ Not verified'}</dd>
-            <dt>MFA</dt><dd>${u.mfaEnabled?'✅ Enabled':'⬜ Disabled'}</dd>
-            <dt>Roles</dt><dd>${state.roles.map(r=>`<span class="badge badge-role">${esc(r.name)}</span>`).join(' ')||'None'}</dd>
-          </dl>
-        </div>
-        <div class="card card-inner">
-          <h3>Two-factor authentication</h3>
-          ${u.mfaEnabled ? `
-            <p class="meta" style="margin-bottom:14px">MFA is active. Enter your current code to disable it.</p>
-            <div class="field"><label>Current authentication code</label><input id="mfa-dis-code" type="text" maxlength="6" inputmode="numeric" placeholder="000000"></div>
-            <button class="btn-primary btn-danger" id="dis-mfa-btn">Disable MFA</button>
-          ` : `
-            <p class="meta" style="margin-bottom:14px">Add the key below to your authenticator app, then enter the 6-digit code to confirm.</p>
-            <button class="btn-primary" id="setup-mfa-btn">Set up MFA</button>
-            <div id="mfa-setup-area"></div>
-          `}
-          <div id="mfa-msg" style="margin-top:10px"></div>
-        </div>
-      </div>`;
-
-    if (u.mfaEnabled) {
-      document.getElementById('dis-mfa-btn').onclick = async () => {
-        const code = document.getElementById('mfa-dis-code').value.trim();
-        try {
-          await api('/auth/mfa/disable',{method:'POST',body:{code}});
-          toast('MFA disabled.');
-          const d = await api('/auth/me'); state.user=d.user; renderProfile();
-        } catch(e) { document.getElementById('mfa-msg').textContent = e.message; }
-      };
-    } else {
-      document.getElementById('setup-mfa-btn').onclick = async () => {
-        try {
-          const d = await api('/auth/mfa/setup',{method:'POST',body:{}});
-          document.getElementById('mfa-setup-area').innerHTML = `
-            <div style="margin-top:16px">
-              <p class="meta">Enter this key manually in your authenticator app:</p>
-              <code style="font-size:13px;background:#f3f5f1;padding:6px 10px;border-radius:4px;display:block;margin:10px 0;word-break:break-all">${esc(d.secret)}</code>
-              <details style="margin:8px 0"><summary class="meta" style="cursor:pointer">Show otpauth URI</summary>
-                <code style="font-size:11px;background:#f3f5f1;padding:6px 10px;border-radius:4px;display:block;margin:8px 0;word-break:break-all">${esc(d.otpauthUri)}</code>
-              </details>
-              <div class="field"><label>Enter the 6-digit code to confirm</label><input id="mfa-confirm-code" type="text" maxlength="6" inputmode="numeric" placeholder="000000"></div>
-              <button class="btn-primary" id="confirm-mfa-btn">Enable MFA</button>
-            </div>`;
-          document.getElementById('confirm-mfa-btn').onclick = async () => {
-            const code = document.getElementById('mfa-confirm-code').value.trim();
-            try {
-              await api('/auth/mfa/enable',{method:'POST',body:{code}});
-              toast('MFA enabled!');
-              const d2 = await api('/auth/me'); state.user=d2.user; renderProfile();
-            } catch(e) { document.getElementById('mfa-msg').textContent = e.message; }
-          };
-        } catch(e) { document.getElementById('mfa-msg').textContent = e.message; }
-      };
-    }
-  }
-
-  function forbidden() { return `<div class="card card-inner meta">You don't have permission to view this section. Contact your Foundation Admin to request access.</div>`; }
-  function errBox(msg) { return `<div class="card card-inner" style="color:var(--danger)">${esc(msg)}</div>`; }
-
-  // ── Boot ────────────────────────────────────────────────────────────────────
-  (async () => {
-    try {
-      const handled = await handleUrlTokens();
-      if (handled) return;
-      await tryRestoreSession();
-    } catch (e) {
-      console.error('[app] boot failed:', e);
-      if (root) root.innerHTML = '<pre style="padding:24px;font:13px/1.5 Menlo,Consolas,monospace;color:#a4372c;white-space:pre-wrap">Boot failed: '
-        + (e?.stack || e?.message || String(e)) + '</pre>';
-    }
-  })();
-})();
+                ${isPending || isRejected ? '' : `
+                  ${can('admin','edit') ? `
+                  <select class="inline-select" data-uid="${u.id}" id="role-sel-${u.id}">
+                    ${roles.map(r=>`<option value="${esc(r.key)}" ${userRoles.some(ur=>ur.key===r.key)?'selected':''}>${esc(r.name)}</option>`).join('')}
+                  </select>
+                  <button class="btn-sm" data-assign="${u.id}">Assign</button>
+                  ${u.is_active && u.id!==state.user.id ?
