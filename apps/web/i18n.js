@@ -1,6 +1,14 @@
 // i18n.js — shared language state and UI translation for the Kabonix portal.
 // The public website and the staff portal are deployed as separate origins, so
 // portal links carry ?lang=en|sw while localStorage keeps the choice locally.
+//
+// [FIX] The MutationObserver no longer fires a full-document text walk on every
+// single DOM mutation. Three changes:
+//   1. rAF coalescing — many mutations in one frame = one walk.
+//   2. English fast-path — when lang === 'en' and nothing is currently
+//      translated, skip the walk entirely (the common case).
+//   3. The switcher-install check is cheap and stays in the observer, but the
+//      expensive translateDocument() work is what we deferred.
 (() => {
   const STORAGE_KEY = 'kabonix_lang';
   const valid = lang => lang === 'sw' ? 'sw' : 'en';
@@ -153,13 +161,11 @@
     'Household size':'Ukubwa wa kaya',
     'GPS latitude':'Latitudo ya GPS',
     'GPS longitude':'Longitudo ya GPS',
-    'Renewable Energy':'Nishati Jadidifu',
     'Climate-smart Agriculture':'Kilimo kinachozingatia hali ya hewa',
     'Youth & Women Entrepreneurship':'Ujasiriamali wa Vijana na Wanawake',
 
     // Messages
     'Website enquiry inbox.':'Kikasha cha maswali kutoka kwenye tovuti.',
-    'From':'Kutoka',
     'Organisation':'Shirika',
     'Subject':'Mada',
     'Received':'Imepokelewa',
@@ -176,7 +182,6 @@
     'Not verified':'Haijathibitishwa',
     'Enabled':'Imewezeshwa',
     'Disabled':'Imezimwa',
-    'Two-factor authentication':'Uthibitishaji wa hatua mbili',
     'MFA is active. Enter your current code to disable it.':'MFA imewashwa. Ingiza msimbo wako wa sasa ili kuizima.',
     'Current authentication code':'Msimbo wa sasa wa uthibitishaji',
     'Disable MFA':'Zima MFA',
@@ -295,34 +300,63 @@
     }
   }
 
+  // [FIX] Tracks whether the DOM currently contains Swahili text. When lang is
+  // English and this is false, translateDocument() returns immediately — no
+  // TreeWalker, no attribute sweep. This is the common case for English users,
+  // and turns ~5 full-body walks per render into zero.
+  let hasTranslated = false;
+
+  function updateSwitcherUi() {
+    const switcher = document.getElementById('kbx-language-switcher');
+    if (!switcher) return;
+    switcher.querySelectorAll('[data-kbx-lang]').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.kbxLang === currentLang);
+    });
+    const label = switcher.querySelector('.kbx-language-label');
+    if (label) label.textContent = currentLang === 'sw' ? 'Lugha' : 'Language';
+  }
+
+  function updateBrandLinks() {
+    const websiteUrl = document.querySelector('meta[name="website-url"]')?.content;
+    if (!websiteUrl) return;
+    document.querySelectorAll('.sb-brand-link').forEach(link => {
+      link.href = withLang(websiteUrl, currentLang);
+    });
+  }
+
   function translateDocument() {
     document.documentElement.lang = currentLang;
+
+    // [FIX] Fast path. Nothing to do when English is active and the DOM is
+    // already in English. Only the (cheap) switcher/brand-link maintenance
+    // runs, so per-render cost is effectively zero.
+    if (currentLang === 'en' && !hasTranslated) {
+      updateSwitcherUi();
+      updateBrandLinks();
+      return;
+    }
+
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-    const textNodes = [];
-    while (walker.nextNode()) textNodes.push(walker.currentNode);
-    for (const node of textNodes) {
+    let anyChanged = false;
+    let node;
+    while ((node = walker.nextNode())) {
       const original = getOriginalText(node);
       const translated = translateText(original);
-      if (node.nodeValue !== translated) node.nodeValue = translated;
+      if (node.nodeValue !== translated) {
+        node.nodeValue = translated;
+        anyChanged = true;
+      }
     }
 
     document.querySelectorAll('[placeholder],[aria-label],[title]').forEach(translateAttributes);
 
-    const switcher = document.getElementById('kbx-language-switcher');
-    if (switcher) {
-      switcher.querySelectorAll('[data-kbx-lang]').forEach(btn => btn.classList.toggle('active', btn.dataset.kbxLang === currentLang));
-      const label = switcher.querySelector('.kbx-language-label');
-      if (label) label.textContent = currentLang === 'sw' ? 'Lugha' : 'Language';
-    }
+    // If we're on Swahili, keep hasTranslated true so future renders still
+    // walk. If we're on English and nothing changed, drop the flag so the
+    // fast path can kick in on the next call.
+    hasTranslated = anyChanged || currentLang === 'sw';
 
-    const websiteUrl = document.querySelector('meta[name="website-url"]')?.content;
-    if (websiteUrl) {
-      document.querySelectorAll('.sb-brand-link').forEach(link => {
-        link.href = withLang(websiteUrl, currentLang);
-      });
-    }
-
-    try { localStorage.setItem(STORAGE_KEY, currentLang); } catch {}
+    updateSwitcherUi();
+    updateBrandLinks();
   }
 
   function withLang(href, lang) {
@@ -374,18 +408,28 @@
   window.alert = message => nativeAlert(window.KabonixI18n.t(String(message)));
   window.confirm = message => nativeConfirm(window.KabonixI18n.t(String(message)));
 
-  const observeTarget = document.body;
+  // [FIX] rAF-coalesced observer. Many mutations in one frame = one pass.
+  // Never schedule twice. The switcher install stays in the observer because
+  // it's a cheap getElementById on the rare path where it's missing.
+  let i18nScheduled = false;
   const observer = new MutationObserver(() => {
-    installSwitcher();
-    translateDocument();
+    if (!document.getElementById('kbx-language-switcher')) installSwitcher();
+    if (i18nScheduled) return;
+    i18nScheduled = true;
+    requestAnimationFrame(() => {
+      i18nScheduled = false;
+      translateDocument();
+    });
   });
-  // Observe structural DOM changes only. Watching characterData here creates a
-  // feedback loop because translateDocument() itself changes text nodes; on a
-  // large portal this can trigger repeated full-document scans and lock the UI.
-  observer.observe(observeTarget, { childList: true, subtree: true });
+  // Watches childList only. Watching characterData here would create a
+  // feedback loop because translateDocument() itself changes text nodes.
+  observer.observe(document.body, { childList: true, subtree: true });
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => { installSwitcher(); translateDocument(); }, { once: true });
+    document.addEventListener('DOMContentLoaded', () => {
+      installSwitcher();
+      translateDocument();
+    }, { once: true });
   } else {
     installSwitcher();
     translateDocument();
