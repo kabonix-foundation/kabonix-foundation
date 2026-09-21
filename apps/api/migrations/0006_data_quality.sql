@@ -85,6 +85,13 @@ UPDATE beneficiaries
 -- 5. DE-DUP: SITES AND ORGANISATIONS
 -- ═══════════════════════════════════════════════════════════════════════════
 
+-- `sites` (0002) has name/location/type but not village/district/region.
+-- Add them so sites carry the same geographic descriptors as beneficiaries
+-- and organisations, and so the de-dup index below can scope by district.
+ALTER TABLE sites ADD COLUMN IF NOT EXISTS village  TEXT;
+ALTER TABLE sites ADD COLUMN IF NOT EXISTS district TEXT;
+ALTER TABLE sites ADD COLUMN IF NOT EXISTS region   TEXT;
+
 ALTER TABLE sites         ADD COLUMN IF NOT EXISTS name_normalised TEXT;
 ALTER TABLE organisations ADD COLUMN IF NOT EXISTS name_normalised TEXT;
 
@@ -97,6 +104,7 @@ UPDATE organisations
  WHERE name_normalised IS NULL AND name IS NOT NULL;
 
 -- Same village name in two districts is legitimately two different sites.
+-- COALESCE keeps the index usable when district hasn't been filled in yet.
 CREATE UNIQUE INDEX IF NOT EXISTS sites_name_district_uidx
   ON sites (name_normalised, COALESCE(district, ''));
 
