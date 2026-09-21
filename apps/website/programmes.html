@@ -3,30 +3,32 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Kabonix — Programmes</title>
+<title data-i18n="programmes_title">Kabonix — Programmes</title>
 <link rel="icon" href="/assets/logo.png">
+<link rel="stylesheet" href="/styles/styles.css">
 <style>
-body{font-family:-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;margin:0;color:#171f1a;background:#fafaf7}
-nav{background:#0b3d2e;color:#fff;padding:12px 20px;display:flex;align-items:center;gap:12px}
-nav a{color:#fff;text-decoration:none;font-weight:700}
-.container{max-width:1000px;margin:28px auto;padding:0 20px}
-.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
-@media(max-width:900px){.grid-3{grid-template-columns:1fr}}
-.prog-card{background:#fff;border-radius:10px;padding:20px;border:1px solid #dde5de}
-.prog-icon{width:44px;height:44px;border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:12px}
-h1{color:#0b3d2e}
+body{font-family:-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;margin:0;color:#171f1a;background:#fafaf7}nav{background:#0b3d2e;color:#fff;padding:12px 20px;display:flex;align-items:center;gap:16px}nav a{color:#fff;text-decoration:none;font-weight:700}.container{max-width:1000px;margin:28px auto;padding:0 20px}.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}@media(max-width:900px){.grid-3{grid-template-columns:1fr}}.prog-card{background:#fff;border-radius:10px;padding:20px;border:1px solid #dde5de}.prog-icon{width:44px;height:44px;border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:12px}h1{color:#0b3d2e}.lang-toggle{margin-left:auto;display:flex;gap:4px}.lang-btn{border:1px solid rgba(255,255,255,.5);background:transparent;color:#fff;border-radius:999px;padding:5px 8px;font-weight:700;cursor:pointer}.lang-btn.active{background:#fff;color:#0b3d2e}
 </style>
 </head>
 <body>
-<nav><a href="/">← Back</a><div style="flex:1"></div><div>KABONIX FOUNDATION</div></nav>
+<nav>
+  <a href="/?lang=en" class="back-link" data-i18n="programmes_back">← Back</a>
+  <div style="flex:1"></div>
+  <div class="lang-toggle">
+    <button class="lang-btn" data-lang="en" onclick="setLanguage('en')">EN</button>
+    <button class="lang-btn" data-lang="sw" onclick="setLanguage('sw')">SW</button>
+  </div>
+  <div>KABONIX FOUNDATION</div>
+</nav>
 <div class="container">
-  <h1>Our Programme Areas</h1>
-  <p>Programmes the Kabonix Foundation works on.</p>
+  <h1 data-i18n="programmes_title">Our Programme Areas</h1>
+  <p data-i18n="programmes_sub">Programmes the Kabonix Foundation works on.</p>
   <div class="grid-3">
-    <div class="prog-card"><div class="prog-icon">🌊</div><h3>Blue Economy & Climate</h3><p>Blue carbon, mangrove restoration, sustainable fisheries and aquaculture.</p></div>
-    <div class="prog-card"><div class="prog-icon">🌱</div><h3>Carbon & Environmental Data</h3><p>Carbon project registry, GIS plot mapping, MRV workflows and carbon accounting.</p></div>
-    <div class="prog-card"><div class="prog-icon">🌾</div><h3>Climate-smart Agriculture</h3><p>Supporting smallholder farmers with climate-adaptive practices and soil health monitoring.</p></div>
+    <div class="prog-card"><div class="prog-icon">🌊</div><h3 data-i18n="programmes_blue_title">Blue Economy & Climate</h3><p data-i18n="programmes_blue_desc">Blue carbon, mangrove restoration, sustainable fisheries and aquaculture.</p></div>
+    <div class="prog-card"><div class="prog-icon">🌱</div><h3 data-i18n="programmes_carbon_title">Carbon & Environmental Data</h3><p data-i18n="programmes_carbon_desc">Carbon project registry, GIS plot mapping, MRV workflows and carbon accounting.</p></div>
+    <div class="prog-card"><div class="prog-icon">🌾</div><h3 data-i18n="programmes_agri_title">Climate-smart Agriculture</h3><p data-i18n="programmes_agri_desc">Supporting smallholder farmers with climate-adaptive practices and soil health monitoring.</p></div>
   </div>
 </div>
+<script src="script.js" defer></script>
 </body>
 </html>

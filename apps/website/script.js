@@ -75,7 +75,17 @@ const translations = {
     footer_rights: "© 2026 Kabonix Foundation. All rights reserved.",
     footer_privacy: "Privacy Policy",
     footer_terms: "Terms & Conditions",
-    footer_transparency: "Transparency Report"
+    footer_transparency: "Transparency Report",
+    programmes_back: "← Back",
+    programmes_title: "Our Programme Areas",
+    programmes_sub: "Programmes the Kabonix Foundation works on.",
+    programmes_blue_title: "Blue Economy & Climate",
+    programmes_blue_desc: "Blue carbon, mangrove restoration, sustainable fisheries and aquaculture.",
+    programmes_carbon_title: "Carbon & Environmental Data",
+    programmes_carbon_desc: "Carbon project registry, GIS plot mapping, MRV workflows and carbon accounting.",
+    programmes_agri_title: "Climate-smart Agriculture",
+    programmes_agri_desc: "Supporting smallholder farmers with climate-adaptive practices and soil health monitoring.",
+    language_label: "Language"
   },
   sw: {
     top_identity: "Utambulisho wa Umma na Uwazi",
@@ -152,15 +162,51 @@ const translations = {
     footer_rights: "© 2026 Kabonix Foundation. Haki zote zimehifadhiwa.",
     footer_privacy: "Sera ya Faragha",
     footer_terms: "Masharti na Vigezo",
-    footer_transparency: "Ripoti ya Uwazi"
+    footer_transparency: "Ripoti ya Uwazi",
+    programmes_back: "← Rudi",
+    programmes_title: "Maeneo ya Programu Zetu",
+    programmes_sub: "Programu ambazo Kabonix Foundation inatekeleza.",
+    programmes_blue_title: "Uchumi wa Bluu na Hali ya Hewa",
+    programmes_blue_desc: "Kaboni ya bluu, urejeshaji wa mikoko, uvuvi endelevu na ufugaji wa viumbe vya majini.",
+    programmes_carbon_title: "Data za Kaboni na Mazingira",
+    programmes_carbon_desc: "Usajili wa miradi ya kaboni, uchoraji wa maeneo kwa GIS, mitiririko ya MRV na uhasibu wa kaboni.",
+    programmes_agri_title: "Kilimo Kinachozingatia Hali ya Hewa",
+    programmes_agri_desc: "Kuwasaidia wakulima wadogo kwa mbinu zinazokabiliana na mabadiliko ya hali ya hewa na ufuatiliaji wa afya ya udongo.",
+    language_label: "Lugha"
   }
 };
 
-let currentLang = localStorage.getItem('kabonix_lang') || 'en';
+const queryLang = new URLSearchParams(window.location.search).get('lang');
+let currentLang = (queryLang === 'sw' || queryLang === 'en') ? queryLang : (localStorage.getItem('kabonix_lang') || 'en');
+
+function withLang(href, lang = currentLang) {
+  try {
+    const url = new URL(href, window.location.href);
+    url.searchParams.set('lang', lang === 'sw' ? 'sw' : 'en');
+    return url.href;
+  } catch {
+    const separator = href.includes('?') ? '&' : '?';
+    return `${href}${separator}lang=${encodeURIComponent(lang)}`;
+  }
+}
+
+function updatePortalLinks() {
+  const configuredPortal = document.querySelector('meta[name="portal-url"]')?.content;
+  if (!configuredPortal) return;
+  document.querySelectorAll('.portal-link').forEach(link => {
+    link.href = withLang(configuredPortal);
+  });
+}
 
 function setLanguage(lang) {
-  currentLang = lang;
-  localStorage.setItem('kabonix_lang', lang);
+  currentLang = (lang === 'sw') ? 'sw' : 'en';
+  localStorage.setItem('kabonix_lang', currentLang);
+  document.documentElement.lang = currentLang;
+  const titleNode = document.querySelector('title[data-i18n]');
+  if (titleNode) titleNode.textContent = translations[currentLang]?.[titleNode.dataset.i18n] || titleNode.textContent;
+  const url = new URL(window.location.href);
+  url.searchParams.set('lang', currentLang);
+  history.replaceState(null, '', url.pathname + url.search + url.hash);
   
   // Update toggle button states
   document.querySelectorAll('.lang-btn').forEach(btn => {
@@ -179,6 +225,10 @@ function setLanguage(lang) {
       }
     }
   });
+
+  updatePortalLinks();
+  const backLink = document.querySelector('.back-link');
+  if (backLink) backLink.href = withLang('/');
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -218,11 +268,5 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Portal Link Configuration (if meta tag is present)
-  const configuredPortal = document.querySelector('meta[name="portal-url"]')?.content;
-  if (configuredPortal) {
-    document.querySelectorAll('.portal-link').forEach(link => { 
-      link.href = configuredPortal; 
-    });
-  }
+  updatePortalLinks();
 });

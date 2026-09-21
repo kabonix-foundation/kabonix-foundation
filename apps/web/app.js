@@ -84,7 +84,7 @@
     if (s < 60) return 'just now';
     if (s < 3600) return `${Math.floor(s/60)}m ago`;
     if (s < 86400) return `${Math.floor(s/3600)}h ago`;
-    return new Date(ts).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+    return new Date(ts).toLocaleDateString(window.KabonixI18n?.locale?.() || 'en-GB',{day:'numeric',month:'short',year:'numeric'});
   }
 
   function asArray(value, key) {
@@ -380,7 +380,7 @@
     const roleNames = state.roles.map(r=>r.name).join(', ')||'No roles assigned';
 
     shell(`
-      ${pageHead('Dashboard', `Welcome back, ${me.name.split(' ')[0]}. ${new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'})}.`)}
+      ${pageHead('Dashboard', `Welcome back, ${me.name.split(' ')[0]}. ${new Date().toLocaleDateString(window.KabonixI18n?.locale?.() || 'en-GB',{weekday:'long',day:'numeric',month:'long'})}.`)}
       <div class="stat-row">
         ${statCard('Active staff',     stats.activeUsers       ?? '—', '👥')}
         ${statCard('Submissions',      stats.submissions        ?? '—', '📋')}
@@ -705,7 +705,7 @@
       if (!tbody) return;
       if (!data.rows.length) { tbody.innerHTML = `<tr><td colspan="6" class="meta" style="text-align:center;padding:24px">No records match the current filters.</td></tr>`; return; }
       tbody.innerHTML = data.rows.map(r=>`<tr>
-        <td class="meta">${new Date(r.created_at).toLocaleString('en-GB')}</td>
+        <td class="meta">${new Date(r.created_at).toLocaleString(window.KabonixI18n?.locale?.() || 'en-GB')}</td>
         <td>${esc(r.user_email||'—')}</td>
         <td><span class="badge badge-action">${esc(r.action)}</span></td>
         <td>${esc(r.entity)}${r.entity_id?` <span class="meta">#${r.entity_id}</span>`:''}</td>
@@ -839,7 +839,7 @@
               `Possible duplicate beneficiary\n\n` +
               `Existing record:\n` +
               `  ${d.full_name} — ${d.village || 'no village'}\n` +
-              `  created ${new Date(d.created_at).toLocaleDateString('en-GB')}\n\n` +
+              `  created ${new Date(d.created_at).toLocaleDateString(window.KabonixI18n?.locale?.() || 'en-GB')}\n\n` +
               `Is this a genuinely different person?\n` +
               `Click OK to create a new record, or Cancel to stop.`
             );
@@ -869,7 +869,7 @@
         const data = await api(`/submissions/${id}/revisions`);
         const revs = data.revisions || [];
         const lines = revs.map(r => {
-          const when = new Date(r.changed_at).toLocaleString('en-GB');
+          const when = new Date(r.changed_at).toLocaleString(window.KabonixI18n?.locale?.() || 'en-GB');
           const who  = r.changed_by_name || 'unknown';
           return `r${r.revision_no}  ${when}\n     ${who} — ${r.change_summary || '(no note)'}`;
         }).join('\n\n');
