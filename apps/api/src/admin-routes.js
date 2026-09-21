@@ -2,25 +2,6 @@
 //
 // Registers all /api/admin/* routes onto the existing request handler.
 // Called from server.js with: import { handleAdminRoute } from './admin-routes.js'
-//
-// Endpoints:
-//   GET  /api/admin/config                         — list system config
-//   PATCH /api/admin/config/:key                   — update a config value
-//   GET  /api/admin/roles                          — roles with their full permission matrix
-//   POST /api/admin/roles                          — create a new role
-//   PUT  /api/admin/roles/:id/permissions          — replace a role's full permission set
-//   GET  /api/admin/users                          — staff list with roles, activity
-//   POST /api/admin/users/invite                   — invite a new staff member
-//   POST /api/admin/users/:id/deactivate
-//   POST /api/admin/users/:id/reactivate
-//   DELETE /api/admin/users/:id                    — hard delete (refuses if user holds data)
-//   PUT  /api/admin/users/:id/roles                — replace a user's role set
-//   GET  /api/admin/audit                          — audit log with filters
-//   GET  /api/admin/notifications/preferences      — current user's notification prefs
-//   PUT  /api/admin/notifications/preferences      — update current user's prefs
-//   GET  /api/admin/contact-messages               — inbox of website contact form submissions
-//   PATCH /api/admin/contact-messages/:id/status   — mark read/replied/archived
-//   GET  /api/admin/stats                          — dashboard counters
 
 import { pool } from './db.js';
 import { hashPassword, generateOpaqueToken, hashOpaqueToken, newExpiry, VERIFY_TOKEN_TTL_MS } from './auth.js';
@@ -39,21 +20,23 @@ export async function handleAdminRoute({ parts, method, body, user, url, res, se
     const f = await checkPermission(user, 'admin', 'view');
     if (f) return send(res, f.status, f.body);
 
-    const [users, roles, auditToday, submissions, contacts, migrations] = await Promise.all([
+    const [users, roles, auditToday, submissions, contacts, migrations, pending] = await Promise.all([
       pool.query(`SELECT COUNT(*)::int AS c FROM users WHERE is_active=TRUE`),
       pool.query(`SELECT COUNT(*)::int AS c FROM roles`),
       pool.query(`SELECT COUNT(*)::int AS c FROM audit_log WHERE created_at > now() - INTERVAL '24 hours'`),
       pool.query(`SELECT COUNT(*)::int AS c FROM me_submissions`),
       pool.query(`SELECT COUNT(*)::int AS c FROM contact_messages WHERE status='new'`),
       pool.query(`SELECT COUNT(*)::int AS c FROM schema_migrations`),
+      pool.query(`SELECT COUNT(*)::int AS c FROM users WHERE approval_status='pending'`),
     ]);
     return send(res, 200, {
-      activeUsers:       users.rows[0].c,
-      roles:             roles.rows[0].c,
-      auditEventsToday:  auditToday.rows[0].c,
-      submissions:       submissions.rows[0].c,
+      activeUsers:        users.rows[0].c,
+      roles:              roles.rows[0].c,
+      auditEventsToday:   auditToday.rows[0].c,
+      submissions:        submissions.rows[0].c,
       newContactMessages: contacts.rows[0].c,
-      migrationsApplied: migrations.rows[0].c,
+      migrationsApplied:  migrations.rows[0].c,
+      pendingApprovals:   pending.rows[0].c,
     });
   }
 
@@ -145,7 +128,7 @@ export async function handleAdminRoute({ parts, method, body, user, url, res, se
     if (f) return send(res, f.status, f.body);
     const { rows: users } = await pool.query(`
       SELECT u.id, u.name, u.email, u.is_active, u.email_verified_at,
-             u.mfa_enabled, u.created_at,
+             u.mfa_enabled, u.created_at, u.approval_status,
              (SELECT created_at FROM audit_log WHERE user_id=u.id ORDER BY id DESC LIMIT 1) AS last_active
       FROM users u ORDER BY u.id
     `);
@@ -168,8 +151,10 @@ export async function handleAdminRoute({ parts, method, body, user, url, res, se
 
     const tempPassword = generateOpaqueToken().slice(0, 12);
     const { hash, salt } = hashPassword(tempPassword);
+    // Admin-invited users skip the approval gate — the invite itself is the approval.
     const { rows } = await pool.query(
-      'INSERT INTO users (name, email, password_hash, password_salt) VALUES ($1,$2,$3,$4) RETURNING id',
+      `INSERT INTO users (name, email, password_hash, password_salt, is_active, approval_status)
+       VALUES ($1,$2,$3,$4, TRUE, 'approved') RETURNING id`,
       [name, email, hash, salt]
     );
     const newId = rows[0].id;
@@ -203,6 +188,116 @@ export async function handleAdminRoute({ parts, method, body, user, url, res, se
     return send(res, 201, { id: newId, tempPassword, message: 'Invitation sent. Temp password shown here only — dev build.' });
   }
 
+  // ── Pending registrations ────────────────────────────────────────────────
+  // List accounts waiting for approval. Returned separately so the portal
+  // can show a dedicated card without scanning the full user list.
+  if (parts[2] === 'users' && parts[3] === 'pending' && !parts[4] && method === 'GET') {
+    const f = await checkPermission(user, 'admin', 'view');
+    if (f) return send(res, f.status, f.body);
+    const { rows } = await pool.query(`
+      SELECT id, name, email, created_at
+      FROM users
+      WHERE approval_status = 'pending'
+      ORDER BY created_at ASC
+    `);
+    return send(res, 200, { users: rows });
+  }
+
+  // Approve a self-registered account. Assigns roles in the same transaction
+  // so the user is never left active-but-roleless.
+  if (parts[2] === 'users' && parts[4] === 'approve' && method === 'POST') {
+    const f = await checkPermission(user, 'admin', 'approve');
+    if (f) return send(res, f.status, f.body);
+    const targetId = Number(parts[3]);
+    const { roleKeys = [] } = body;
+
+    const { rows: existing } = await pool.query(
+      'SELECT id, name, email, approval_status FROM users WHERE id = $1',
+      [targetId]
+    );
+    if (!existing[0]) return send(res, 404, { error: 'User not found' });
+    if (existing[0].approval_status !== 'pending') {
+      return send(res, 400, { error: 'This account is not awaiting approval.' });
+    }
+
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query(
+        `UPDATE users SET is_active = TRUE, approval_status = 'approved' WHERE id = $1`,
+        [targetId]
+      );
+      if (Array.isArray(roleKeys) && roleKeys.length) {
+        const { rows: roleRows } = await client.query(
+          'SELECT id FROM roles WHERE key = ANY($1)',
+          [roleKeys]
+        );
+        for (const r of roleRows) {
+          await client.query(
+            'INSERT INTO user_roles (user_id, role_id) VALUES ($1,$2) ON CONFLICT DO NOTHING',
+            [targetId, r.id]
+          );
+        }
+      }
+      await client.query('COMMIT');
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
+
+    invalidateUserPermissions(targetId);
+
+    await logAction({
+      userId: user.id, userEmail: user.email,
+      action: 'approve', entity: 'user', entityId: targetId,
+      detail: `approved registration for ${existing[0].email}${roleKeys.length ? ` as ${roleKeys.join(', ')}` : ''}`,
+    });
+
+    // Best-effort notification. sendMail never throws, so an SMTP hiccup
+    // won't fail the approval itself.
+    await sendMail({
+      to: existing[0].email,
+      subject: 'Your Kabonix Foundation account has been approved',
+      bodyText: `Hello ${existing[0].name},\n\nYour registration on the Kabonix Foundation Digital Platform has been approved.\n\nYou can now sign in with the email address and password you chose at registration.`,
+    });
+
+    return send(res, 200, { ok: true });
+  }
+
+  // Reject a self-registered account. Soft reject — the row is kept for
+  // audit, is_active stays FALSE, and the user cannot sign in. Admins can
+  // still hard-delete the row later via DELETE /admin/users/:id.
+  if (parts[2] === 'users' && parts[4] === 'reject' && method === 'POST') {
+    const f = await checkPermission(user, 'admin', 'approve');
+    if (f) return send(res, f.status, f.body);
+    const targetId = Number(parts[3]);
+
+    const { rows: existing } = await pool.query(
+      'SELECT id, name, email, approval_status FROM users WHERE id = $1',
+      [targetId]
+    );
+    if (!existing[0]) return send(res, 404, { error: 'User not found' });
+    if (existing[0].approval_status !== 'pending') {
+      return send(res, 400, { error: 'This account is not awaiting approval.' });
+    }
+
+    await pool.query(
+      `UPDATE users SET is_active = FALSE, approval_status = 'rejected' WHERE id = $1`,
+      [targetId]
+    );
+    invalidateUserPermissions(targetId);
+
+    await logAction({
+      userId: user.id, userEmail: user.email,
+      action: 'approve', entity: 'user', entityId: targetId,
+      detail: `rejected registration for ${existing[0].email}`,
+    });
+
+    return send(res, 200, { ok: true });
+  }
+
   if (parts[2] === 'users' && parts[4] === 'deactivate' && method === 'POST') {
     const f = await checkPermission(user, 'admin', 'edit');
     if (f) return send(res, f.status, f.body);
@@ -226,9 +321,6 @@ export async function handleAdminRoute({ parts, method, body, user, url, res, se
   }
 
   // ── Hard delete user ─────────────────────────────────────────────────────
-  // Requires admin:approve (Super Admin, Foundation Admin). Refuses if the
-  // target has M&E submissions, created beneficiaries, or is the last active
-  // Super Admin — all cases where deactivation is the correct action instead.
   if (parts[2] === 'users' && parts[3] && !parts[4] && method === 'DELETE') {
     const f = await checkPermission(user, 'admin', 'approve');
     if (f) return send(res, f.status, f.body);
