@@ -36,6 +36,9 @@ const ALLOWED_ORIGINS = ALLOWED_ORIGINS_RAW
   ? new Set(ALLOWED_ORIGINS_RAW.split(',').map(s => s.trim()))
   : null;
 
+// Contact form notifications go here during testing. Change later if needed.
+const CONTACT_INBOX = process.env.CONTACT_INBOX || 'kabonixfoundation@gmail.com';
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function makeSend(req) {
@@ -422,6 +425,9 @@ const server = http.createServer(async (req, res) => {
         return send(res, 200, rows);
       }
 
+      // POST /api/website/contact — the public contact form.
+      // The message is persisted to contact_messages (what the portal reads)
+      // AND an email notification is sent to CONTACT_INBOX.
       if (parts[2] === 'contact' && req.method === 'POST') {
         const { full_name = '', email = '', organisation = '', subject = '', message = '', lang: msgLang = 'en' } = await readBody(req);
         if (!full_name || !email || !subject || !message) {
@@ -438,8 +444,16 @@ const server = http.createServer(async (req, res) => {
           [full_name, email, organisation || null, subject, message, msgLang]
         );
         await logAction({ userId: null, userEmail: email, action: 'create', entity: 'contact_message', entityId: rows[0].id, detail: subject });
-        await sendMail({ to: 'info@kabonix.org', subject: `Website enquiry: ${subject}`,
-          bodyText: `From: ${full_name} <${email}>${organisation ? ` (${organisation})` : ''}\n\n${message}` });
+
+        // Fire-and-forget notification. sendMail() never throws; if SMTP
+        // isn't configured it logs to the API console instead.
+        await sendMail({
+          to:       CONTACT_INBOX,
+          replyTo:  email,
+          subject:  `Website enquiry: ${subject}`,
+          bodyText: `From: ${full_name} <${email}>${organisation ? ` (${organisation})` : ''}\n\n${message}`,
+        });
+
         return send(res, 201, { ok: true, message: 'Thank you — we will be in touch shortly.' });
       }
 
@@ -825,6 +839,7 @@ async function start() {
   server.listen(PORT, '0.0.0.0', () => {
     console.log(`\nKabonix API ready → http://localhost:${PORT}`);
     console.log(`Health check     → http://localhost:${PORT}/health\n`);
+    console.log(`Contact form notifications will go to: ${CONTACT_INBOX}\n`);
   });
 }
 
