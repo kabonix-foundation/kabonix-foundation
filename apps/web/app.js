@@ -83,6 +83,19 @@
   }
   window.api = api;
 
+  // [FIX] Extension surface. ai.js (and any future drop-in module) registers
+  // views and nav items through this object instead of fighting app.js for
+  // #main and the sidebar with a MutationObserver.
+  const extraViews    = {};
+  const extraNavItems = [];
+  window.__kabonix = Object.freeze({
+    get state()     { return state; },
+    get renderSeq() { return renderSeq; },
+    isStale, can, esc, toast, api, shell, pageHead, card, nav,
+    registerView(key, fn) { extraViews[key] = fn; },
+    registerNav(item)     { extraNavItems.push(item); },
+  });
+
   function can(module, level) { return state.permissions.some(p=>p.module===module&&p.level===level); }
 
   function toast(msg, isErr) {
@@ -250,6 +263,7 @@
       forms:     renderForms,
       messages:  renderMessages,
       profile:   renderProfile,
+      ...extraViews,          // [FIX] extension views (e.g. ai.js)
     };
     (views[state.route]||renderDashboard)(seq);
   }
@@ -346,8 +360,7 @@
   }
 
   // ── Layout ────────────────────────────────────────────────────────────────
-  // Delegated, one-time listeners — never re-attached per render. They find
-  // the *current* .app-shell each time, so no closures retain detached DOM.
+  // Delegated, one-time listeners — never re-attached per render.
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') document.querySelector('.app-shell')?.classList.remove('sidebar-open');
   });
@@ -370,6 +383,11 @@
       can('admin','view') && { key:'config', icon:'⚙️', label:'System Config' },
       can('admin','view') && { key:'messages', icon:'✉️', label:'Contact Messages' },
       (can('admin','view')||can('data_collection','approve')) && { key:'audit', icon:'📜', label:'Audit Log' },
+      // [FIX] Extension nav items — canAccess() is re-evaluated every render,
+      // so permission / login changes take effect immediately.
+      ...extraNavItems
+        .filter(i => i.canAccess())
+        .map(i => ({ key: i.key, icon: i.icon, label: i.label })),
     ].filter(Boolean);
 
     root.innerHTML = `
@@ -712,7 +730,6 @@
         const ctrl = row.querySelector('.cfg-value');
         const value = ctrl.type === 'checkbox' ? String(ctrl.checked) : ctrl.value;
 
-        // Numeric config: validate before sending so the server never has to.
         if (ctrl.type === 'number') {
           if (value === '' || Number.isNaN(Number(value))) {
             return toast(`${key} must be a number.`, true);
@@ -744,7 +761,7 @@
     if (!el) return;
     try {
       const stats = await api('/admin/stats');
-      if (!document.body.contains(el)) return; // view changed while we were fetching
+      if (!document.body.contains(el)) return;
       el.innerHTML = `<span class="badge badge-ok">✓ ${esc(String(stats.migrationsApplied))} migrations applied</span>`;
     } catch { el.textContent = 'Could not load.'; }
   }
@@ -763,7 +780,6 @@
     }
     shell(pageHead('Audit Log','Loading…'), 'audit');
 
-    // Filters mirror the server's query params. userId removed — no UI set it.
     const filters = { action:'', entity:'', from:'', to:'' };
     let data = { rows:[], total:0 };
 
@@ -787,7 +803,7 @@
 
     async function load() {
       const qs = new URLSearchParams({ limit:200, ...Object.fromEntries(Object.entries(filters).filter(([,v])=>v)) });
-      const mySeq = renderSeq; // audit re-loads happen inside an already-rendered view
+      const mySeq = renderSeq;
       const result = await api(`/admin/audit?${qs}`).catch(()=>({ rows:[], total:0 }));
       if (mySeq !== renderSeq) return;
       data = result;
@@ -973,8 +989,6 @@
     ].filter(Boolean).join(' ');
 
     if (f.type === 'select') {
-      // Always emit a placeholder. When required, mark it disabled+selected
-      // so the browser blocks submit if the user never picks a real option.
       const ph = `<option value="" ${f.required ? 'disabled selected' : ''}>Select…</option>`;
       return `<div class="field"><label>${esc(f.label)}${f.required?' *':''}</label>
         <select id="f_${f.id}" ${req}>${ph}
