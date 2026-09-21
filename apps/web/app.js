@@ -12,6 +12,12 @@
 
   const WEBSITE_URL = document.querySelector('meta[name="website-url"]')?.content || 'http://localhost:3001';
 
+  // Demo mode: only pre-fill seeded credentials and show the "seeded accounts"
+  // hint when explicitly enabled, or when running on a dev host.
+  const DEMO_MODE =
+    document.querySelector('meta[name="demo-mode"]')?.content === 'true' ||
+    ['localhost', '127.0.0.1', '0.0.0.0'].includes(location.hostname);
+
   window.addEventListener('error', e => {
     const r = document.getElementById('root');
     if (r && !r.innerHTML.trim()) {
@@ -33,6 +39,7 @@
     token: lsGet('kabonix_token'),
     user: null, roles: [], permissions: [],
     route: 'dashboard', routeParam: null,
+    mfaChallenge: null,   // set by doLogin when the API returns mfaRequired
   };
 
   window.state = state;
@@ -43,14 +50,30 @@
 
   const root = document.getElementById('root');
 
-  async function api(path, opts={}) {
+  // ── Render sequencing ──────────────────────────────────────────────────────
+  // Every render() bumps this counter. Async view functions capture the value
+  // at start and bail out after each await if a newer render has begun. This
+  // stops a slow response from overwriting a page the user has already left.
+  let renderSeq = 0;
+  function isStale(seq) { return seq !== renderSeq; }
+
+  async function api(path, opts = {}) {
+    // __silent401 is used by the boot probe so a failed session check does not
+    // trigger a second render (the caller handles the redirect itself).
+    const { __silent401, ...fetchOpts } = opts;
     const res = await fetch(API + path, {
-      ...opts,
-      headers: { 'Content-Type':'application/json', ...(state.token?{Authorization:`Bearer ${state.token}`}:{}), ...(opts.headers||{}) },
-      body: opts.body ? JSON.stringify(opts.body) : undefined,
+      ...fetchOpts,
+      headers: { 'Content-Type':'application/json', ...(state.token?{Authorization:`Bearer ${state.token}`}:{}), ...(fetchOpts.headers||{}) },
+      body: fetchOpts.body ? JSON.stringify(fetchOpts.body) : undefined,
     });
     const data = await res.json().catch(()=>({}));
     if (!res.ok) {
+      if (res.status === 401 && state.token && !__silent401) {
+        // Session expired or revoked — drop it and send the user to sign-in.
+        state.token = null; state.user = null; state.roles = []; state.permissions = [];
+        lsDel('kabonix_token');
+        render();
+      }
       const err = new Error(data.error || `Request failed (${res.status})`);
       err.status = res.status;
       err.body = data;
@@ -66,9 +89,15 @@
     let stack = document.getElementById('toast-stack');
     if (!stack) {
       stack = Object.assign(document.createElement('div'), { id: 'toast-stack' });
+      stack.setAttribute('role', 'status');
+      stack.setAttribute('aria-live', 'polite');
       document.body.appendChild(stack);
     }
-    const el = Object.assign(document.createElement('div'), { className:'toast'+(isErr?' error':''), textContent:msg });
+    const el = Object.assign(document.createElement('div'), {
+      className: 'toast' + (isErr ? ' error' : ''),
+      textContent: msg,
+    });
+    if (isErr) el.setAttribute('role', 'alert');
     stack.appendChild(el);
     setTimeout(()=>el.remove(), 3400);
   }
@@ -94,17 +123,17 @@
   }
 
   // ── URL token handler (password reset / email verify) ───────────────────────
-  // These flows are triggered by links that arrive in an email. They land on
-  // the portal with ?resetToken=… or ?verifyToken=… and must be handled
-  // BEFORE the normal session bootstrap, because the user is not signed in.
   async function handleUrlTokens() {
     const params = new URLSearchParams(location.search);
     const resetToken  = params.get('resetToken');
     const verifyToken = params.get('verifyToken');
     if (!resetToken && !verifyToken) return false;
 
-    // Strip the token from the address bar so a reload doesn't re-trigger.
-    history.replaceState(null, '', location.pathname);
+    // Strip only the token(s) from the address bar — keep any other query params.
+    const url = new URL(location.href);
+    url.searchParams.delete('resetToken');
+    url.searchParams.delete('verifyToken');
+    history.replaceState(null, '', url.pathname + (url.search ? url.search : '') + url.hash);
 
     if (verifyToken) {
       root.innerHTML = `
@@ -114,6 +143,7 @@
       <h2>Verifying your email</h2>
       <p class="sub">One moment…</p>
       <div id="tok-msg" class="err-msg"></div>
+      <p class="hint" id="tok-retry-wrap" style="display:none"><a href="#" id="tok-retry">← Back to sign in</a></p>
     </div>
   </div>
 </div>`;
@@ -124,7 +154,8 @@
         setTimeout(() => render(), 1600);
       } catch (e) {
         msg.textContent = e.message;
-        setTimeout(() => render(), 4000);
+        document.getElementById('tok-retry-wrap').style.display = '';
+        document.getElementById('tok-retry').onclick = ev => { ev.preventDefault(); render(); };
       }
       return true;
     }
@@ -174,7 +205,7 @@
 
     try {
       const d = await Promise.race([
-        api('/auth/me'),
+        api('/auth/me', { __silent401: true }),
         new Promise((_, reject) => setTimeout(() => reject(new Error('Session check timed out')), 5000)),
       ]);
       state.user = d.user; state.roles = d.roles; state.permissions = d.permissions;
@@ -208,7 +239,8 @@
   window.nav = nav;
 
   function render() {
-    if (!state.token||!state.user) return renderLogin();
+    const seq = ++renderSeq;
+    if (!state.token || !state.user) return renderLogin();
     const views = {
       dashboard: renderDashboard,
       users:     renderUsers,
@@ -219,10 +251,11 @@
       messages:  renderMessages,
       profile:   renderProfile,
     };
-    (views[state.route]||renderDashboard)();
+    (views[state.route]||renderDashboard)(seq);
   }
 
-  function renderLogin(mfaChallenge) {
+  function renderLogin() {
+    const mfaChallenge = state.mfaChallenge;
     root.innerHTML = `
 <div class="login-screen">
   <div class="login-visual">
@@ -244,11 +277,11 @@
       ` : `
         <h2>Sign in</h2>
         <p class="sub">Foundation staff and field officers only.</p>
-        <div class="field"><label>Email</label><input id="l-email" type="email" value="admin@kabonix.org"></div>
-        <div class="field"><label>Password</label><input id="l-pw" type="password" value="ChangeMe123!"></div>
+        <div class="field"><label>Email</label><input id="l-email" type="email" ${DEMO_MODE?'value="admin@kabonix.org"':''}></div>
+        <div class="field"><label>Password</label><input id="l-pw" type="password" ${DEMO_MODE?'value="ChangeMe123!"':''}></div>
         <button class="btn-primary" id="login-btn">Sign in</button>
         <p class="hint"><a href="#" id="forgot-link">Forgot your password?</a></p>
-        <p class="hint">Seeded accounts: <strong>admin@kabonix.org</strong> (Super Admin) · <strong>amina@kabonix.org</strong> (Field Officer) — password: <strong>ChangeMe123!</strong></p>
+        ${DEMO_MODE ? `<p class="hint">Seeded accounts: <strong>admin@kabonix.org</strong> (Super Admin) · <strong>amina@kabonix.org</strong> (Field Officer) — password: <strong>ChangeMe123!</strong></p>` : ''}
       `}
       <div id="l-err" class="err-msg"></div>
     </div>
@@ -261,7 +294,9 @@
         try { await submitMfa(mfaChallenge, code.value.trim()); }
         catch(e) { document.getElementById('l-err').textContent = e.message; }
       };
-      document.getElementById('back-link').onclick = e => { e.preventDefault(); render(); };
+      document.getElementById('back-link').onclick = e => {
+        e.preventDefault(); state.mfaChallenge = null; render();
+      };
     } else {
       document.getElementById('login-btn').onclick = doLogin;
       document.getElementById('l-pw').onkeydown = e => { if(e.key==='Enter') doLogin(); };
@@ -276,7 +311,7 @@
     err.textContent = '';
     try {
       const d = await login(email, pw);
-      if (d?.mfaRequired) renderLogin(d.challengeToken);
+      if (d?.mfaRequired) { state.mfaChallenge = d.challengeToken; renderLogin(); }
     } catch(e) { err.textContent = e.message; }
   }
 
@@ -309,6 +344,22 @@
       if (e.key === 'Enter') document.getElementById('fp-submit').click();
     };
   }
+
+  // ── Layout ────────────────────────────────────────────────────────────────
+  // Delegated, one-time listeners — never re-attached per render. They find
+  // the *current* .app-shell each time, so no closures retain detached DOM.
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') document.querySelector('.app-shell')?.classList.remove('sidebar-open');
+  });
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 800) document.querySelector('.app-shell')?.classList.remove('sidebar-open');
+  });
+  document.addEventListener('click', e => {
+    const sh = document.querySelector('.app-shell');
+    if (!sh || !sh.classList.contains('sidebar-open')) return;
+    if (e.target.closest('.sidebar') || e.target.closest('#sb-toggle')) return;
+    sh.classList.remove('sidebar-open');
+  });
 
   function shell(contentHtml, activeRoute) {
     const items = [
@@ -350,19 +401,6 @@
     if (sbToggle && appShell) {
       sbToggle.onclick = () => appShell.classList.toggle('sidebar-open');
     }
-    if (appShell) {
-      appShell.addEventListener('click', e => {
-        if (!appShell.classList.contains('sidebar-open')) return;
-        if (e.target.closest('.sidebar') || e.target.closest('#sb-toggle')) return;
-        appShell.classList.remove('sidebar-open');
-      });
-      document.addEventListener('keydown', e => {
-        if (e.key === 'Escape') appShell.classList.remove('sidebar-open');
-      });
-      window.addEventListener('resize', () => {
-        if (window.innerWidth > 800) appShell.classList.remove('sidebar-open');
-      });
-    }
   }
 
   function pageHead(title, sub='') {
@@ -371,10 +409,11 @@
 
   function card(content, cls='') { return `<div class="card ${cls}">${content}</div>`; }
 
-  async function renderDashboard() {
+  async function renderDashboard(seq) {
     shell(`${pageHead('Dashboard','Loading…')}`, 'dashboard');
     let stats = {};
     try { stats = await api('/admin/stats'); } catch {}
+    if (isStale(seq)) return;
 
     const me = state.user;
     const roleNames = state.roles.map(r=>r.name).join(', ')||'No roles assigned';
@@ -391,7 +430,7 @@
         ${card(`<h3>Your access</h3>
           <p class="meta">${esc(roleNames)}</p>
           <table class="mini-table"><tbody>
-            ${Object.entries(groupPerms(state.permissions)).map(([m,ls])=>`<tr><td>${esc(m)}</td><td>${ls.map(l=>`<span class="badge">${l}</span>`).join('')}</td></tr>`).join('')}
+            ${Object.entries(groupPerms(state.permissions)).map(([m,ls])=>`<tr><td>${esc(m)}</td><td>${ls.map(l=>`<span class="badge">${esc(l)}</span>`).join('')}</td></tr>`).join('')}
           </tbody></table>`, 'card-inner')}
         ${card(`<h3>Quick actions</h3>
           <div class="quick-actions">
@@ -415,17 +454,23 @@
     return out;
   }
 
-  async function renderUsers() {
-    shell(pageHead('Staff & Users','Manage team members, roles and account status.'), 'users');
-    if (!can('admin','view')) return document.getElementById('main').insertAdjacentHTML('beforeend', forbidden());
+  async function renderUsers(seq) {
+    if (!can('admin','view')) {
+      shell(pageHead('Staff & Users'), 'users');
+      return document.getElementById('main').insertAdjacentHTML('beforeend', forbidden());
+    }
+    shell(pageHead('Staff & Users','Loading…'), 'users');
 
     let users=[], roles=[];
     try {
       const [usersRes, rolesRes] = await Promise.all([api('/admin/users'), api('/admin/roles')]);
       users = asArray(usersRes, 'users');
       roles = asArray(rolesRes, 'roles');
+    } catch(e) {
+      if (isStale(seq)) return;
+      return document.getElementById('main').insertAdjacentHTML('beforeend', errBox(e.message));
     }
-    catch(e) { return document.getElementById('main').insertAdjacentHTML('beforeend', errBox(e.message)); }
+    if (isStale(seq)) return;
 
     document.getElementById('main').innerHTML = `
       ${pageHead('Staff & Users', `${users.length} accounts · ${users.filter(u=>u.is_active).length} active`)}
@@ -482,7 +527,7 @@
         try {
           await api('/admin/users/invite',{method:'POST',body:{name,email,roleKey:role||undefined}});
           toast('Invitation sent — check the API console for the dev email link.');
-          renderUsers();
+          renderUsers(++renderSeq);
         } catch(e) { toast(e.message, true); }
       };
     }
@@ -490,16 +535,16 @@
     document.querySelectorAll('[data-assign]').forEach(btn => btn.onclick = async () => {
       const uid = Number(btn.dataset.assign);
       const roleKey = document.getElementById(`role-sel-${uid}`).value;
-      try { await api(`/admin/users/${uid}/roles`,{method:'PUT',body:{roleKeys:[roleKey]}}); toast('Role updated.'); renderUsers(); }
+      try { await api(`/admin/users/${uid}/roles`,{method:'PUT',body:{roleKeys:[roleKey]}}); toast('Role updated.'); renderUsers(++renderSeq); }
       catch(e) { toast(e.message, true); }
     });
     document.querySelectorAll('[data-deactivate]').forEach(btn => btn.onclick = async () => {
       if (!confirm('Deactivate this user? Their active sessions will be revoked.')) return;
-      try { await api(`/admin/users/${btn.dataset.deactivate}/deactivate`,{method:'POST',body:{}}); toast('User deactivated.'); renderUsers(); }
+      try { await api(`/admin/users/${btn.dataset.deactivate}/deactivate`,{method:'POST',body:{}}); toast('User deactivated.'); renderUsers(++renderSeq); }
       catch(e) { toast(e.message, true); }
     });
     document.querySelectorAll('[data-reactivate]').forEach(btn => btn.onclick = async () => {
-      try { await api(`/admin/users/${btn.dataset.reactivate}/reactivate`,{method:'POST',body:{}}); toast('User reactivated.'); renderUsers(); }
+      try { await api(`/admin/users/${btn.dataset.reactivate}/reactivate`,{method:'POST',body:{}}); toast('User reactivated.'); renderUsers(++renderSeq); }
       catch(e) { toast(e.message, true); }
     });
     document.querySelectorAll('[data-delete-user]').forEach(btn => btn.onclick = async () => {
@@ -509,18 +554,25 @@
       if (!confirm(`Permanently delete ${name}? This cannot be undone.\n\nIf they hold M&E data you'll be asked to deactivate instead.`)) return;
       try {
         await api(`/admin/users/${uid}`, { method: 'DELETE' });
-        toast('User deleted.'); renderUsers();
+        toast('User deleted.'); renderUsers(++renderSeq);
       } catch(e) { toast(e.message, true); }
     });
   }
 
-  async function renderRoles() {
+  async function renderRoles(seq) {
+    if (!can('admin','view')) {
+      shell(pageHead('Roles & Permissions'), 'roles');
+      return document.getElementById('main').insertAdjacentHTML('beforeend', forbidden());
+    }
     shell(pageHead('Roles & Permissions', 'Loading…'), 'roles');
-    if (!can('admin','view')) return document.getElementById('main').insertAdjacentHTML('beforeend', forbidden());
 
     let data = { roles:[], modules:[], levels:[] };
     try { data = await api('/admin/roles'); }
-    catch(e) { return document.getElementById('main').insertAdjacentHTML('beforeend', errBox(e.message)); }
+    catch(e) {
+      if (isStale(seq)) return;
+      return document.getElementById('main').insertAdjacentHTML('beforeend', errBox(e.message));
+    }
+    if (isStale(seq)) return;
 
     const roles   = asArray(data, 'roles');
     const modules = Array.isArray(data?.modules) ? data.modules : [];
@@ -551,7 +603,7 @@
               ${modules.map(mod=>`<tr>
                 <td class="mod-name">${esc(mod)}</td>
                 ${levels.map(lev=>`<td class="perm-cell">
-                  <input type="checkbox" data-role="${role.id}" data-mod="${mod}" data-lev="${lev}"
+                  <input type="checkbox" data-role="${role.id}" data-mod="${esc(mod)}" data-lev="${esc(lev)}"
                     ${permSet.has(`${mod}:${lev}`) ? 'checked' : ''}
                     ${can('admin','approve') ? '' : 'disabled'}>
                 </td>`).join('')}
@@ -569,7 +621,7 @@
             name: document.getElementById('r-name').value.trim(),
             description: document.getElementById('r-desc').value.trim()||undefined,
           }});
-          toast('Role created.'); renderRoles();
+          toast('Role created.'); renderRoles(++renderSeq);
         } catch(e) { toast(e.message, true); }
       };
     }
@@ -585,15 +637,22 @@
     });
   }
 
-  async function renderConfig() {
+  async function renderConfig(seq) {
+    if (!can('admin','view')) {
+      shell(pageHead('System Configuration'), 'config');
+      return document.getElementById('main').insertAdjacentHTML('beforeend', forbidden());
+    }
     shell(pageHead('System Configuration', 'Loading…'), 'config');
-    if (!can('admin','view')) return document.getElementById('main').insertAdjacentHTML('beforeend', forbidden());
 
     let cfg=[], prefs={};
     try {
       cfg = asArray(await api('/admin/config'), 'config');
       prefs = await api('/admin/notifications/preferences').catch(()=>({}));
-    } catch(e) { return document.getElementById('main').insertAdjacentHTML('beforeend', errBox(e.message)); }
+    } catch(e) {
+      if (isStale(seq)) return;
+      return document.getElementById('main').insertAdjacentHTML('beforeend', errBox(e.message));
+    }
+    if (isStale(seq)) return;
 
     document.getElementById('main').innerHTML = `
       ${pageHead('System Configuration', 'Platform-wide settings managed by Foundation admin — no developer required.')}
@@ -644,7 +703,7 @@
         </div>
       </div>`;
 
-    pool_migrations_display();
+    renderMigrationStatus();
 
     if (can('admin','edit')) {
       document.querySelectorAll('[data-cfg]').forEach(btn => btn.onclick = async () => {
@@ -652,6 +711,14 @@
         const row = document.querySelector(`.cfg-row[data-key="${key}"]`);
         const ctrl = row.querySelector('.cfg-value');
         const value = ctrl.type === 'checkbox' ? String(ctrl.checked) : ctrl.value;
+
+        // Numeric config: validate before sending so the server never has to.
+        if (ctrl.type === 'number') {
+          if (value === '' || Number.isNaN(Number(value))) {
+            return toast(`${key} must be a number.`, true);
+          }
+        }
+
         try {
           await api(`/admin/config/${key}`,{method:'PATCH',body:{value}});
           toast(`${key} saved.`);
@@ -672,46 +739,59 @@
     };
   }
 
-  async function pool_migrations_display() {
+  async function renderMigrationStatus() {
     const el = document.getElementById('migration-list');
     if (!el) return;
     try {
       const stats = await api('/admin/stats');
-      el.innerHTML = `<span class="badge badge-ok">✓ ${stats.migrationsApplied} migrations applied</span>`;
+      if (!document.body.contains(el)) return; // view changed while we were fetching
+      el.innerHTML = `<span class="badge badge-ok">✓ ${esc(String(stats.migrationsApplied))} migrations applied</span>`;
     } catch { el.textContent = 'Could not load.'; }
   }
 
   function cfgControl(c) {
     if (c.type === 'boolean') return `<label class="toggle-wrap"><input type="checkbox" class="cfg-value" ${c.value==='true'?'checked':''}><span class="toggle-slider"></span></label>`;
     if (c.type === 'select')  return `<select class="cfg-value">${(c.options||'').split(',').map(o=>`<option value="${esc(o.trim())}" ${c.value===o.trim()?'selected':''}>${esc(o.trim())}</option>`).join('')}</select>`;
-    return `<input type="${c.type==='number'?'number':'text'}" class="cfg-value" value="${esc(c.value)}">`;
+    if (c.type === 'number')  return `<input type="number" class="cfg-value" value="${esc(c.value)}"${c.min!=null?` min="${esc(c.min)}"`:''}${c.max!=null?` max="${esc(c.max)}"`:''}>`;
+    return `<input type="text" class="cfg-value" value="${esc(c.value)}">`;
   }
 
-  async function renderAudit() {
-    shell(pageHead('Audit Log','Full record of who changed what, and when.'), 'audit');
-    if (!can('admin','view') && !can('data_collection','approve'))
+  async function renderAudit(seq) {
+    if (!can('admin','view') && !can('data_collection','approve')) {
+      shell(pageHead('Audit Log'), 'audit');
       return document.getElementById('main').insertAdjacentHTML('beforeend', forbidden());
-
-    let data = { rows:[], total:0 };
-    const filters = { action:'', entity:'', userId:'', from:'', to:'' };
-    async function load() {
-      const qs = new URLSearchParams({ limit:200, ...Object.fromEntries(Object.entries(filters).filter(([,v])=>v)) });
-      data = await api(`/admin/audit?${qs}`).catch(()=>({ rows:[], total:0 }));
-      renderTable();
     }
+    shell(pageHead('Audit Log','Loading…'), 'audit');
+
+    // Filters mirror the server's query params. userId removed — no UI set it.
+    const filters = { action:'', entity:'', from:'', to:'' };
+    let data = { rows:[], total:0 };
 
     function renderTable() {
       const tbody = document.getElementById('audit-tbody');
       if (!tbody) return;
-      if (!data.rows.length) { tbody.innerHTML = `<tr><td colspan="6" class="meta" style="text-align:center;padding:24px">No records match the current filters.</td></tr>`; return; }
+      if (!data.rows.length) {
+        tbody.innerHTML = `<tr><td colspan="6" class="meta" style="text-align:center;padding:24px">No records match the current filters.</td></tr>`;
+        const c = document.getElementById('audit-count'); if (c) c.textContent = `0 of ${data.total} events`;
+        return;
+      }
       tbody.innerHTML = data.rows.map(r=>`<tr>
-        <td class="meta">${new Date(r.created_at).toLocaleString(window.KabonixI18n?.locale?.() || 'en-GB')}</td>
+        <td class="meta">${esc(new Date(r.created_at).toLocaleString(window.KabonixI18n?.locale?.() || 'en-GB'))}</td>
         <td>${esc(r.user_email||'—')}</td>
         <td><span class="badge badge-action">${esc(r.action)}</span></td>
-        <td>${esc(r.entity)}${r.entity_id?` <span class="meta">#${r.entity_id}</span>`:''}</td>
+        <td>${esc(r.entity)}${r.entity_id?` <span class="meta">#${esc(String(r.entity_id))}</span>`:''}</td>
         <td class="meta">${esc(r.detail||'—')}</td>
       </tr>`).join('');
       document.getElementById('audit-count').textContent = `${data.rows.length} of ${data.total} events`;
+    }
+
+    async function load() {
+      const qs = new URLSearchParams({ limit:200, ...Object.fromEntries(Object.entries(filters).filter(([,v])=>v)) });
+      const mySeq = renderSeq; // audit re-loads happen inside an already-rendered view
+      const result = await api(`/admin/audit?${qs}`).catch(()=>({ rows:[], total:0 }));
+      if (mySeq !== renderSeq) return;
+      data = result;
+      renderTable();
     }
 
     document.getElementById('main').innerHTML = `
@@ -757,14 +837,18 @@
     load();
   }
 
-  async function renderForms() {
-    shell(pageHead('M&E Data Collection','Household Baseline Survey and field data submission.'), 'forms');
+  async function renderForms(seq) {
+    shell(pageHead('M&E Data Collection','Loading…'), 'forms');
+
     let forms=[], submissions=[];
     try {
       forms       = asArray(await api('/forms'), 'forms');
       submissions = asArray(await api('/submissions'), 'submissions');
+    } catch(e) {
+      if (isStale(seq)) return;
+      return document.getElementById('main').insertAdjacentHTML('beforeend', errBox(e.message));
     }
-    catch(e) { return document.getElementById('main').insertAdjacentHTML('beforeend', errBox(e.message)); }
+    if (isStale(seq)) return;
 
     const form = forms[0];
     const canCreate = can('data_collection','create');
@@ -774,7 +858,7 @@
       ${form && canCreate ? `
       <div class="card card-inner" style="margin-bottom:18px">
         <h3>${esc(form.title)}</h3>
-        <form id="me-form">
+        <form id="me-form" novalidate>
           <div class="form-grid">${(form.schema||[]).map(fieldHtml).join('')}</div>
           <button class="btn-primary" type="submit">Submit survey</button>
         </form>
@@ -831,7 +915,7 @@
 
         try {
           await api('/submissions',{method:'POST',body:{formKey:form.key,answers}});
-          toast('Submission recorded.'); renderForms();
+          toast('Submission recorded.'); renderForms(++renderSeq);
         } catch(err) {
           if (err.status === 409 && err.body?.duplicate) {
             const d = err.body.duplicate;
@@ -846,7 +930,7 @@
             if (!proceed) return;
             try {
               await api('/submissions',{method:'POST',body:{formKey:form.key,answers,forceNew:true}});
-              toast('Submission recorded (confirmed as new).'); renderForms();
+              toast('Submission recorded (confirmed as new).'); renderForms(++renderSeq);
             } catch(e2) { toast(e2.message, true); }
             return;
           }
@@ -859,7 +943,7 @@
       if (!confirm('Delete this M&E submission? This cannot be undone.')) return;
       try {
         await api(`/submissions/${btn.dataset.deleteSub}`, { method: 'DELETE' });
-        toast('Submission deleted.'); renderForms();
+        toast('Submission deleted.'); renderForms(++renderSeq);
       } catch(e) { toast(e.message, true); }
     });
 
@@ -888,22 +972,34 @@
       f.pattern           ? `pattern="${esc(f.pattern)}"` : '',
     ].filter(Boolean).join(' ');
 
-    if (f.type === 'select') return `<div class="field"><label>${esc(f.label)}${f.required?' *':''}</label>
-      <select id="f_${f.id}" ${req}>${f.required?'':'<option value="">Select…</option>'}
-      ${(f.options||[]).map(o=>`<option value="${esc(o)}">${esc(o)}</option>`).join('')}</select></div>`;
+    if (f.type === 'select') {
+      // Always emit a placeholder. When required, mark it disabled+selected
+      // so the browser blocks submit if the user never picks a real option.
+      const ph = `<option value="" ${f.required ? 'disabled selected' : ''}>Select…</option>`;
+      return `<div class="field"><label>${esc(f.label)}${f.required?' *':''}</label>
+        <select id="f_${f.id}" ${req}>${ph}
+        ${(f.options||[]).map(o=>`<option value="${esc(o)}">${esc(o)}</option>`).join('')}</select></div>`;
+    }
     if (f.type === 'textarea') return `<div class="field"><label>${esc(f.label)}${f.required?' *':''}</label>
       <textarea id="f_${f.id}" ${req} ${attrs}></textarea></div>`;
     return `<div class="field"><label>${esc(f.label)}${f.required?' *':''}</label>
       <input id="f_${f.id}" type="${f.type==='number'?'number':'text'}" ${req} ${attrs}></div>`;
   }
 
-  async function renderMessages() {
-    shell(pageHead('Contact Messages','Website enquiry inbox.'), 'messages');
-    if (!can('admin','view')) return document.getElementById('main').insertAdjacentHTML('beforeend', forbidden());
+  async function renderMessages(seq) {
+    if (!can('admin','view')) {
+      shell(pageHead('Contact Messages'), 'messages');
+      return document.getElementById('main').insertAdjacentHTML('beforeend', forbidden());
+    }
+    shell(pageHead('Contact Messages','Loading…'), 'messages');
 
     let msgs=[];
     try { msgs = asArray(await api('/admin/contact-messages'), 'messages'); }
-    catch(e) { return document.getElementById('main').insertAdjacentHTML('beforeend', errBox(e.message)); }
+    catch(e) {
+      if (isStale(seq)) return;
+      return document.getElementById('main').insertAdjacentHTML('beforeend', errBox(e.message));
+    }
+    if (isStale(seq)) return;
 
     const statusColor = { new:'badge-new', read:'badge-role', replied:'badge-ok', archived:'meta' };
 
@@ -917,11 +1013,11 @@
               <td><strong>${esc(m.full_name)}</strong><br><span class="meta">${esc(m.email)}</span></td>
               <td class="meta">${esc(m.organisation||'—')}</td>
               <td>${esc(m.subject)}<br><span class="meta">${esc((m.message||'').slice(0,80))}${(m.message||'').length>80?'…':''}</span></td>
-              <td><span class="badge ${statusColor[m.status]||''}">${m.status}</span></td>
+              <td><span class="badge ${esc(statusColor[m.status]||'')}">${esc(m.status)}</span></td>
               <td class="meta">${ago(m.created_at)}</td>
               <td class="action-cell">
                 ${['read','replied','archived'].map(s=>
-                  s!==m.status ? `<button class="btn-sm" data-msg="${m.id}" data-status="${s}">${s}</button>` : ''
+                  s!==m.status ? `<button class="btn-sm" data-msg="${m.id}" data-status="${esc(s)}">${esc(s)}</button>` : ''
                 ).join('')}
               </td>
             </tr>`).join('')}
@@ -932,7 +1028,7 @@
     document.querySelectorAll('[data-msg]').forEach(btn => btn.onclick = async () => {
       try {
         await api(`/admin/contact-messages/${btn.dataset.msg}/status`,{method:'PATCH',body:{status:btn.dataset.status}});
-        toast(`Marked as ${btn.dataset.status}.`); renderMessages();
+        toast(`Marked as ${btn.dataset.status}.`); renderMessages(++renderSeq);
       } catch(e) { toast(e.message, true); }
     });
   }
@@ -961,7 +1057,7 @@
             <div class="field"><label>Current authentication code</label><input id="mfa-dis-code" type="text" maxlength="6" inputmode="numeric" placeholder="000000"></div>
             <button class="btn-primary btn-danger" id="dis-mfa-btn">Disable MFA</button>
           ` : `
-            <p class="meta" style="margin-bottom:14px">Scan the QR code (or copy the key) into your authenticator app, then enter the 6-digit code to confirm.</p>
+            <p class="meta" style="margin-bottom:14px">Add the key below to your authenticator app, then enter the 6-digit code to confirm.</p>
             <button class="btn-primary" id="setup-mfa-btn">Set up MFA</button>
             <div id="mfa-setup-area"></div>
           `}
@@ -974,18 +1070,25 @@
         const code = document.getElementById('mfa-dis-code').value.trim();
         try {
           await api('/auth/mfa/disable',{method:'POST',body:{code}});
-          toast('MFA disabled.'); const d = await api('/auth/me'); state.user=d.user; renderProfile();
+          toast('MFA disabled.');
+          const d = await api('/auth/me'); state.user=d.user; renderProfile();
         } catch(e) { document.getElementById('mfa-msg').textContent = e.message; }
       };
     } else {
       document.getElementById('setup-mfa-btn').onclick = async () => {
         try {
           const d = await api('/auth/mfa/setup',{method:'POST',body:{}});
+          // NOTE: the otpauth:// URI embeds the shared TOTP secret. We do NOT
+          // ship it to a third-party QR service. Either generate the QR
+          // locally (e.g. the `qrcode` npm package) or let the user type the
+          // key — which is what we do here.
           document.getElementById('mfa-setup-area').innerHTML = `
             <div style="margin-top:16px">
-              <p class="meta">Scan with your authenticator app, or enter the key manually:</p>
+              <p class="meta">Enter this key manually in your authenticator app:</p>
               <code style="font-size:13px;background:#f3f5f1;padding:6px 10px;border-radius:4px;display:block;margin:10px 0;word-break:break-all">${esc(d.secret)}</code>
-              <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(d.otpauthUri)}" alt="QR code" style="border:1px solid var(--line);border-radius:6px;display:block;margin:10px 0">
+              <details style="margin:8px 0"><summary class="meta" style="cursor:pointer">Show otpauth URI</summary>
+                <code style="font-size:11px;background:#f3f5f1;padding:6px 10px;border-radius:4px;display:block;margin:8px 0;word-break:break-all">${esc(d.otpauthUri)}</code>
+              </details>
               <div class="field"><label>Enter the 6-digit code to confirm</label><input id="mfa-confirm-code" type="text" maxlength="6" inputmode="numeric" placeholder="000000"></div>
               <button class="btn-primary" id="confirm-mfa-btn">Enable MFA</button>
             </div>`;
@@ -993,7 +1096,8 @@
             const code = document.getElementById('mfa-confirm-code').value.trim();
             try {
               await api('/auth/mfa/enable',{method:'POST',body:{code}});
-              toast('MFA enabled!'); const d2 = await api('/auth/me'); state.user=d2.user; renderProfile();
+              toast('MFA enabled!');
+              const d2 = await api('/auth/me'); state.user=d2.user; renderProfile();
             } catch(e) { document.getElementById('mfa-msg').textContent = e.message; }
           };
         } catch(e) { document.getElementById('mfa-msg').textContent = e.message; }
