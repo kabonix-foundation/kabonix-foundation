@@ -10,7 +10,7 @@
   --sand-tint:     #fdf3e3;
   --ink:           #171f1a;
   --ink-soft:      #3d4d44;
-  --ink-faint:     #5f6d5c;   /* darkened from #758270 for AA contrast on --paper */
+  --ink-faint:     #5f6d5c;
   --paper:         #f6f8f5;
   --card:          #ffffff;
   --line:          #dde5de;
@@ -28,14 +28,12 @@ body { font-family: "Georgia", "Times New Roman", serif; font-size: 15px; color:
 a { color: var(--forest-light); }
 code { font-family: "Menlo","Consolas","Courier New",monospace; font-size: 12px; }
 
-/* ── Focus visibility ── */
 :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
   outline: 2px solid var(--leaf);
   outline-offset: 2px;
   border-radius: 4px;
 }
 
-/* ── Reduced motion ── */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: .001ms !important;
@@ -54,7 +52,6 @@ code { font-family: "Menlo","Consolas","Courier New",monospace; font-size: 12px;
   color: #fff; padding: 60px 52px;
   display: flex; flex-direction: column; justify-content: flex-start;
 }
-/* Brand lockup: wordmark → logo mark → heading, with the pills pinned to the floor. */
 .login-visual::before {
   content: "";
   order: 0;
@@ -126,8 +123,6 @@ code { font-family: "Menlo","Consolas","Courier New",monospace; font-size: 12px;
   display: flex; flex-direction: column; padding: 0;
   position: sticky; top: 0; height: 100vh; overflow-y: auto; overflow-x: hidden;
 }
-
-/* Brand block — 40px mark keeps the lockup inside 230px without crowding the nav. */
 .sb-brand {
   display: flex; align-items: center; gap: 10px;
   padding: 16px 14px; border-bottom: 1px solid rgba(255,255,255,.08);
@@ -160,13 +155,8 @@ code { font-family: "Menlo","Consolas","Courier New",monospace; font-size: 12px;
 }
 .sb-logout:hover { background: rgba(255,255,255,.07); color: #fff; }
 
-/* Hamburger — mobile only. The desktop sidebar is always visible, so a
-   collapse control there would be redundant. */
 #sb-toggle { display: none; }
 
-/* ── Mobile: off-canvas drawer ──
-   Uses `left` rather than `transform` so the floating #sb-toggle (a fixed
-   descendant) is not re-parented by a transformed ancestor. */
 @media (max-width: 800px) {
   .sidebar {
     position: fixed; top: 0; left: calc(-1 * min(290px, 84vw));
@@ -178,7 +168,6 @@ code { font-family: "Menlo","Consolas","Courier New",monospace; font-size: 12px;
     content: ''; position: fixed; inset: 0;
     background: rgba(11,61,46,.45); z-index: 900;
   }
-  /* Clear the floating button. */
   .sb-brand { padding: 14px 14px 14px 64px; }
   #sb-toggle {
     display: inline-flex;
@@ -198,18 +187,15 @@ code { font-family: "Menlo","Consolas","Courier New",monospace; font-size: 12px;
 }
 @media (max-width: 900px) { .main-area { padding: 28px 20px 48px; } }
 
-/* ── Page head ── */
 .page-head { margin-bottom: 24px; }
 .page-head h1 { font-size: 26px; font-weight: 500; color: var(--forest); margin-bottom: 4px; }
 .page-head p { font-family: -apple-system,"Segoe UI",sans-serif; color: var(--ink-faint); font-size: 13.5px; }
 
-/* ── Cards ── */
 .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; margin-bottom: 18px; overflow: hidden; }
 .card-inner { padding: 22px 24px; }
-.card-table { overflow-x: auto; }   /* must come after .card */
+.card-table { overflow-x: auto; }
 .card h3 { font-family: -apple-system,"Segoe UI",sans-serif; font-size: 14px; font-weight: 600; margin-bottom: 14px; color: var(--ink); }
 
-/* ── Tables ── */
 table { width: 100%; border-collapse: collapse; font-family: -apple-system,"Segoe UI",sans-serif; font-size: 13px; }
 th { text-align: left; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-faint); padding: 10px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
 td { padding: 10px 12px; border-bottom: 1px solid var(--line); color: var(--ink-soft); vertical-align: middle; }
@@ -219,7 +205,6 @@ tr:hover td { background: #fafcfa; }
 .mini-table th, .mini-table td { padding: 5px 8px; font-size: 12px; }
 .meta { font-family: -apple-system,"Segoe UI",sans-serif; font-size: 12px; color: var(--ink-faint); }
 
-/* ── Badges ── */
 .badge {
   display: inline-block; font-family: -apple-system,"Segoe UI",sans-serif; font-size: 10.5px;
   font-weight: 600; padding: 2px 8px; border-radius: 20px; margin-right: 3px;
@@ -230,12 +215,10 @@ tr:hover td { background: #fafcfa; }
 .badge-ok     { background: var(--leaf-tint); color: var(--ok); }
 .badge-new    { background: var(--sand-tint); color: #7a5610; }
 
-/* ── Status dot ── */
 .status-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 5px; }
 .status-dot.active   { background: var(--leaf); }
 .status-dot.inactive { background: var(--line); }
 
-/* ── Stat cards ── */
 .stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
 @media (max-width: 800px) { .stat-row { grid-template-columns: 1fr 1fr; } }
 .stat-card {
@@ -246,11 +229,9 @@ tr:hover td { background: #fafcfa; }
 .stat-value { font-size: 32px; font-weight: 500; color: var(--forest); line-height: 1; }
 .stat-label { font-family: -apple-system,"Segoe UI",sans-serif; font-size: 12px; color: var(--ink-faint); }
 
-/* ── Two-col layout ── */
 .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
 @media (max-width: 800px) { .two-col { grid-template-columns: 1fr; } }
 
-/* ── Quick actions ── */
 .quick-actions { display: flex; flex-direction: column; gap: 8px; }
 .qa-btn {
   text-align: left; padding: 9px 14px; background: var(--paper); border: 1px solid var(--line);
@@ -259,14 +240,12 @@ tr:hover td { background: #fafcfa; }
 }
 .qa-btn:hover { background: var(--leaf-tint); border-color: var(--leaf); }
 
-/* ── Permission matrix ── */
 .perm-table { font-size: 12.5px; }
 .perm-table th { font-size: 10.5px; text-align: center; }
 .perm-cell { text-align: center; }
 .perm-cell input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--leaf); cursor: pointer; }
 .mod-name { font-family: -apple-system,"Segoe UI",sans-serif; font-weight: 600; color: var(--ink); min-width: 140px; }
 
-/* ── Config rows ── */
 .cfg-row {
   display: flex; justify-content: space-between; align-items: flex-start;
   padding: 12px 0; border-bottom: 1px solid var(--line); gap: 16px;
@@ -282,7 +261,6 @@ tr:hover td { background: #fafcfa; }
   max-width: 180px; width: 100%;
 }
 
-/* ── Toggle switch ── */
 .toggle-wrap { position: relative; display: inline-block; width: 40px; height: 22px; cursor: pointer; flex-shrink: 0; }
 .toggle-wrap input { opacity: 0; width: 0; height: 0; position: absolute; }
 .toggle-slider { position: absolute; inset: 0; background: var(--line); border-radius: 22px; transition: background .2s; }
@@ -294,19 +272,16 @@ tr:hover td { background: #fafcfa; }
 .toggle-wrap input:checked + .toggle-slider::after { transform: translateX(18px); }
 .toggle-wrap input:focus-visible + .toggle-slider { outline: 2px solid var(--leaf); outline-offset: 2px; }
 
-/* ── Inline select ── */
 .inline-select {
   font-family: -apple-system,"Segoe UI",sans-serif; font-size: 12px; padding: 4px 7px;
   border: 1px solid var(--line); border-radius: 5px; background: var(--card); color: var(--ink);
   max-width: 150px;
 }
 
-/* ── Detail list ── */
 .detail-list { font-family: -apple-system,"Segoe UI",sans-serif; }
 .detail-list dt { font-size: 11.5px; font-weight: 700; color: var(--ink-faint); text-transform: uppercase; letter-spacing: .04em; margin-top: 12px; }
 .detail-list dd { font-size: 14px; margin-top: 3px; }
 
-/* ── Toasts (stack instead of overlapping) ── */
 #toast-stack {
   position: fixed; bottom: 24px; right: 24px; z-index: 999;
   display: flex; flex-direction: column; gap: 10px; align-items: flex-end;
@@ -344,11 +319,50 @@ tr:hover td { background: #fafcfa; }
 .ai-insight-icon.info { background: #e4eef9; color: #1a3d6d; }
 @media (max-width: 800px) { .ai-grid, .ai-insight-grid { grid-template-columns: 1fr; } }
 
-
-/* Global portal language switcher */
+/* ── Global portal language switcher ── */
 #kbx-language-switcher{position:fixed;top:14px;right:18px;z-index:5000;display:flex;align-items:center;gap:4px;padding:5px 7px;border:1px solid rgba(13,61,46,.14);border-radius:999px;background:rgba(255,255,255,.94);box-shadow:0 8px 24px rgba(19,42,28,.10);backdrop-filter:blur(8px);font:600 12px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#5f6d5c}
 #kbx-language-switcher .kbx-language-label{padding:0 5px}
 #kbx-language-switcher button{min-width:30px;padding:6px 7px;border:0;border-radius:999px;background:transparent;color:#5f6d5c;font:700 11px/1 inherit;cursor:pointer}
 #kbx-language-switcher button:hover{background:#edf3ee;color:#174c35}
 #kbx-language-switcher button.active{background:#174c35;color:#fff}
 @media(max-width:800px){#kbx-language-switcher{top:10px;right:10px}.sidebar-open #kbx-language-switcher{display:none}}
+
+/* ── Map picker (M&E location field) ── */
+.field-map-wide { grid-column: 1 / -1; }   /* span both columns of .form-grid */
+.map-picker {
+  width: 100%;
+  height: 320px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--leaf-tint);
+}
+@media (max-width: 640px) { .map-picker { height: 260px; } }
+
+.map-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+.map-readout {
+  font-family: -apple-system,"Segoe UI",sans-serif;
+  font-size: 12px;
+  color: var(--ink-faint);
+  margin-left: auto;
+  padding: 4px 10px;
+  border-radius: 5px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+}
+.map-readout.has-value {
+  color: var(--forest);
+  border-color: var(--leaf);
+  background: var(--leaf-tint);
+  font-weight: 600;
+}
+
+/* Leaflet overrides so the map matches the portal's design */
+.leaflet-container { font-family: -apple-system,"Segoe UI",sans-serif; }
+.leaflet-control-attribution { font-size: 10px; background: rgba(255,255,255,.8); }
