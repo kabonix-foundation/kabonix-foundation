@@ -4,6 +4,7 @@ const translations = {
     top_identity: "Public Identity & Transparency",
     top_partner: "Partner With Us →",
     nav_about: "About",
+    nav_about_us: "About Us",
     nav_programmes: "Programmes",
     nav_news: "News & Events",
     nav_impact: "Impact",
@@ -23,7 +24,7 @@ const translations = {
     feat_comm_title: "Community First",
     feat_comm_desc: "Empowering the people we serve.",
     about_kicker: "About Kabonix",
-    about_title: "Our Programmes & Focus Areas",
+    about_title: "Our Focus Areas",
     about_sub: "Kabonix Foundation is dedicated to climate resilience and the sustainable blue economy. We work hand-in-hand with communities to create lasting impact.",
     card_climate_title: "Climate Action",
     card_climate_desc: "Implementing projects that mitigate climate change and build resilient ecosystems.",
@@ -65,6 +66,8 @@ const translations = {
     cta_title: "Partner with Kabonix Foundation.",
     cta_sub: "Contact us to discuss how we can work together for a sustainable future.",
     cta_btn: "Contact Us",
+    contact_via_email: "Email us",
+    contact_via_whatsapp: "WhatsApp",
     footer_desc: "The Foundation's public identity and transparency window — visited by donors, partners, government and the communities it serves.",
     footer_quick: "Quick Links",
     footer_focus: "Focus Areas",
@@ -91,6 +94,7 @@ const translations = {
     top_identity: "Utambulisho wa Umma na Uwazi",
     top_partner: "Shirikiana Nasi →",
     nav_about: "Kuhusu",
+    nav_about_us: "Kuhusu Sisi",
     nav_programmes: "Programu",
     nav_news: "Habari na Matukio",
     nav_impact: "Athari",
@@ -110,7 +114,7 @@ const translations = {
     feat_comm_title: "Jamii Kwanza",
     feat_comm_desc: "Kuwapa nguvu watu tunaowahudumia.",
     about_kicker: "Kuhusu Kabonix",
-    about_title: "Programu Zetu na Maeneo ya Kipaumbele",
+    about_title: "Maeneo Yetu ya Kipaumbele",
     about_sub: "Kabonix Foundation imejitolea kwa ustahimilivu wa hali ya hewa na uchumi endelevu wa bluu. Tunafanya kazi bega kwa bega na jamii kuunda athari ya kudumu.",
     card_climate_title: "Hatua za Hali ya Hewa",
     card_climate_desc: "Kutekeleza miradi inayopunguza mabadiliko ya hali ya hewa na kujenga mifumo ikolojia imara.",
@@ -152,6 +156,8 @@ const translations = {
     cta_title: "Shirikiana na Kabonix Foundation.",
     cta_sub: "Wasiliana nasi ili kujadili jinsi tunaweza kufanya kazi pamoja kwa mustakabali endelevu.",
     cta_btn: "Wasiliana Nasi",
+    contact_via_email: "Tutumie barua pepe",
+    contact_via_whatsapp: "WhatsApp",
     footer_desc: "Dirisha la utambulisho wa umma na uwazi wa Foundation — linatembelewa na wafadhili, washirika, serikali na jamii inayohudumia.",
     footer_quick: "Viungo vya Haraka",
     footer_focus: "Maeneo ya Kipaumbele",
@@ -207,17 +213,14 @@ function setLanguage(lang) {
   const url = new URL(window.location.href);
   url.searchParams.set('lang', currentLang);
   history.replaceState(null, '', url.pathname + url.search + url.hash);
-  
-  // Update toggle button states
+
   document.querySelectorAll('.lang-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.lang === lang);
   });
 
-  // Update all elements with data-i18n attribute
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.getAttribute('data-i18n');
     if (translations[lang] && translations[lang][key]) {
-      // Handle placeholder attributes for inputs
       if (el.tagName === 'INPUT' && el.hasAttribute('placeholder')) {
         el.setAttribute('placeholder', translations[lang][key]);
       } else {
@@ -231,26 +234,44 @@ function setLanguage(lang) {
   if (backLink) backLink.href = withLang('/');
 }
 
+// Fetch the service-status banner from the API and show it at the very top
+// of the page. The API URL comes from the <meta name="api-url"> tag that
+// serve.js injects at runtime.
+async function fetchAndShowBanner() {
+  const apiUrl = document.querySelector('meta[name="api-url"]')?.content;
+  if (!apiUrl) return;
+  try {
+    const res = await fetch(apiUrl.replace(/\/$/, '') + '/api/status');
+    if (!res.ok) return;
+    const data = await res.json();
+    const msg = data?.banner?.message?.trim();
+    if (!msg) return;
+    const el = document.createElement('div');
+    el.id = 'service-banner';
+    el.setAttribute('role', 'status');
+    el.style.cssText = [
+      'background:#7a5610', 'color:#fff',
+      'padding:10px 16px', 'text-align:center',
+      'font:600 13px/1.4 Arial,Helvetica,sans-serif',
+      'position:relative', 'z-index:200',
+    ].join(';');
+    el.textContent = '⚠️ ' + msg;
+    document.body.prepend(el);
+  } catch { /* silent */ }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
-  // Initialize language
   setLanguage(currentLang);
 
-  // Intersection Observer for Scroll Animations
   const reveals = document.querySelectorAll('.reveal');
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('visible');
-      }
+      if (entry.isIntersecting) entry.target.classList.add('visible');
     });
-  }, {
-    threshold: 0.1,
-    rootMargin: "0px 0px -50px 0px"
-  });
+  }, { threshold: 0.1, rootMargin: "0px 0px -50px 0px" });
 
   reveals.forEach(reveal => observer.observe(reveal));
 
-  // Portals Dropdown Logic
   const toggleBtn = document.getElementById('portal-toggle');
   const menu = document.getElementById('portal-menu');
 
@@ -259,8 +280,6 @@ document.addEventListener('DOMContentLoaded', () => {
       e.stopPropagation();
       menu.classList.toggle('show');
     });
-
-    // Close dropdown when clicking outside
     document.addEventListener('click', (e) => {
       if (!toggleBtn.contains(e.target) && !menu.contains(e.target)) {
         menu.classList.remove('show');
@@ -269,4 +288,5 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   updatePortalLinks();
+  fetchAndShowBanner();
 });
