@@ -33,21 +33,17 @@
         <span>Kabonix<small>Foundation</small></span>
       </a>
       <nav class="links" aria-label="Main navigation">
-        <a href="#about" data-i18n="nav_about">About</a>
-        <a href="#programmes" data-i18n="nav_programmes">Programmes</a>
+        <a href="#about" data-i18n="nav_about_us">About Us</a>
         <a href="#news" data-i18n="nav_news">News & Events</a>
         <a href="#impact" data-i18n="nav_impact">Impact</a>
         <a href="#partners" data-i18n="nav_partners">Partners</a>
         <a href="#contact" data-i18n="nav_contact">Contact</a>
       </nav>
       <div style="display: flex; align-items: center; gap: 16px;">
-        <!-- Language Toggle -->
         <div class="lang-toggle">
           <button class="lang-btn active" data-lang="en" onclick="setLanguage('en')">EN</button>
           <button class="lang-btn" data-lang="sw" onclick="setLanguage('sw')">SW</button>
         </div>
-
-        <!-- Portals Dropdown -->
         <div class="portal-dropdown">
           <button class="btn primary dropdown-toggle" id="portal-toggle" data-i18n="btn_portals">Portals ▾</button>
           <div class="dropdown-menu" id="portal-menu">
@@ -98,12 +94,12 @@
       </div>
     </section>
 
-    <!-- ABOUT / PROGRAMMES SECTION -->
+    <!-- ABOUT / FOCUS AREAS SECTION -->
     <section id="about" class="section-bg">
       <div class="container">
         <div class="heading reveal">
           <div class="kicker" data-i18n="about_kicker">About Kabonix</div>
-          <h2 data-i18n="about_title">Our Programmes & Focus Areas</h2>
+          <h2 data-i18n="about_title">Our Focus Areas</h2>
           <p data-i18n="about_sub">Kabonix Foundation is dedicated to climate resilience and the sustainable blue economy. We work hand-in-hand with communities to create lasting impact.</p>
         </div>
         <div class="cards-grid">
@@ -112,7 +108,6 @@
               <div class="icon">🌱</div>
               <h3 data-i18n="card_climate_title">Climate Action</h3>
               <p data-i18n="card_climate_desc">Implementing projects that mitigate climate change and build resilient ecosystems.</p>
-              <a href="#programmes" data-i18n="card_climate_link">Explore Programmes →</a>
             </div>
           </article>
 
@@ -121,9 +116,7 @@
               <div class="icon">🐟</div>
               <h3 data-i18n="card_blue_title">Blue Economy</h3>
               <p data-i18n="card_blue_desc">Promoting sustainable use of ocean resources for economic growth and improved livelihoods.</p>
-              <a href="#programmes" data-i18n="card_blue_link">Explore Programmes →</a>
             </div>
-
             <div class="water">
               <div class="fish fish-1"></div>
               <div class="fish fish-2"></div>
@@ -136,7 +129,6 @@
               <div class="icon">🏛️</div>
               <h3 data-i18n="card_gov_title">Governance & Transparency</h3>
               <p data-i18n="card_gov_desc">Ensuring accountability to our donors, partners, and the communities we serve.</p>
-              <a href="#impact" data-i18n="card_gov_link">View Our Impact →</a>
             </div>
           </article>
         </div>
@@ -240,7 +232,22 @@
           <h2 data-i18n="cta_title">Partner with Kabonix Foundation.</h2>
           <p data-i18n="cta_sub">Contact us to discuss how we can work together for a sustainable future.</p>
         </div>
-        <a class="btn primary reveal reveal-delay-1" href="mailto:kabonixfoundation@gmail.com" data-i18n="cta_btn">Contact Us</a>
+        <div class="contact-options reveal reveal-delay-1">
+          <a class="contact-option" href="mailto:kabonixfoundation@gmail.com">
+            <span class="contact-option-icon" aria-hidden="true">✉️</span>
+            <span class="contact-option-text">
+              <span class="contact-option-label" data-i18n="contact_via_email">Email us</span>
+              <span class="contact-option-value">kabonixfoundation@gmail.com</span>
+            </span>
+          </a>
+          <a class="contact-option" href="https://wa.me/255700000000" target="_blank" rel="noopener">
+            <span class="contact-option-icon" aria-hidden="true">💬</span>
+            <span class="contact-option-text">
+              <span class="contact-option-label" data-i18n="contact_via_whatsapp">WhatsApp</span>
+              <span class="contact-option-value">+255 700 000 000</span>
+            </span>
+          </a>
+        </div>
       </div>
     </section>
 
@@ -260,8 +267,7 @@
         <div class="footer-col">
           <h4 data-i18n="footer_quick">Quick Links</h4>
           <ul>
-            <li><a href="#about" data-i18n="nav_about">About</a></li>
-            <li><a href="#programmes" data-i18n="nav_programmes">Programmes</a></li>
+            <li><a href="#about" data-i18n="nav_about_us">About Us</a></li>
             <li><a href="#news" data-i18n="nav_news">News & Events</a></li>
             <li><a href="#impact" data-i18n="nav_impact">Impact</a></li>
             <li><a href="#partners" data-i18n="nav_partners">Partners</a></li>
@@ -270,10 +276,10 @@
         <div class="footer-col">
           <h4 data-i18n="footer_focus">Focus Areas</h4>
           <ul>
-            <li><a href="#" data-i18n="card_climate_title">Climate Action</a></li>
-            <li><a href="#" data-i18n="card_blue_title">Blue Economy</a></li>
-            <li><a href="#" data-i18n="feat_comm_title">Community Empowerment</a></li>
-            <li><a href="#" data-i18n="card_gov_title">Governance</a></li>
+            <li><a href="#about" data-i18n="card_climate_title">Climate Action</a></li>
+            <li><a href="#about" data-i18n="card_blue_title">Blue Economy</a></li>
+            <li><a href="#about" data-i18n="feat_comm_title">Community Empowerment</a></li>
+            <li><a href="#about" data-i18n="card_gov_title">Governance</a></li>
           </ul>
         </div>
         <div class="footer-col">
