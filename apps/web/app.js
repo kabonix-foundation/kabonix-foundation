@@ -35,8 +35,9 @@
     user: null, roles: [], permissions: [],
     route: 'dashboard', routeParam: null,
     mfaChallenge: null,
-    prefillEmail: null,       // set after successful registration, cleared after prefill
-    regSuccess: null,         // { email, message } shown on the login screen
+    prefillEmail: null,
+    regSuccess: null,
+    emailNeedsVerification: false,
   };
 
   window.state = state;
@@ -292,7 +293,6 @@
   </div>
 </div>`;
 
-    // Clear one-shot state
     state.prefillEmail = null;
     state.regSuccess   = null;
 
@@ -358,7 +358,7 @@
   <div class="login-form-side">
     <div class="login-card">
       <h2>Create an account</h2>
-      <p class="sub">You'll receive a verification email. Sign-in is enabled once your email is verified <em>and</em> an administrator approves your account.</p>
+      <p class="sub">You'll receive a verification email. Sign-in is enabled once your email is verified and an administrator approves your account.</p>
       <div class="field"><label>Full name</label><input id="reg-name" type="text" autocomplete="name" placeholder="Jane Doe"></div>
       <div class="field"><label>Email</label><input id="reg-email" type="email" autocomplete="email" placeholder="jane@example.org"></div>
       <div class="field"><label>Password</label><input id="reg-pw" type="password" autocomplete="new-password"></div>
@@ -387,7 +387,6 @@
 
       try {
         const r = await api('/auth/register', { method: 'POST', body: { name, email, password: pw1 } });
-        // Redirect to login with a success banner + prefilled email.
         state.regSuccess   = { email, message: r.message || 'Check your inbox for a verification link, then wait for administrator approval.' };
         state.prefillEmail = email;
         state.emailNeedsVerification = false;
@@ -430,9 +429,6 @@
       if (e.key === 'Enter') document.getElementById('fp-submit').click();
     };
   }
-
-  // ── Shell, dashboard, users, roles, config, audit, forms, messages, profile ──
-  // (continued in Part B — paste directly below this line)
 
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') document.querySelector('.app-shell')?.classList.remove('sidebar-open');
@@ -631,15 +627,17 @@
               <td>${u.mfa_enabled?'✅ On':'⬜ Off'}</td>
               <td class="meta">${ago(u.last_active)}</td>
               <td class="action-cell">
+                ${can('admin','approve') && u.id !== state.user.id ? `
+                  <button class="btn-sm btn-danger" data-delete-user="${u.id}">Delete</button>
+                ` : ''}
                 ${isPending || isRejected ? '' : `
                   ${can('admin','edit') ? `
-                  <select class="inline-select" id="role-sel-${u.id}">
+                  <select class="inline-select" data-uid="${u.id}" id="role-sel-${u.id}">
                     ${roles.map(r=>`<option value="${esc(r.key)}" ${userRoles.some(ur=>ur.key===r.key)?'selected':''}>${esc(r.name)}</option>`).join('')}
                   </select>
                   <button class="btn-sm" data-assign="${u.id}">Assign</button>
                   ${u.is_active && u.id!==state.user.id ? `<button class="btn-sm btn-danger" data-deactivate="${u.id}">Deactivate</button>` : ''}
                   ${!u.is_active ? `<button class="btn-sm btn-ok" data-reactivate="${u.id}">Reactivate</button>` : ''}
-                  ${can('admin','approve') && u.id!==state.user.id ? `<button class="btn-sm btn-danger" data-delete-user="${u.id}">Delete</button>` : ''}
                   ` : ''}
                 `}
               </td>
@@ -1185,11 +1183,9 @@
     });
   }
 
-  // ── Profile management ────────────────────────────────────────────────────
   async function renderProfile(seq) {
     shell(pageHead('My Profile','Loading…'));
 
-    // Refresh user record so we see pending_email etc.
     let u = state.user;
     try {
       const d = await api('/auth/me', { __silent401: true });
@@ -1202,7 +1198,6 @@
       ${pageHead('My Profile', 'Manage your account details, security and two-factor authentication.')}
       <div class="two-col">
         <div>
-          <!-- ── Account details ── -->
           <div class="card card-inner">
             <h3>Account details</h3>
             <div class="field">
@@ -1224,7 +1219,6 @@
             <div id="prof-msg" class="err-msg"></div>
           </div>
 
-          <!-- ── Change email ── -->
           <div class="card card-inner" style="margin-top:16px">
             <h3>Change email address</h3>
             ${u.pendingEmail ? `
@@ -1238,7 +1232,6 @@
             <div id="prof-email-msg" class="err-msg"></div>
           </div>
 
-          <!-- ── Change password ── -->
           <div class="card card-inner" style="margin-top:16px">
             <h3>Change password</h3>
             <p class="meta" style="margin-bottom:14px">For security, all other sessions will be signed out when you change your password.</p>
@@ -1251,7 +1244,6 @@
         </div>
 
         <div>
-          <!-- ── MFA ── -->
           <div class="card card-inner">
             <h3>Two-factor authentication</h3>
             ${u.mfaEnabled ? `
@@ -1268,7 +1260,6 @@
         </div>
       </div>`;
 
-    // ── Save name ──
     document.getElementById('save-name-btn').onclick = async () => {
       const name = document.getElementById('prof-name').value.trim();
       const msg  = document.getElementById('prof-msg');
@@ -1279,20 +1270,17 @@
         state.user = r.user;
         msg.style.color = 'var(--ok)';
         msg.textContent = '✅ Name updated.';
-        // Update sidebar greeting
         const sidebarLink = document.querySelector('.sb-foot .nav-item[data-route="profile"]');
         if (sidebarLink) sidebarLink.innerHTML = `<span class="nav-icon">👤</span>${esc(name.split(' ')[0])}`;
       } catch(e) { msg.textContent = e.message; }
     };
 
-    // ── Change email ──
     document.getElementById('change-email-btn').onclick = async () => {
       const newEmail = document.getElementById('prof-new-email').value.trim();
       const pw       = document.getElementById('prof-email-pw').value;
       const msg      = document.getElementById('prof-email-msg');
       msg.textContent = ''; msg.style.color = '';
 
-      // If there's a pending change and no new email entered, resend to the pending address.
       const targetEmail = newEmail || u.pendingEmail;
       if (!targetEmail) return msg.textContent = 'Please enter the new email address.';
       if (!pw)          return msg.textContent = 'Please enter your current password.';
@@ -1305,7 +1293,6 @@
       } catch(e) { msg.textContent = e.message; }
     };
 
-    // ── Change password ──
     document.getElementById('change-pw-btn').onclick = async () => {
       const cur     = document.getElementById('prof-pw-cur').value;
       const newPw   = document.getElementById('prof-pw-new').value;
@@ -1328,7 +1315,6 @@
       } catch(e) { msg.textContent = e.message; }
     };
 
-    // ── MFA disable ──
     if (u.mfaEnabled) {
       document.getElementById('dis-mfa-btn').onclick = async () => {
         const code = document.getElementById('mfa-dis-code').value.trim();
@@ -1342,7 +1328,6 @@
         } catch(e) { msg.textContent = e.message; }
       };
     } else {
-      // ── MFA setup ──
       document.getElementById('setup-mfa-btn').onclick = async () => {
         const msg = document.getElementById('mfa-msg');
         msg.textContent = '';
