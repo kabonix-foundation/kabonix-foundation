@@ -122,6 +122,33 @@
     return [];
   }
 
+  // ── Service banner ────────────────────────────────────────────────────────
+  // Fetches the public service banner (set by admins in System Config) and
+  // injects it at the top of the page. Called on boot and after login.
+  async function fetchAndShowBanner() {
+    try {
+      const res = await fetch(API + '/status');
+      if (!res.ok) return;
+      const data = await res.json();
+      const msg = data?.banner?.message?.trim();
+      document.getElementById('service-banner')?.remove();
+      if (!msg) return;
+      const el = document.createElement('div');
+      el.id = 'service-banner';
+      el.setAttribute('role', 'status');
+      el.style.cssText = [
+        'position:sticky', 'top:0', 'z-index:6000',
+        'background:#7a5610', 'color:#fff',
+        'padding:10px 16px', 'text-align:center',
+        'font:600 13px/1.4 -apple-system,"Segoe UI",sans-serif',
+        'box-shadow:0 2px 8px rgba(0,0,0,.15)',
+      ].join(';');
+      el.textContent = '⚠️ ' + msg;
+      document.body.prepend(el);
+    } catch { /* silent */ }
+  }
+
+  // ── URL token handler ─────────────────────────────────────────────────────
   async function handleUrlTokens() {
     const params = new URLSearchParams(location.search);
     const resetToken  = params.get('resetToken');
@@ -191,6 +218,7 @@
     return true;
   }
 
+  // ── Session ───────────────────────────────────────────────────────────────
   async function tryRestoreSession() {
     if (!state.token) return render();
     root.innerHTML = `
@@ -207,6 +235,7 @@
       state.token = null; lsDel('kabonix_token');
     }
     render();
+    fetchAndShowBanner();
   }
 
   async function login(email, password) {
@@ -215,6 +244,7 @@
     state.token=d.accessToken; state.user=d.user; state.roles=d.roles; state.permissions=d.permissions;
     lsSet('kabonix_token', d.accessToken);
     state.route='dashboard'; render();
+    fetchAndShowBanner();
   }
 
   async function submitMfa(challengeToken, code) {
@@ -222,11 +252,14 @@
     state.token=d.accessToken; state.user=d.user; state.roles=d.roles; state.permissions=d.permissions;
     lsSet('kabonix_token', d.accessToken);
     state.route='dashboard'; render();
+    fetchAndShowBanner();
   }
 
   function logout() {
     state.token=null; state.user=null; state.roles=[]; state.permissions=[];
-    lsDel('kabonix_token'); render();
+    lsDel('kabonix_token');
+    document.getElementById('service-banner')?.remove();
+    render();
   }
 
   function nav(route, param) { state.route=route; state.routeParam=param||null; render(); }
@@ -361,6 +394,7 @@
       <p class="sub">You'll receive a verification email. Sign-in is enabled once your email is verified and an administrator approves your account.</p>
       <div class="field"><label>Full name</label><input id="reg-name" type="text" autocomplete="name" placeholder="Jane Doe"></div>
       <div class="field"><label>Email</label><input id="reg-email" type="email" autocomplete="email" placeholder="jane@example.org"></div>
+      <div class="field"><label>Phone number</label><input id="reg-phone" type="tel" autocomplete="tel" placeholder="+255 712 345 678"></div>
       <div class="field"><label>Password</label><input id="reg-pw" type="password" autocomplete="new-password"></div>
       <div class="field"><label>Confirm password</label><input id="reg-pw2" type="password" autocomplete="new-password"></div>
       <button class="btn-primary" id="reg-submit">Create account</button>
@@ -375,6 +409,7 @@
     const submit = async () => {
       const name  = document.getElementById('reg-name').value.trim();
       const email = document.getElementById('reg-email').value.trim();
+      const phone = document.getElementById('reg-phone').value.trim();
       const pw1   = document.getElementById('reg-pw').value;
       const pw2   = document.getElementById('reg-pw2').value;
       const msg   = document.getElementById('reg-msg');
@@ -382,11 +417,12 @@
 
       if (!name)          return msg.textContent = 'Please enter your full name.';
       if (!email)         return msg.textContent = 'Please enter your email address.';
+      if (!phone)         return msg.textContent = 'Please enter your phone number.';
       if (pw1.length < 8) return msg.textContent = 'Password must be at least 8 characters.';
       if (pw1 !== pw2)    return msg.textContent = 'Passwords do not match.';
 
       try {
-        const r = await api('/auth/register', { method: 'POST', body: { name, email, password: pw1 } });
+        const r = await api('/auth/register', { method: 'POST', body: { name, email, password: pw1, phone } });
         state.regSuccess   = { email, message: r.message || 'Check your inbox for a verification link, then wait for administrator approval.' };
         state.prefillEmail = email;
         state.emailNeedsVerification = false;
@@ -573,11 +609,12 @@
         <h3 style="color:#7a5610">⏳ ${pending.length} registration${pending.length>1?'s':''} awaiting approval</h3>
         <p class="meta" style="margin-bottom:14px">Assign a role and approve, or reject the request.</p>
         <table class="mini-table">
-          <thead><tr><th>Name</th><th>Email</th><th>Verified</th><th>Registered</th><th>Assign role</th><th></th></tr></thead>
+          <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Verified</th><th>Registered</th><th>Assign role</th><th></th></tr></thead>
           <tbody>
             ${pending.map(u => `<tr data-pending-uid="${u.id}">
               <td><strong>${esc(u.name)}</strong></td>
               <td class="meta">${esc(u.email)}</td>
+              <td class="meta">${esc(u.phone || '—')}</td>
               <td>${u.email_verified_at ? '✅' : '<span class="meta">⏳ not yet</span>'}</td>
               <td class="meta">${ago(u.created_at)}</td>
               <td><select class="inline-select" id="approve-role-${u.id}">
@@ -613,7 +650,7 @@
       </div>` : ''}
       <div class="card card-table">
         <table>
-          <thead><tr><th>Name</th><th>Email</th><th>Roles</th><th>Status</th><th>MFA</th><th>Last active</th><th>Actions</th></tr></thead>
+          <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Roles</th><th>Status</th><th>MFA</th><th>Last active</th><th>Actions</th></tr></thead>
           <tbody>
             ${users.map(u => {
               const userRoles = u.roles || [];
@@ -622,6 +659,7 @@
               return `<tr data-uid="${u.id}">
               <td><strong>${esc(u.name)}</strong></td>
               <td class="meta">${esc(u.email)}</td>
+              <td class="meta">${esc(u.phone || '—')}</td>
               <td>${userRoles.map(r=>`<span class="badge badge-role">${esc(r.name)}</span>`).join(' ')||'<span class="meta">none</span>'}</td>
               <td>${userStatusCell(u)}</td>
               <td>${u.mfa_enabled?'✅ On':'⬜ Off'}</td>
@@ -856,8 +894,12 @@
         if (ctrl.type === 'number' && (value === '' || Number.isNaN(Number(value)))) {
           return toast(`${key} must be a number.`, true);
         }
-        try { await api(`/admin/config/${key}`,{method:'PATCH',body:{value}}); toast(`${key} saved.`); }
-        catch(e) { toast(e.message, true); }
+        try {
+          await api(`/admin/config/${key}`,{method:'PATCH',body:{value}});
+          toast(`${key} saved.`);
+          // If the banner message changed, refresh it right away.
+          if (key === 'service_banner_message') fetchAndShowBanner();
+        } catch(e) { toast(e.message, true); }
       });
     }
     document.getElementById('save-prefs-btn').onclick = async () => {
@@ -1210,6 +1252,11 @@
               <p class="meta" style="margin-top:6px">
                 ${u.emailVerified ? '✅ Verified' : '⚠️ Not verified'}
               </p>
+            </div>
+            <div class="field">
+              <label>Phone number</label>
+              <input type="tel" value="${esc(u.phone || '')}" disabled>
+              <p class="meta" style="margin-top:6px">Contact a Foundation admin to change your phone number.</p>
             </div>
             <div class="field">
               <label>Roles</label>
