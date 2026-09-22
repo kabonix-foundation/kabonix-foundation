@@ -13,7 +13,7 @@ import {
   REFRESH_TOKEN_TTL_MS, RESET_TOKEN_TTL_MS, VERIFY_TOKEN_TTL_MS, MFA_CHALLENGE_TTL_MS,
 } from './auth.js';
 import { generateBase32Secret, verifyTotp, otpauthUri } from './mfa.js';
-import { sendMail }      from './mailer.js';
+import { sendMail, mailerStatus } from './mailer.js';
 import { can, loadPermissions, loadRoles, requirePermission } from './rbac.js';
 import { logAction }     from './audit.js';
 import { handleAdminRoute } from './admin-routes.js';
@@ -198,6 +198,29 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { ok: true, service: 'kabonix-api', db: 'postgres+postgis', time: new Date().toISOString() });
     }
 
+    // ── SMTP diagnostic ───────────────────────────────────────────────────────
+    // TEMPORARY — remove before production.
+    //   GET /api/_mailtest                          → mailer status only
+    //   GET /api/_mailtest?send=1&to=you@test.com   → attempts a real send
+    if (parts[1] === '_mailtest' && req.method === 'GET') {
+      const status = mailerStatus();
+
+      const to = url.searchParams.get('to');
+      if (url.searchParams.get('send') !== '1' || !to) {
+        return send(res, 200, {
+          status,
+          hint: 'Add ?send=1&to=your@email.com to attempt a real send.',
+        });
+      }
+
+      const result = await sendMail({
+        to,
+        subject: 'Kabonix SMTP test',
+        bodyText: `Sent at ${new Date().toISOString()}.\nIf you see this, SMTP is working end to end.`,
+      });
+      return send(res, 200, { status, sendResult: result });
+    }
+
     if (parts[0] !== 'api') return send(res, 404, { error: 'Not found' });
 
     // ═══ PUBLIC ROUTES ════════════════════════════════════════════════════════
@@ -237,10 +260,8 @@ const server = http.createServer(async (req, res) => {
         [newId]
       );
 
-      // Send the verification link to the new user.
       await sendVerificationEmail(newId, email.toLowerCase(), cleanName, 'signup');
 
-      // Notify the admin inbox.
       await sendMail({
         to: CONTACT_INBOX,
         subject: `New registration awaiting approval: ${cleanName}`,
@@ -282,9 +303,6 @@ const server = http.createServer(async (req, res) => {
         return send(res, 401, badCreds);
       }
 
-      // Password is correct. Now check account state.
-
-      // 1. Email must be verified.
       if (!user.email_verified_at) {
         await logAction({ userId: user.id, userEmail: user.email, action: 'login_blocked', entity: 'user', entityId: user.id, detail: 'email not verified' });
         return send(res, 403, {
@@ -293,7 +311,6 @@ const server = http.createServer(async (req, res) => {
         });
       }
 
-      // 2. Registration must be approved by an administrator.
       if (user.approval_status === 'pending') {
         await logAction({ userId: user.id, userEmail: user.email, action: 'login_blocked', entity: 'user', entityId: user.id, detail: 'awaiting approval' });
         return send(res, 403, {
@@ -309,13 +326,11 @@ const server = http.createServer(async (req, res) => {
         });
       }
 
-      // 3. Account must be active.
       if (!user.is_active) {
         await logAction({ userId: user.id, userEmail: user.email, action: 'login_failed', entity: 'user', entityId: user.id, detail: 'account inactive' });
         return send(res, 401, { error: 'Your account has been deactivated. Contact a Foundation administrator.' });
       }
 
-      // 4. If MFA is enabled, issue a challenge instead of tokens.
       if (user.mfa_enabled) {
         const challengeToken = generateOpaqueToken();
         await pool.query(
@@ -453,8 +468,6 @@ const server = http.createServer(async (req, res) => {
     }
 
     // ── POST /api/auth/email/verify ───────────────────────────────────────────
-    // Handles both signup verification and email-change confirmation. The
-    // token's `purpose` column tells us which.
     if (parts[1] === 'auth' && parts[2] === 'email' && parts[3] === 'verify' && req.method === 'POST') {
       const { token = '' } = await readBody(req);
       const { rows } = await pool.query(
@@ -488,15 +501,13 @@ const server = http.createServer(async (req, res) => {
         return send(res, 200, { ok: true, message: 'Your email address has been updated.' });
       }
 
-      // Default: signup verification.
       await pool.query('UPDATE users SET email_verified_at = now() WHERE id = $1', [target.id]);
       await pool.query('UPDATE email_verification_tokens SET used_at = now() WHERE id = $1', [v.id]);
       await logAction({ userId: target.id, userEmail: target.email, action: 'email_verified', entity: 'user', entityId: target.id });
       return send(res, 200, { ok: true, message: 'Your email has been verified.' });
     }
 
-    // ── POST /api/auth/email/resend (public) ──────────────────────────────────
-    // Always returns success to avoid leaking whether an account exists.
+    // ── POST /api/auth/email/resend ───────────────────────────────────────────
     if (parts[1] === 'auth' && parts[2] === 'email' && parts[3] === 'resend' && req.method === 'POST') {
       const { email = '' } = await readBody(req);
       if (!validateEmail(email)) {
@@ -631,8 +642,6 @@ const server = http.createServer(async (req, res) => {
 
       const { hash, salt } = hashPassword(newPassword);
       await pool.query('UPDATE users SET password_hash = $1, password_salt = $2 WHERE id = $3', [hash, salt, user.id]);
-      // Invalidate every other session. The user will need to sign back in on
-      // any device except (potentially) this one, which is the point.
       await pool.query('UPDATE refresh_tokens SET revoked_at = now() WHERE user_id = $1 AND revoked_at IS NULL', [user.id]);
       await logAction({ userId: user.id, userEmail: user.email, action: 'edit', entity: 'user', entityId: user.id, detail: 'password changed' });
       return send(res, 200, { ok: true, message: 'Password updated. Other sessions have been signed out.' });
@@ -675,9 +684,6 @@ const server = http.createServer(async (req, res) => {
       await pool.query('UPDATE users SET mfa_pending_secret = $1 WHERE id = $2', [secret, user.id]);
       const uri = otpauthUri({ secret, accountEmail: user.email });
 
-      // Server-side QR generation keeps the TOTP secret away from any
-      // third-party image service. Falls back gracefully if the `qrcode`
-      // package isn't installed — the frontend can still show the setup key.
       let qrDataUrl = null;
       try {
         const QRCode = (await import('qrcode')).default;
