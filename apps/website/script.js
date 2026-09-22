@@ -208,8 +208,10 @@ function setLanguage(lang) {
   currentLang = (lang === 'sw') ? 'sw' : 'en';
   localStorage.setItem('kabonix_lang', currentLang);
   document.documentElement.lang = currentLang;
+
   const titleNode = document.querySelector('title[data-i18n]');
   if (titleNode) titleNode.textContent = translations[currentLang]?.[titleNode.dataset.i18n] || titleNode.textContent;
+
   const url = new URL(window.location.href);
   url.searchParams.set('lang', currentLang);
   history.replaceState(null, '', url.pathname + url.search + url.hash);
