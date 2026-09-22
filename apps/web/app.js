@@ -5,7 +5,6 @@
     return;
   }
   window.__kabonixAppLoaded = true;
-
   console.log('[app] booting…');
 
   const WEBSITE_URL = document.querySelector('meta[name="website-url"]')?.content || 'http://localhost:3001';
@@ -36,6 +35,8 @@
     user: null, roles: [], permissions: [],
     route: 'dashboard', routeParam: null,
     mfaChallenge: null,
+    prefillEmail: null,       // set after successful registration, cleared after prefill
+    regSuccess: null,         // { email, message } shown on the login screen
   };
 
   window.state = state;
@@ -60,8 +61,7 @@
     if (!res.ok) {
       if (res.status === 401 && state.token && !__silent401) {
         state.token = null; state.user = null; state.roles = []; state.permissions = [];
-        lsDel('kabonix_token');
-        render();
+        lsDel('kabonix_token'); render();
       }
       const err = new Error(data.error || `Request failed (${res.status})`);
       err.status = res.status;
@@ -146,9 +146,9 @@
 </div>`;
       const msg = document.getElementById('tok-msg');
       try {
-        await api('/auth/email/verify', { method: 'POST', body: { token: verifyToken } });
-        msg.innerHTML = '<span style="color:var(--ok)">✅ Your email address is verified. Redirecting to sign in…</span>';
-        setTimeout(() => render(), 1600);
+        const r = await api('/auth/email/verify', { method: 'POST', body: { token: verifyToken } });
+        msg.innerHTML = '<span style="color:var(--ok)">✅ ' + esc(r.message || 'Email verified.') + ' Redirecting to sign in…</span>';
+        setTimeout(() => render(), 1800);
       } catch (e) {
         msg.textContent = e.message;
         document.getElementById('tok-retry-wrap').style.display = '';
@@ -192,12 +192,10 @@
 
   async function tryRestoreSession() {
     if (!state.token) return render();
-
     root.innerHTML = `
       <div style="display:grid;place-items:center;min-height:100vh;font:14px -apple-system,'Segoe UI',sans-serif;color:#5f6d5c">
         Loading…
       </div>`;
-
     try {
       const d = await Promise.race([
         api('/auth/me', { __silent401: true }),
@@ -237,14 +235,9 @@
     const seq = ++renderSeq;
     if (!state.token || !state.user) return renderLogin();
     const views = {
-      dashboard: renderDashboard,
-      users:     renderUsers,
-      roles:     renderRoles,
-      config:    renderConfig,
-      audit:     renderAudit,
-      forms:     renderForms,
-      messages:  renderMessages,
-      profile:   renderProfile,
+      dashboard: renderDashboard, users: renderUsers, roles: renderRoles,
+      config: renderConfig, audit: renderAudit, forms: renderForms,
+      messages: renderMessages, profile: renderProfile,
       ...extraViews,
     };
     (views[state.route]||renderDashboard)(seq);
@@ -252,6 +245,10 @@
 
   function renderLogin() {
     const mfaChallenge = state.mfaChallenge;
+    const regSuccess   = state.regSuccess;
+    const prefillEmail = state.prefillEmail || (DEMO_MODE ? 'admin@kabonix.org' : '');
+    const prefillPw    = DEMO_MODE && !state.prefillEmail ? 'ChangeMe123!' : '';
+
     root.innerHTML = `
 <div class="login-screen">
   <div class="login-visual">
@@ -271,19 +268,34 @@
         <button class="btn-primary" id="mfa-btn">Verify</button>
         <p class="hint"><a href="#" id="back-link">← Back to sign in</a></p>
       ` : `
+        ${regSuccess ? `
+          <div class="card card-inner" style="background:var(--leaf-tint);border-color:var(--leaf);margin-bottom:20px;padding:16px 18px">
+            <strong style="color:var(--ok);font-family:-apple-system,'Segoe UI',sans-serif;font-size:13px">✅ Account created</strong>
+            <p class="meta" style="margin-top:6px;color:var(--ink-soft);font-size:13px;line-height:1.5">${esc(regSuccess.message)}</p>
+          </div>` : ''}
         <h2>Sign in</h2>
         <p class="sub">Foundation staff and field officers only.</p>
-        <div class="field"><label>Email</label><input id="l-email" type="email" ${DEMO_MODE?'value="admin@kabonix.org"':''}></div>
-        <div class="field"><label>Password</label><input id="l-pw" type="password" ${DEMO_MODE?'value="ChangeMe123!"':''}></div>
+        <div class="field"><label>Email</label><input id="l-email" type="email" value="${esc(prefillEmail)}"></div>
+        <div class="field"><label>Password</label><input id="l-pw" type="password" value="${esc(prefillPw)}"></div>
         <button class="btn-primary" id="login-btn">Sign in</button>
         <p class="hint"><a href="#" id="forgot-link">Forgot your password?</a></p>
         <p class="hint">New to the platform? <a href="#" id="register-link">Create an account</a></p>
         ${DEMO_MODE ? `<p class="hint">Seeded accounts: <strong>admin@kabonix.org</strong> (Super Admin) · <strong>amina@kabonix.org</strong> (Field Officer) — password: <strong>ChangeMe123!</strong></p>` : ''}
       `}
       <div id="l-err" class="err-msg"></div>
+      ${state.emailNeedsVerification ? `
+        <p class="hint" style="margin-top:14px">
+          Didn't get the email?
+          <a href="#" id="resend-verify-link">Resend verification link</a>
+        </p>` : ''}
     </div>
   </div>
 </div>`;
+
+    // Clear one-shot state
+    state.prefillEmail = null;
+    state.regSuccess   = null;
+
     if (mfaChallenge) {
       const code = document.getElementById('l-code');
       code.focus();
@@ -299,6 +311,17 @@
       document.getElementById('l-pw').onkeydown = e => { if(e.key==='Enter') doLogin(); };
       document.getElementById('forgot-link').onclick = e => { e.preventDefault(); renderForgotPassword(); };
       document.getElementById('register-link').onclick = e => { e.preventDefault(); renderRegister(); };
+      if (document.getElementById('resend-verify-link')) {
+        document.getElementById('resend-verify-link').onclick = async e => {
+          e.preventDefault();
+          const email = document.getElementById('l-email').value.trim();
+          if (!email) return toast('Enter your email address first.', true);
+          try {
+            const r = await api('/auth/email/resend', { method: 'POST', body: { email } });
+            toast(r.message || 'If unverified, a new link has been sent.');
+          } catch (err) { toast(err.message, true); }
+        };
+      }
     }
   }
 
@@ -307,10 +330,18 @@
     const pw    = document.getElementById('l-pw').value;
     const err   = document.getElementById('l-err');
     err.textContent = '';
+    state.emailNeedsVerification = false;
     try {
       const d = await login(email, pw);
       if (d?.mfaRequired) { state.mfaChallenge = d.challengeToken; renderLogin(); }
-    } catch(e) { err.textContent = e.message; }
+    } catch(e) {
+      err.textContent = e.message;
+      if (e.body?.code === 'email_not_verified') {
+        state.emailNeedsVerification = true;
+        renderLogin();
+        document.getElementById('l-err').textContent = e.message;
+      }
+    }
   }
 
   function renderRegister() {
@@ -319,7 +350,7 @@
   <div class="login-visual">
     <div class="mark">KABONIX FOUNDATION</div>
     <h1>Join the platform</h1>
-    <p>Register as a staff member or field officer. An administrator will review your request before your account is activated.</p>
+    <p>Register as a staff member or field officer. After verifying your email, an administrator will review your request.</p>
     <div class="login-pills">
       <span>🌊 Blue Economy</span><span>🌱 Carbon</span><span>⚡ Renewable Energy</span><span>👩‍💼 Youth & Women</span>
     </div>
@@ -327,7 +358,7 @@
   <div class="login-form-side">
     <div class="login-card">
       <h2>Create an account</h2>
-      <p class="sub">You'll be able to sign in once an administrator approves your request.</p>
+      <p class="sub">You'll receive a verification email. Sign-in is enabled once your email is verified <em>and</em> an administrator approves your account.</p>
       <div class="field"><label>Full name</label><input id="reg-name" type="text" autocomplete="name" placeholder="Jane Doe"></div>
       <div class="field"><label>Email</label><input id="reg-email" type="email" autocomplete="email" placeholder="jane@example.org"></div>
       <div class="field"><label>Password</label><input id="reg-pw" type="password" autocomplete="new-password"></div>
@@ -342,24 +373,25 @@
     document.getElementById('reg-back').onclick = e => { e.preventDefault(); render(); };
 
     const submit = async () => {
-      const name = document.getElementById('reg-name').value.trim();
+      const name  = document.getElementById('reg-name').value.trim();
       const email = document.getElementById('reg-email').value.trim();
-      const pw1 = document.getElementById('reg-pw').value;
-      const pw2 = document.getElementById('reg-pw2').value;
-      const msg = document.getElementById('reg-msg');
-      msg.textContent = '';
-      msg.style.color = '';
+      const pw1   = document.getElementById('reg-pw').value;
+      const pw2   = document.getElementById('reg-pw2').value;
+      const msg   = document.getElementById('reg-msg');
+      msg.textContent = ''; msg.style.color = '';
 
-      if (!name) return msg.textContent = 'Please enter your full name.';
-      if (!email) return msg.textContent = 'Please enter your email address.';
+      if (!name)          return msg.textContent = 'Please enter your full name.';
+      if (!email)         return msg.textContent = 'Please enter your email address.';
       if (pw1.length < 8) return msg.textContent = 'Password must be at least 8 characters.';
-      if (pw1 !== pw2) return msg.textContent = 'Passwords do not match.';
+      if (pw1 !== pw2)    return msg.textContent = 'Passwords do not match.';
 
       try {
         const r = await api('/auth/register', { method: 'POST', body: { name, email, password: pw1 } });
-        msg.style.color = 'var(--ok)';
-        msg.textContent = r.message || 'Registration submitted. An administrator will review your request.';
-        document.getElementById('reg-submit').disabled = true;
+        // Redirect to login with a success banner + prefilled email.
+        state.regSuccess   = { email, message: r.message || 'Check your inbox for a verification link, then wait for administrator approval.' };
+        state.prefillEmail = email;
+        state.emailNeedsVerification = false;
+        renderLogin();
       } catch (e) {
         msg.textContent = e.message;
       }
@@ -399,6 +431,9 @@
     };
   }
 
+  // ── Shell, dashboard, users, roles, config, audit, forms, messages, profile ──
+  // (continued in Part B — paste directly below this line)
+
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') document.querySelector('.app-shell')?.classList.remove('sidebar-open');
   });
@@ -412,7 +447,7 @@
     sh.classList.remove('sidebar-open');
   });
 
-  function shell(contentHtml, activeRoute) {
+  function shell(contentHtml) {
     const items = [
       { key:'dashboard', icon:'◉', label:'Dashboard' },
       can('data_collection','view') && { key:'forms', icon:'📋', label:'M&E Collection' },
@@ -450,19 +485,14 @@
 
     const sbToggle = document.getElementById('sb-toggle');
     const appShell = document.querySelector('.app-shell');
-    if (sbToggle && appShell) {
-      sbToggle.onclick = () => appShell.classList.toggle('sidebar-open');
-    }
+    if (sbToggle && appShell) sbToggle.onclick = () => appShell.classList.toggle('sidebar-open');
   }
 
-  function pageHead(title, sub='') {
-    return `<div class="page-head"><h1>${esc(title)}</h1>${sub?`<p>${esc(sub)}</p>`:''}</div>`;
-  }
-
-  function card(content, cls='') { return `<div class="card ${cls}">${content}</div>`; }
+  function pageHead(title, sub='') { return `<div class="page-head"><h1>${esc(title)}</h1>${sub?`<p>${esc(sub)}</p>`:''}</div>`; }
+  function card(content, cls='')  { return `<div class="card ${cls}">${content}</div>`; }
 
   async function renderDashboard(seq) {
-    shell(`${pageHead('Dashboard','Loading…')}`, 'dashboard');
+    shell(`${pageHead('Dashboard','Loading…')}`);
     let stats = {};
     try { stats = await api('/admin/stats'); } catch {}
     if (isStale(seq)) return;
@@ -473,17 +503,17 @@
     shell(`
       ${pageHead('Dashboard', `Welcome back, ${me.name.split(' ')[0]}. ${new Date().toLocaleDateString(window.KabonixI18n?.locale?.() || 'en-GB',{weekday:'long',day:'numeric',month:'long'})}.`)}
       <div class="stat-row">
-        ${statCard('Active staff',     stats.activeUsers       ?? '—', '👥')}
-        ${statCard('Submissions',      stats.submissions        ?? '—', '📋')}
-        ${statCard('Audit events (24h)',stats.auditEventsToday ?? '—', '📜')}
-        ${statCard('New enquiries',    stats.newContactMessages ?? '—', '✉️')}
+        ${statCard('Active staff',      stats.activeUsers        ?? '—', '👥')}
+        ${statCard('Submissions',       stats.submissions        ?? '—', '📋')}
+        ${statCard('Audit events (24h)',stats.auditEventsToday   ?? '—', '📜')}
+        ${statCard('New enquiries',     stats.newContactMessages ?? '—', '✉️')}
       </div>
       ${stats.pendingApprovals ? `
       <div class="card card-inner" style="border-color:var(--sand);background:var(--sand-tint);margin-bottom:18px">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
           <div>
             <strong style="color:#7a5610">⏳ ${stats.pendingApprovals} registration${stats.pendingApprovals>1?'s':''} awaiting approval</strong>
-            <p class="meta" style="margin-top:4px">New staff have registered and are waiting for you to review them.</p>
+            <p class="meta" style="margin-top:4px">New staff have registered and are waiting for review.</p>
           </div>
           ${can('admin','view') ? `<button class="btn-primary" onclick="nav('users')">Review on Staff &amp; Users</button>` : ''}
         </div>
@@ -500,34 +530,32 @@
             ${can('admin','create')           ? `<button class="qa-btn" onclick="nav('users')">➕ Invite staff member</button>` : ''}
             ${can('admin','view')             ? `<button class="qa-btn" onclick="nav('messages')">✉️ View contact messages</button>` : ''}
             ${can('admin','view')||can('data_collection','approve') ? `<button class="qa-btn" onclick="nav('audit')">📜 View audit log</button>` : ''}
+            <button class="qa-btn" onclick="nav('profile')">👤 Manage my profile</button>
           </div>`, 'card-inner')}
       </div>
       <div style="margin-top:8px" class="meta">Platform: Postgres + PostGIS · Migrations applied: ${stats.migrationsApplied ?? '—'} · <a href="${WEBSITE_URL}" target="_blank">Public website ↗</a></div>
-    `, 'dashboard');
+    `);
   }
 
   function statCard(label, value, icon) {
     return `<div class="stat-card"><div class="stat-icon">${icon}</div><div class="stat-value">${esc(String(value))}</div><div class="stat-label">${esc(label)}</div></div>`;
   }
 
-  function groupPerms(perms) {
-    const out={};
-    for(const p of perms) (out[p.module]??=[]).push(p.level);
-    return out;
-  }
+  function groupPerms(perms) { const out={}; for(const p of perms) (out[p.module]??=[]).push(p.level); return out; }
 
   function userStatusCell(u) {
     if (u.approval_status === 'pending')  return '<span class="badge badge-new">Pending approval</span>';
     if (u.approval_status === 'rejected') return '<span class="badge" style="background:#f3f5f1;color:#7a5610">Rejected</span>';
+    if (!u.email_verified_at)             return '<span class="badge" style="background:#fdf3e3;color:#7a5610">Unverified</span>';
     return `<span class="status-dot ${u.is_active?'active':'inactive'}"></span>${u.is_active?'Active':'Inactive'}`;
   }
 
   async function renderUsers(seq) {
     if (!can('admin','view')) {
-      shell(pageHead('Staff & Users'), 'users');
+      shell(pageHead('Staff & Users'));
       return document.getElementById('main').insertAdjacentHTML('beforeend', forbidden());
     }
-    shell(pageHead('Staff & Users','Loading…'), 'users');
+    shell(pageHead('Staff & Users','Loading…'));
 
     let users=[], roles=[];
     try {
@@ -547,20 +575,19 @@
       ${pending.length ? `
       <div class="card card-inner" style="margin-bottom:18px;border-color:var(--sand);background:var(--sand-tint)">
         <h3 style="color:#7a5610">⏳ ${pending.length} registration${pending.length>1?'s':''} awaiting approval</h3>
-        <p class="meta" style="margin-bottom:14px">These people registered themselves. Assign a role and approve, or reject the request.</p>
+        <p class="meta" style="margin-bottom:14px">Assign a role and approve, or reject the request.</p>
         <table class="mini-table">
-          <thead><tr><th>Name</th><th>Email</th><th>Registered</th><th>Assign role</th><th></th></tr></thead>
+          <thead><tr><th>Name</th><th>Email</th><th>Verified</th><th>Registered</th><th>Assign role</th><th></th></tr></thead>
           <tbody>
             ${pending.map(u => `<tr data-pending-uid="${u.id}">
               <td><strong>${esc(u.name)}</strong></td>
               <td class="meta">${esc(u.email)}</td>
+              <td>${u.email_verified_at ? '✅' : '<span class="meta">⏳ not yet</span>'}</td>
               <td class="meta">${ago(u.created_at)}</td>
-              <td>
-                <select class="inline-select" id="approve-role-${u.id}">
-                  <option value="">No role yet</option>
-                  ${roles.map(r=>`<option value="${esc(r.key)}">${esc(r.name)}</option>`).join('')}
-                </select>
-              </td>
+              <td><select class="inline-select" id="approve-role-${u.id}">
+                <option value="">No role yet</option>
+                ${roles.map(r=>`<option value="${esc(r.key)}">${esc(r.name)}</option>`).join('')}
+              </select></td>
               <td class="action-cell">
                 ${can('admin','approve') ? `
                   <button class="btn-sm btn-ok" data-approve-user="${u.id}">Approve</button>
@@ -574,7 +601,7 @@
       ${can('admin','create') ? `
       <div class="card card-inner" style="margin-bottom:18px">
         <h3>Invite new staff member</h3>
-        <p class="meta" style="margin-bottom:14px">Admin-invited users skip approval — they can sign in immediately with the temporary password.</p>
+        <p class="meta" style="margin-bottom:14px">Admin-invited users skip approval. They still need to verify their email.</p>
         <div class="form-row">
           <div class="field"><label>Full name</label><input id="inv-name" placeholder="Jane Doe"></div>
           <div class="field"><label>Email</label><input id="inv-email" type="email" placeholder="jane@kabonix.org"></div>
@@ -591,10 +618,10 @@
       <div class="card card-table">
         <table>
           <thead><tr><th>Name</th><th>Email</th><th>Roles</th><th>Status</th><th>MFA</th><th>Last active</th><th>Actions</th></tr></thead>
-          <tbody id="users-tbody">
+          <tbody>
             ${users.map(u => {
               const userRoles = u.roles || [];
-              const isPending = u.approval_status === 'pending';
+              const isPending  = u.approval_status === 'pending';
               const isRejected = u.approval_status === 'rejected';
               return `<tr data-uid="${u.id}">
               <td><strong>${esc(u.name)}</strong></td>
@@ -606,7 +633,7 @@
               <td class="action-cell">
                 ${isPending || isRejected ? '' : `
                   ${can('admin','edit') ? `
-                  <select class="inline-select" data-uid="${u.id}" id="role-sel-${u.id}">
+                  <select class="inline-select" id="role-sel-${u.id}">
                     ${roles.map(r=>`<option value="${esc(r.key)}" ${userRoles.some(ur=>ur.key===r.key)?'selected':''}>${esc(r.name)}</option>`).join('')}
                   </select>
                   <button class="btn-sm" data-assign="${u.id}">Assign</button>
@@ -628,7 +655,7 @@
         const role  = document.getElementById('inv-role').value;
         try {
           await api('/admin/users/invite',{method:'POST',body:{name,email,roleKey:role||undefined}});
-          toast('Invitation sent — check the API console for the dev email link.');
+          toast('Invitation sent.');
           renderUsers(++renderSeq);
         } catch(e) { toast(e.message, true); }
       };
@@ -640,18 +667,15 @@
       if (!confirm(`Approve this registration${roleKey ? ` and assign the ${roleKey} role` : ''}?`)) return;
       try {
         await api(`/admin/users/${uid}/approve`,{method:'POST',body:{roleKeys: roleKey ? [roleKey] : []}});
-        toast('Registration approved.');
-        renderUsers(++renderSeq);
+        toast('Registration approved.'); renderUsers(++renderSeq);
       } catch(e) { toast(e.message, true); }
     });
 
     document.querySelectorAll('[data-reject-user]').forEach(btn => btn.onclick = async () => {
-      const uid = Number(btn.dataset.rejectUser);
-      if (!confirm('Reject this registration? The user will not be able to sign in. You can still delete the account later.')) return;
+      if (!confirm('Reject this registration? The user will not be able to sign in.')) return;
       try {
-        await api(`/admin/users/${uid}/reject`,{method:'POST',body:{}});
-        toast('Registration rejected.');
-        renderUsers(++renderSeq);
+        await api(`/admin/users/${btn.dataset.rejectUser}/reject`,{method:'POST',body:{}});
+        toast('Registration rejected.'); renderUsers(++renderSeq);
       } catch(e) { toast(e.message, true); }
     });
 
@@ -662,7 +686,7 @@
       catch(e) { toast(e.message, true); }
     });
     document.querySelectorAll('[data-deactivate]').forEach(btn => btn.onclick = async () => {
-      if (!confirm('Deactivate this user? Their active sessions will be revoked.')) return;
+      if (!confirm('Deactivate this user?')) return;
       try { await api(`/admin/users/${btn.dataset.deactivate}/deactivate`,{method:'POST',body:{}}); toast('User deactivated.'); renderUsers(++renderSeq); }
       catch(e) { toast(e.message, true); }
     });
@@ -674,7 +698,7 @@
       const uid = Number(btn.dataset.deleteUser);
       const row = document.querySelector(`tr[data-uid="${uid}"]`);
       const name = row?.querySelector('strong')?.textContent || `user #${uid}`;
-      if (!confirm(`Permanently delete ${name}? This cannot be undone.\n\nIf they hold M&E data you'll be asked to deactivate instead.`)) return;
+      if (!confirm(`Permanently delete ${name}? This cannot be undone.`)) return;
       try {
         await api(`/admin/users/${uid}`, { method: 'DELETE' });
         toast('User deleted.'); renderUsers(++renderSeq);
@@ -684,10 +708,10 @@
 
   async function renderRoles(seq) {
     if (!can('admin','view')) {
-      shell(pageHead('Roles & Permissions'), 'roles');
+      shell(pageHead('Roles & Permissions'));
       return document.getElementById('main').insertAdjacentHTML('beforeend', forbidden());
     }
-    shell(pageHead('Roles & Permissions', 'Loading…'), 'roles');
+    shell(pageHead('Roles & Permissions', 'Loading…'));
 
     let data = { roles:[], modules:[], levels:[] };
     try { data = await api('/admin/roles'); }
@@ -748,7 +772,6 @@
         } catch(e) { toast(e.message, true); }
       };
     }
-
     document.querySelectorAll('[data-save-role]').forEach(btn => btn.onclick = async () => {
       const roleId = Number(btn.dataset.saveRole);
       const perms = [...document.querySelectorAll(`input[data-role="${roleId}"]:checked`)]
@@ -762,10 +785,10 @@
 
   async function renderConfig(seq) {
     if (!can('admin','view')) {
-      shell(pageHead('System Configuration'), 'config');
+      shell(pageHead('System Configuration'));
       return document.getElementById('main').insertAdjacentHTML('beforeend', forbidden());
     }
-    shell(pageHead('System Configuration', 'Loading…'), 'config');
+    shell(pageHead('System Configuration', 'Loading…'));
 
     let cfg=[], prefs={};
     try {
@@ -778,7 +801,7 @@
     if (isStale(seq)) return;
 
     document.getElementById('main').innerHTML = `
-      ${pageHead('System Configuration', 'Platform-wide settings managed by Foundation admin — no developer required.')}
+      ${pageHead('System Configuration', 'Platform-wide settings managed by Foundation admin.')}
       <div class="two-col">
         <div>
           <div class="card card-inner">
@@ -800,10 +823,10 @@
             <h3>My notification preferences</h3>
             <p class="meta" style="margin-bottom:14px">These apply to your account only.</p>
             ${[
-              ['email',    '✉️', 'Email notifications'],
-              ['sms',      '📱', 'SMS notifications'],
-              ['whatsapp', '💬', 'WhatsApp notifications'],
-              ['in_app',   '🔔', 'In-app notifications'],
+              ['email','✉️','Email notifications'],
+              ['sms','📱','SMS notifications'],
+              ['whatsapp','💬','WhatsApp notifications'],
+              ['in_app','🔔','In-app notifications'],
             ].map(([k,icon,label])=>`
               <div class="cfg-row">
                 <div class="cfg-label"><strong>${icon} ${label}</strong></div>
@@ -814,9 +837,7 @@
                   </label>
                 </div>
               </div>`).join('')}
-            <div style="margin-top:16px">
-              <button class="btn-primary" id="save-prefs-btn">Save preferences</button>
-            </div>
+            <div style="margin-top:16px"><button class="btn-primary" id="save-prefs-btn">Save preferences</button></div>
           </div>
           <div class="card card-inner" style="margin-top:16px">
             <h3>Migration status</h3>
@@ -834,20 +855,13 @@
         const row = document.querySelector(`.cfg-row[data-key="${key}"]`);
         const ctrl = row.querySelector('.cfg-value');
         const value = ctrl.type === 'checkbox' ? String(ctrl.checked) : ctrl.value;
-
-        if (ctrl.type === 'number') {
-          if (value === '' || Number.isNaN(Number(value))) {
-            return toast(`${key} must be a number.`, true);
-          }
+        if (ctrl.type === 'number' && (value === '' || Number.isNaN(Number(value)))) {
+          return toast(`${key} must be a number.`, true);
         }
-
-        try {
-          await api(`/admin/config/${key}`,{method:'PATCH',body:{value}});
-          toast(`${key} saved.`);
-        } catch(e) { toast(e.message, true); }
+        try { await api(`/admin/config/${key}`,{method:'PATCH',body:{value}}); toast(`${key} saved.`); }
+        catch(e) { toast(e.message, true); }
       });
     }
-
     document.getElementById('save-prefs-btn').onclick = async () => {
       const nextPrefs = {
         email:    document.querySelector('[data-pref="email"]').checked,
@@ -874,16 +888,16 @@
   function cfgControl(c) {
     if (c.type === 'boolean') return `<label class="toggle-wrap"><input type="checkbox" class="cfg-value" ${c.value==='true'?'checked':''}><span class="toggle-slider"></span></label>`;
     if (c.type === 'select')  return `<select class="cfg-value">${(c.options||'').split(',').map(o=>`<option value="${esc(o.trim())}" ${c.value===o.trim()?'selected':''}>${esc(o.trim())}</option>`).join('')}</select>`;
-    if (c.type === 'number')  return `<input type="number" class="cfg-value" value="${esc(c.value)}"${c.min!=null?` min="${esc(c.min)}"`:''}${c.max!=null?` max="${esc(c.max)}"`:''}>`;
+    if (c.type === 'number')  return `<input type="number" class="cfg-value" value="${esc(c.value)}">`;
     return `<input type="text" class="cfg-value" value="${esc(c.value)}">`;
   }
 
   async function renderAudit(seq) {
     if (!can('admin','view') && !can('data_collection','approve')) {
-      shell(pageHead('Audit Log'), 'audit');
+      shell(pageHead('Audit Log'));
       return document.getElementById('main').insertAdjacentHTML('beforeend', forbidden());
     }
-    shell(pageHead('Audit Log','Loading…'), 'audit');
+    shell(pageHead('Audit Log','Loading…'));
 
     const filters = { action:'', entity:'', from:'', to:'' };
     let data = { rows:[], total:0 };
@@ -892,8 +906,8 @@
       const tbody = document.getElementById('audit-tbody');
       if (!tbody) return;
       if (!data.rows.length) {
-        tbody.innerHTML = `<tr><td colspan="6" class="meta" style="text-align:center;padding:24px">No records match the current filters.</td></tr>`;
-        const c = document.getElementById('audit-count'); if (c) c.textContent = `0 of ${data.total} events`;
+        tbody.innerHTML = `<tr><td colspan="5" class="meta" style="text-align:center;padding:24px">No records match the current filters.</td></tr>`;
+        document.getElementById('audit-count').textContent = `0 of ${data.total} events`;
         return;
       }
       tbody.innerHTML = data.rows.map(r=>`<tr>
@@ -922,18 +936,14 @@
           <div class="field"><label>Action</label>
             <select id="f-action">
               <option value="">All actions</option>
-              ${['login','login_failed','logout','create','edit','delete','approve','export','permission_denied','mfa_enabled','mfa_disabled','token_reuse_detected','password_reset_requested','email_verified']
+              ${['login','login_failed','login_blocked','logout','create','edit','delete','approve','register','email_verified','email_changed','email_change_requested','password_reset_requested','password_reset_completed','password_change_failed','permission_denied','mfa_enabled','mfa_disabled','token_reuse_detected']
                 .map(a=>`<option value="${a}">${a}</option>`).join('')}
             </select>
           </div>
-          <div class="field"><label>Entity type</label>
-            <input id="f-entity" placeholder="e.g. user, me_submission">
-          </div>
+          <div class="field"><label>Entity type</label><input id="f-entity" placeholder="e.g. user, me_submission"></div>
           <div class="field"><label>From</label><input type="date" id="f-from"></div>
           <div class="field"><label>To</label><input type="date" id="f-to"></div>
-          <div class="field" style="align-self:flex-end">
-            <button class="btn-primary" id="filter-btn">Apply filters</button>
-          </div>
+          <div class="field" style="align-self:flex-end"><button class="btn-primary" id="filter-btn">Apply filters</button></div>
         </div>
       </div>
       <div class="card card-table">
@@ -943,7 +953,7 @@
         </div>
         <table>
           <thead><tr><th>Timestamp</th><th>User</th><th>Action</th><th>Entity</th><th>Detail</th></tr></thead>
-          <tbody id="audit-tbody"><tr><td colspan="6" class="meta" style="text-align:center;padding:24px">Loading…</td></tr></tbody>
+          <tbody id="audit-tbody"><tr><td colspan="5" class="meta" style="text-align:center;padding:24px">Loading…</td></tr></tbody>
         </table>
       </div>`;
 
@@ -959,7 +969,7 @@
   }
 
   async function renderForms(seq) {
-    shell(pageHead('M&E Data Collection','Loading…'), 'forms');
+    shell(pageHead('M&E Data Collection','Loading…'));
 
     let forms=[], submissions=[];
     try {
@@ -994,8 +1004,7 @@
             <td>${esc(s.answers?.village||'—')}</td>
             <td>${esc(s.answers?.programme_area||'—')}</td>
             <td class="meta">${(s.answers?.gps_lat != null && s.answers?.gps_lng != null)
-                                ? `${Number(s.answers.gps_lat).toFixed(4)}, ${Number(s.answers.gps_lng).toFixed(4)}`
-                                : '—'}</td>
+                                ? `${Number(s.answers.gps_lat).toFixed(4)}, ${Number(s.answers.gps_lng).toFixed(4)}` : '—'}</td>
             <td class="meta">${esc(s.submitted_by_email)}</td>
             <td class="meta">${ago(s.submitted_at)}</td>
             <td class="action-cell">
@@ -1014,7 +1023,6 @@
       document.getElementById('me-form').onsubmit = async e => {
         e.preventDefault();
         const answers = {};
-
         for (const f of form.schema||[]) {
           if (f.type === 'map') {
             const picker = window.__meMapPickers?.get?.(f.id);
@@ -1022,14 +1030,11 @@
             if (val) { answers.gps_lat = val.lat; answers.gps_lng = val.lng; }
             continue;
           }
-
           const el = document.getElementById('f_'+f.id);
           if (!el) continue;
-          if (f.type === 'number') {
-            answers[f.id] = el.value === '' ? undefined : Number(el.value);
-          } else {
-            answers[f.id] = el.value;
-          }
+          answers[f.id] = f.type === 'number'
+            ? (el.value === '' ? undefined : Number(el.value))
+            : el.value;
         }
 
         for (const f of form.schema||[]) {
@@ -1039,7 +1044,6 @@
             }
             continue;
           }
-
           const v = answers[f.id];
           const empty = v === undefined || v === null || v === '';
           if (f.required && empty) return toast(`${f.label} is required.`, true);
@@ -1063,12 +1067,7 @@
           if (err.status === 409 && err.body?.duplicate) {
             const d = err.body.duplicate;
             const proceed = confirm(
-              `Possible duplicate beneficiary\n\n` +
-              `Existing record:\n` +
-              `  ${d.full_name} — ${d.village || 'no village'}\n` +
-              `  created ${new Date(d.created_at).toLocaleDateString(window.KabonixI18n?.locale?.() || 'en-GB')}\n\n` +
-              `Is this a genuinely different person?\n` +
-              `Click OK to create a new record, or Cancel to stop.`
+              `Possible duplicate beneficiary\n\nExisting record:\n  ${d.full_name} — ${d.village || 'no village'}\n  created ${new Date(d.created_at).toLocaleDateString(window.KabonixI18n?.locale?.() || 'en-GB')}\n\nIs this a genuinely different person?\nClick OK to create a new record, or Cancel to stop.`
             );
             if (!proceed) return;
             try {
@@ -1083,7 +1082,7 @@
     }
 
     document.querySelectorAll('[data-delete-sub]').forEach(btn => btn.onclick = async () => {
-      if (!confirm('Delete this M&E submission? This cannot be undone.')) return;
+      if (!confirm('Delete this M&E submission?')) return;
       try {
         await api(`/submissions/${btn.dataset.deleteSub}`, { method: 'DELETE' });
         toast('Submission deleted.'); renderForms(++renderSeq);
@@ -1127,7 +1126,6 @@
         </div>
       </div>`;
     }
-
     if (f.type === 'select') {
       const ph = `<option value="" ${f.required ? 'disabled selected' : ''}>Select…</option>`;
       return `<div class="field"><label>${esc(f.label)}${f.required?' *':''}</label>
@@ -1142,10 +1140,10 @@
 
   async function renderMessages(seq) {
     if (!can('admin','view')) {
-      shell(pageHead('Contact Messages'), 'messages');
+      shell(pageHead('Contact Messages'));
       return document.getElementById('main').insertAdjacentHTML('beforeend', forbidden());
     }
-    shell(pageHead('Contact Messages','Loading…'), 'messages');
+    shell(pageHead('Contact Messages','Loading…'));
 
     let msgs=[];
     try { msgs = asArray(await api('/admin/contact-messages'), 'messages'); }
@@ -1187,75 +1185,205 @@
     });
   }
 
-  async function renderProfile() {
-    shell(pageHead('My Profile','Account settings and two-factor authentication.'), 'profile');
-    const u = state.user;
+  // ── Profile management ────────────────────────────────────────────────────
+  async function renderProfile(seq) {
+    shell(pageHead('My Profile','Loading…'));
+
+    // Refresh user record so we see pending_email etc.
+    let u = state.user;
+    try {
+      const d = await api('/auth/me', { __silent401: true });
+      state.user = d.user; state.roles = d.roles; state.permissions = d.permissions;
+      u = d.user;
+    } catch {}
+    if (isStale(seq)) return;
 
     document.getElementById('main').innerHTML = `
-      ${pageHead('My Profile')}
+      ${pageHead('My Profile', 'Manage your account details, security and two-factor authentication.')}
       <div class="two-col">
-        <div class="card card-inner">
-          <h3>Account details</h3>
-          <dl class="detail-list">
-            <dt>Name</dt><dd>${esc(u.name)}</dd>
-            <dt>Email</dt><dd>${esc(u.email)}</dd>
-            <dt>Email verified</dt><dd>${u.emailVerified?'✅ Yes':'⚠️ Not verified'}</dd>
-            <dt>MFA</dt><dd>${u.mfaEnabled?'✅ Enabled':'⬜ Disabled'}</dd>
-            <dt>Roles</dt><dd>${state.roles.map(r=>`<span class="badge badge-role">${esc(r.name)}</span>`).join(' ')||'None'}</dd>
-          </dl>
+        <div>
+          <!-- ── Account details ── -->
+          <div class="card card-inner">
+            <h3>Account details</h3>
+            <div class="field">
+              <label>Full name</label>
+              <input id="prof-name" type="text" value="${esc(u.name)}" maxlength="120">
+            </div>
+            <div class="field">
+              <label>Email</label>
+              <input type="email" value="${esc(u.email)}" disabled>
+              <p class="meta" style="margin-top:6px">
+                ${u.emailVerified ? '✅ Verified' : '⚠️ Not verified'}
+              </p>
+            </div>
+            <div class="field">
+              <label>Roles</label>
+              <div>${state.roles.map(r=>`<span class="badge badge-role">${esc(r.name)}</span>`).join(' ')||'<span class="meta">None</span>'}</div>
+            </div>
+            <button class="btn-primary" id="save-name-btn">Save name</button>
+            <div id="prof-msg" class="err-msg"></div>
+          </div>
+
+          <!-- ── Change email ── -->
+          <div class="card card-inner" style="margin-top:16px">
+            <h3>Change email address</h3>
+            ${u.pendingEmail ? `
+              <p class="meta" style="margin-bottom:14px;color:#7a5610">⏳ Waiting for confirmation at <strong>${esc(u.pendingEmail)}</strong>. Click the link in that inbox to complete the change.</p>
+            ` : `
+              <p class="meta" style="margin-bottom:14px">We'll send a verification link to the new address. Your current email stays active until you confirm the change.</p>
+            `}
+            <div class="field"><label>New email address</label><input id="prof-new-email" type="email" placeholder="new@example.org"></div>
+            <div class="field"><label>Your current password</label><input id="prof-email-pw" type="password" autocomplete="current-password"></div>
+            <button class="btn-primary" id="change-email-btn">${u.pendingEmail ? 'Resend verification link' : 'Send verification link'}</button>
+            <div id="prof-email-msg" class="err-msg"></div>
+          </div>
+
+          <!-- ── Change password ── -->
+          <div class="card card-inner" style="margin-top:16px">
+            <h3>Change password</h3>
+            <p class="meta" style="margin-bottom:14px">For security, all other sessions will be signed out when you change your password.</p>
+            <div class="field"><label>Current password</label><input id="prof-pw-cur" type="password" autocomplete="current-password"></div>
+            <div class="field"><label>New password</label><input id="prof-pw-new" type="password" autocomplete="new-password"></div>
+            <div class="field"><label>Confirm new password</label><input id="prof-pw-confirm" type="password" autocomplete="new-password"></div>
+            <button class="btn-primary" id="change-pw-btn">Update password</button>
+            <div id="prof-pw-msg" class="err-msg"></div>
+          </div>
         </div>
-        <div class="card card-inner">
-          <h3>Two-factor authentication</h3>
-          ${u.mfaEnabled ? `
-            <p class="meta" style="margin-bottom:14px">MFA is active. Enter your current code to disable it.</p>
-            <div class="field"><label>Current authentication code</label><input id="mfa-dis-code" type="text" maxlength="6" inputmode="numeric" placeholder="000000"></div>
-            <button class="btn-primary btn-danger" id="dis-mfa-btn">Disable MFA</button>
-          ` : `
-            <p class="meta" style="margin-bottom:14px">Add the key below to your authenticator app, then enter the 6-digit code to confirm.</p>
-            <button class="btn-primary" id="setup-mfa-btn">Set up MFA</button>
-            <div id="mfa-setup-area"></div>
-          `}
-          <div id="mfa-msg" style="margin-top:10px"></div>
+
+        <div>
+          <!-- ── MFA ── -->
+          <div class="card card-inner">
+            <h3>Two-factor authentication</h3>
+            ${u.mfaEnabled ? `
+              <p class="meta" style="margin-bottom:14px">MFA is active. Enter your current code to disable it.</p>
+              <div class="field"><label>Current authentication code</label><input id="mfa-dis-code" type="text" maxlength="6" inputmode="numeric" placeholder="000000"></div>
+              <button class="btn-primary btn-danger" id="dis-mfa-btn">Disable MFA</button>
+            ` : `
+              <p class="meta" style="margin-bottom:14px">Scan the QR code with any authenticator app (Google Authenticator, Authy, 1Password, …), then enter the 6-digit code to confirm.</p>
+              <button class="btn-primary" id="setup-mfa-btn">Set up MFA</button>
+              <div id="mfa-setup-area"></div>
+            `}
+            <div id="mfa-msg" class="err-msg"></div>
+          </div>
         </div>
       </div>`;
 
+    // ── Save name ──
+    document.getElementById('save-name-btn').onclick = async () => {
+      const name = document.getElementById('prof-name').value.trim();
+      const msg  = document.getElementById('prof-msg');
+      msg.textContent = ''; msg.style.color = '';
+      if (!name) return msg.textContent = 'Please enter your name.';
+      try {
+        const r = await api('/auth/profile', { method: 'PUT', body: { name } });
+        state.user = r.user;
+        msg.style.color = 'var(--ok)';
+        msg.textContent = '✅ Name updated.';
+        // Update sidebar greeting
+        const sidebarLink = document.querySelector('.sb-foot .nav-item[data-route="profile"]');
+        if (sidebarLink) sidebarLink.innerHTML = `<span class="nav-icon">👤</span>${esc(name.split(' ')[0])}`;
+      } catch(e) { msg.textContent = e.message; }
+    };
+
+    // ── Change email ──
+    document.getElementById('change-email-btn').onclick = async () => {
+      const newEmail = document.getElementById('prof-new-email').value.trim();
+      const pw       = document.getElementById('prof-email-pw').value;
+      const msg      = document.getElementById('prof-email-msg');
+      msg.textContent = ''; msg.style.color = '';
+
+      // If there's a pending change and no new email entered, resend to the pending address.
+      const targetEmail = newEmail || u.pendingEmail;
+      if (!targetEmail) return msg.textContent = 'Please enter the new email address.';
+      if (!pw)          return msg.textContent = 'Please enter your current password.';
+
+      try {
+        const r = await api('/auth/email/change', { method: 'POST', body: { newEmail: targetEmail, currentPassword: pw } });
+        msg.style.color = 'var(--ok)';
+        msg.textContent = '✅ ' + (r.message || 'Verification link sent.');
+        renderProfile(++renderSeq);
+      } catch(e) { msg.textContent = e.message; }
+    };
+
+    // ── Change password ──
+    document.getElementById('change-pw-btn').onclick = async () => {
+      const cur     = document.getElementById('prof-pw-cur').value;
+      const newPw   = document.getElementById('prof-pw-new').value;
+      const confirm = document.getElementById('prof-pw-confirm').value;
+      const msg     = document.getElementById('prof-pw-msg');
+      msg.textContent = ''; msg.style.color = '';
+
+      if (!cur)                  return msg.textContent = 'Please enter your current password.';
+      if (newPw.length < 8)      return msg.textContent = 'New password must be at least 8 characters.';
+      if (newPw !== confirm)     return msg.textContent = 'New passwords do not match.';
+      if (newPw === cur)         return msg.textContent = 'New password must be different from your current one.';
+
+      try {
+        const r = await api('/auth/password', { method: 'PUT', body: { currentPassword: cur, newPassword: newPw } });
+        msg.style.color = 'var(--ok)';
+        msg.textContent = '✅ ' + (r.message || 'Password updated.');
+        document.getElementById('prof-pw-cur').value = '';
+        document.getElementById('prof-pw-new').value = '';
+        document.getElementById('prof-pw-confirm').value = '';
+      } catch(e) { msg.textContent = e.message; }
+    };
+
+    // ── MFA disable ──
     if (u.mfaEnabled) {
       document.getElementById('dis-mfa-btn').onclick = async () => {
         const code = document.getElementById('mfa-dis-code').value.trim();
+        const msg  = document.getElementById('mfa-msg');
+        msg.textContent = '';
         try {
           await api('/auth/mfa/disable',{method:'POST',body:{code}});
           toast('MFA disabled.');
-          const d = await api('/auth/me'); state.user=d.user; renderProfile();
-        } catch(e) { document.getElementById('mfa-msg').textContent = e.message; }
+          const d = await api('/auth/me'); state.user = d.user;
+          renderProfile(++renderSeq);
+        } catch(e) { msg.textContent = e.message; }
       };
     } else {
+      // ── MFA setup ──
       document.getElementById('setup-mfa-btn').onclick = async () => {
+        const msg = document.getElementById('mfa-msg');
+        msg.textContent = '';
         try {
           const d = await api('/auth/mfa/setup',{method:'POST',body:{}});
           document.getElementById('mfa-setup-area').innerHTML = `
             <div style="margin-top:16px">
-              <p class="meta">Enter this key manually in your authenticator app:</p>
-              <code style="font-size:13px;background:#f3f5f1;padding:6px 10px;border-radius:4px;display:block;margin:10px 0;word-break:break-all">${esc(d.secret)}</code>
-              <details style="margin:8px 0"><summary class="meta" style="cursor:pointer">Show otpauth URI</summary>
-                <code style="font-size:11px;background:#f3f5f1;padding:6px 10px;border-radius:4px;display:block;margin:8px 0;word-break:break-all">${esc(d.otpauthUri)}</code>
+              ${d.qrDataUrl ? `
+                <p class="meta" style="margin-bottom:8px">Scan this code with your authenticator app:</p>
+                <img src="${esc(d.qrDataUrl)}" alt="MFA setup QR code"
+                     style="display:block;margin:10px 0;border:1px solid var(--line);border-radius:8px;background:#fff">
+              ` : `
+                <p class="meta" style="margin-bottom:8px;color:var(--warn)">QR image unavailable — use the setup key below.</p>
+              `}
+              <details style="margin:8px 0">
+                <summary class="meta" style="cursor:pointer">Can't scan? Show the setup key</summary>
+                <code style="font-size:13px;background:#f3f5f1;padding:6px 10px;border-radius:4px;display:block;margin:10px 0;word-break:break-all">${esc(d.secret)}</code>
               </details>
-              <div class="field"><label>Enter the 6-digit code to confirm</label><input id="mfa-confirm-code" type="text" maxlength="6" inputmode="numeric" placeholder="000000"></div>
+              <div class="field" style="margin-top:14px">
+                <label>Enter the 6-digit code to confirm</label>
+                <input id="mfa-confirm-code" type="text" maxlength="6" inputmode="numeric" placeholder="000000">
+              </div>
               <button class="btn-primary" id="confirm-mfa-btn">Enable MFA</button>
             </div>`;
           document.getElementById('confirm-mfa-btn').onclick = async () => {
             const code = document.getElementById('mfa-confirm-code').value.trim();
+            const m2   = document.getElementById('mfa-msg');
+            m2.textContent = '';
             try {
               await api('/auth/mfa/enable',{method:'POST',body:{code}});
               toast('MFA enabled!');
-              const d2 = await api('/auth/me'); state.user=d2.user; renderProfile();
-            } catch(e) { document.getElementById('mfa-msg').textContent = e.message; }
+              const d2 = await api('/auth/me'); state.user = d2.user;
+              renderProfile(++renderSeq);
+            } catch(e) { m2.textContent = e.message; }
           };
-        } catch(e) { document.getElementById('mfa-msg').textContent = e.message; }
+        } catch(e) { msg.textContent = e.message; }
       };
     }
   }
 
-  function forbidden() { return `<div class="card card-inner meta">You don't have permission to view this section. Contact your Foundation Admin to request access.</div>`; }
+  function forbidden() { return `<div class="card card-inner meta">You don't have permission to view this section.</div>`; }
   function errBox(msg) { return `<div class="card card-inner" style="color:var(--danger)">${esc(msg)}</div>`; }
 
   (async () => {
