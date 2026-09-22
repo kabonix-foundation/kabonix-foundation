@@ -73,7 +73,7 @@ async function getAuthUser(req) {
 
 function publicUser(u) {
   return {
-    id: u.id, name: u.name, email: u.email,
+    id: u.id, name: u.name, email: u.email, phone: u.phone || null,
     emailVerified: !!u.email_verified_at,
     mfaEnabled:    !!u.mfa_enabled,
     pendingEmail:  u.pending_email || null,
@@ -108,6 +108,15 @@ function validateEmail(email) {
 function validatePassword(pw) {
   if (typeof pw !== 'string' || pw.length < 8) return 'Password must be at least 8 characters';
   if (pw.length > 128) return 'Password is too long';
+  return null;
+}
+
+function validatePhone(phone) {
+  // Loose — accepts +255…, 0…, spaces, dashes, parentheses.
+  // Rejects anything that's obviously not a phone number.
+  const s = String(phone || '').trim();
+  if (s.length < 6 || s.length > 32) return 'Please enter a valid phone number.';
+  if (!/^[+\d][\d\s\-()]+$/.test(s)) return 'Please enter a valid phone number.';
   return null;
 }
 
@@ -198,21 +207,32 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { ok: true, service: 'kabonix-api', db: 'postgres+postgis', time: new Date().toISOString() });
     }
 
-    // ── SMTP diagnostic ───────────────────────────────────────────────────────
-    // TEMPORARY — remove before production.
+    // ── GET /api/status — public, no auth ─────────────────────────────────────
+    // Returns the current service banner (if any). Both the public website and
+    // the staff portal fetch this on load to render a banner across the top.
+    if (parts[1] === 'status' && req.method === 'GET') {
+      try {
+        const { rows } = await pool.query(
+          "SELECT value, updated_at FROM system_config WHERE key = 'service_banner_message'"
+        );
+        const msg = (rows[0]?.value || '').trim();
+        return send(res, 200, {
+          banner: msg ? { message: msg, updatedAt: rows[0].updated_at } : null,
+        });
+      } catch {
+        return send(res, 200, { banner: null });
+      }
+    }
+
+    // ── SMTP diagnostic (temporary — remove before production) ────────────────
     //   GET /api/_mailtest                          → mailer status only
     //   GET /api/_mailtest?send=1&to=you@test.com   → attempts a real send
     if (parts[1] === '_mailtest' && req.method === 'GET') {
       const status = mailerStatus();
-
       const to = url.searchParams.get('to');
       if (url.searchParams.get('send') !== '1' || !to) {
-        return send(res, 200, {
-          status,
-          hint: 'Add ?send=1&to=your@email.com to attempt a real send.',
-        });
+        return send(res, 200, { status, hint: 'Add ?send=1&to=your@email.com to attempt a real send.' });
       }
-
       const result = await sendMail({
         to,
         subject: 'Kabonix SMTP test',
@@ -227,7 +247,7 @@ const server = http.createServer(async (req, res) => {
 
     // ── POST /api/auth/register ───────────────────────────────────────────────
     if (parts[1] === 'auth' && parts[2] === 'register' && req.method === 'POST') {
-      const { name = '', email = '', password = '' } = await readBody(req);
+      const { name = '', email = '', password = '', phone = '' } = await readBody(req);
 
       const cleanName = String(name).trim();
       if (!cleanName || cleanName.length > 120) {
@@ -236,8 +256,12 @@ const server = http.createServer(async (req, res) => {
       if (!validateEmail(email)) {
         return send(res, 400, { error: 'Please enter a valid email address.' });
       }
+      const phoneErr = validatePhone(phone);
+      if (phoneErr) return send(res, 400, { error: phoneErr });
       const pwErr = validatePassword(password);
       if (pwErr) return send(res, 400, { error: pwErr });
+
+      const cleanPhone = String(phone).trim();
 
       const existing = await pool.query(
         'SELECT id FROM users WHERE LOWER(email) = LOWER($1)',
@@ -249,9 +273,9 @@ const server = http.createServer(async (req, res) => {
 
       const { hash, salt } = hashPassword(password);
       const { rows } = await pool.query(
-        `INSERT INTO users (name, email, password_hash, password_salt, is_active, approval_status)
-         VALUES ($1, $2, $3, $4, FALSE, 'pending') RETURNING id`,
-        [cleanName, email.toLowerCase(), hash, salt]
+        `INSERT INTO users (name, email, password_hash, password_salt, phone, is_active, approval_status)
+         VALUES ($1, $2, $3, $4, $5, FALSE, 'pending') RETURNING id`,
+        [cleanName, email.toLowerCase(), hash, salt, cleanPhone]
       );
       const newId = rows[0].id;
 
@@ -265,7 +289,7 @@ const server = http.createServer(async (req, res) => {
       await sendMail({
         to: CONTACT_INBOX,
         subject: `New registration awaiting approval: ${cleanName}`,
-        bodyText: `${cleanName} <${email}> has registered on the Kabonix staff portal.\n\nThey have been sent a verification link. Once they verify their email, their account will appear in Staff & Users awaiting your approval.`,
+        bodyText: `${cleanName} <${email}> — ${cleanPhone}\n\nhas registered on the Kabonix staff portal.\n\nThey have been sent a verification link. Once they verify their email, their account will appear in Staff & Users awaiting your approval.`,
       });
 
       await logAction({
@@ -647,7 +671,7 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { ok: true, message: 'Password updated. Other sessions have been signed out.' });
     }
 
-    // ── POST /api/auth/email/change — request an email change ─────────────────
+    // ── POST /api/auth/email/change ───────────────────────────────────────────
     if (parts[1] === 'auth' && parts[2] === 'email' && parts[3] === 'change' && req.method === 'POST') {
       const { newEmail = '', currentPassword = '' } = await readBody(req);
       if (!validateEmail(newEmail)) return send(res, 400, { error: 'Please enter a valid email address.' });
@@ -678,7 +702,7 @@ const server = http.createServer(async (req, res) => {
       });
     }
 
-    // ── POST /api/auth/mfa/setup — generate secret + QR ───────────────────────
+    // ── POST /api/auth/mfa/setup ──────────────────────────────────────────────
     if (parts[1] === 'auth' && parts[2] === 'mfa' && parts[3] === 'setup' && req.method === 'POST') {
       const secret = generateBase32Secret();
       await pool.query('UPDATE users SET mfa_pending_secret = $1 WHERE id = $2', [secret, user.id]);
