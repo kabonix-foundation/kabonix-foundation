@@ -76,6 +76,7 @@ function publicUser(u) {
     id: u.id, name: u.name, email: u.email,
     emailVerified: !!u.email_verified_at,
     mfaEnabled:    !!u.mfa_enabled,
+    pendingEmail:  u.pending_email || null,
   };
 }
 
@@ -105,11 +106,26 @@ function validateEmail(email) {
 }
 
 function validatePassword(pw) {
-  if (typeof pw !== 'string' || pw.length < 8)
-    return 'Password must be at least 8 characters';
-  if (pw.length > 128)
-    return 'Password is too long';
+  if (typeof pw !== 'string' || pw.length < 8) return 'Password must be at least 8 characters';
+  if (pw.length > 128) return 'Password is too long';
   return null;
+}
+
+async function sendVerificationEmail(userId, toEmail, name, purpose) {
+  const token = generateOpaqueToken();
+  await pool.query(
+    'INSERT INTO email_verification_tokens (user_id, token_hash, expires_at, purpose) VALUES ($1,$2,$3,$4)',
+    [userId, hashOpaqueToken(token), newExpiry(VERIFY_TOKEN_TTL_MS), purpose]
+  );
+  const devLink = `${WEB_ORIGIN}/?verifyToken=${token}`;
+  const subject = purpose === 'email_change'
+    ? 'Confirm your new Kabonix email address'
+    : 'Verify your Kabonix email address';
+  const bodyText = purpose === 'email_change'
+    ? `Hello ${name},\n\nYou asked to change your Kabonix email address to this one.\nClick the link below to confirm the change.\nIf you did not request this, ignore this email — your address will not be changed.\n\nThis link expires in 24 hours.`
+    : `Hello ${name},\n\nThank you for registering with the Kabonix Foundation Digital Platform.\nPlease confirm your email address using the link below. After verifying, an administrator will review your account.\n\nThis link expires in 24 hours.`;
+  await sendMail({ to: toEmail, subject, bodyText, devLink });
+  return token;
 }
 
 // ── Data-quality helpers ──────────────────────────────────────────────────────
@@ -184,7 +200,9 @@ const server = http.createServer(async (req, res) => {
 
     if (parts[0] !== 'api') return send(res, 404, { error: 'Not found' });
 
-    // ── Public auth: register ─────────────────────────────────────────────────
+    // ═══ PUBLIC ROUTES ════════════════════════════════════════════════════════
+
+    // ── POST /api/auth/register ───────────────────────────────────────────────
     if (parts[1] === 'auth' && parts[2] === 'register' && req.method === 'POST') {
       const { name = '', email = '', password = '' } = await readBody(req);
 
@@ -199,7 +217,7 @@ const server = http.createServer(async (req, res) => {
       if (pwErr) return send(res, 400, { error: pwErr });
 
       const existing = await pool.query(
-        'SELECT id, approval_status FROM users WHERE LOWER(email) = LOWER($1)',
+        'SELECT id FROM users WHERE LOWER(email) = LOWER($1)',
         [email]
       );
       if (existing.rows[0]) {
@@ -219,25 +237,29 @@ const server = http.createServer(async (req, res) => {
         [newId]
       );
 
-      await logAction({
-        userId: newId, userEmail: email, action: 'register',
-        entity: 'user', entityId: newId,
-        detail: 'self-registration pending approval',
-      });
+      // Send the verification link to the new user.
+      await sendVerificationEmail(newId, email.toLowerCase(), cleanName, 'signup');
 
+      // Notify the admin inbox.
       await sendMail({
         to: CONTACT_INBOX,
         subject: `New registration awaiting approval: ${cleanName}`,
-        bodyText: `${cleanName} <${email}> has registered on the Kabonix staff portal and is awaiting approval.\n\nSign in to the portal to approve or reject the request.`,
+        bodyText: `${cleanName} <${email}> has registered on the Kabonix staff portal.\n\nThey have been sent a verification link. Once they verify their email, their account will appear in Staff & Users awaiting your approval.`,
+      });
+
+      await logAction({
+        userId: newId, userEmail: email, action: 'register',
+        entity: 'user', entityId: newId,
+        detail: 'self-registration pending approval + email verification',
       });
 
       return send(res, 201, {
         ok: true,
-        message: 'Registration submitted. An administrator will review your request.',
+        message: 'Registration submitted. Check your email for a verification link, then wait for administrator approval.',
       });
     }
 
-    // ── Public auth: login ────────────────────────────────────────────────────
+    // ── POST /api/auth/login ──────────────────────────────────────────────────
     if (parts[1] === 'auth' && parts[2] === 'login' && req.method === 'POST') {
       const { email = '', password = '' } = await readBody(req);
 
@@ -260,19 +282,40 @@ const server = http.createServer(async (req, res) => {
         return send(res, 401, badCreds);
       }
 
+      // Password is correct. Now check account state.
+
+      // 1. Email must be verified.
+      if (!user.email_verified_at) {
+        await logAction({ userId: user.id, userEmail: user.email, action: 'login_blocked', entity: 'user', entityId: user.id, detail: 'email not verified' });
+        return send(res, 403, {
+          error: 'Please verify your email address. Check your inbox for the verification link.',
+          code: 'email_not_verified',
+        });
+      }
+
+      // 2. Registration must be approved by an administrator.
       if (user.approval_status === 'pending') {
         await logAction({ userId: user.id, userEmail: user.email, action: 'login_blocked', entity: 'user', entityId: user.id, detail: 'awaiting approval' });
-        return send(res, 403, { error: 'Your account is awaiting administrator approval. You will be able to sign in once it has been reviewed.' });
+        return send(res, 403, {
+          error: 'Your account is awaiting administrator approval. You will be able to sign in once it has been reviewed.',
+          code: 'pending_approval',
+        });
       }
       if (user.approval_status === 'rejected') {
         await logAction({ userId: user.id, userEmail: user.email, action: 'login_blocked', entity: 'user', entityId: user.id, detail: 'registration rejected' });
-        return send(res, 403, { error: 'Your registration was not approved. Contact a Foundation administrator for more information.' });
+        return send(res, 403, {
+          error: 'Your registration was not approved. Contact a Foundation administrator for more information.',
+          code: 'rejected',
+        });
       }
+
+      // 3. Account must be active.
       if (!user.is_active) {
         await logAction({ userId: user.id, userEmail: user.email, action: 'login_failed', entity: 'user', entityId: user.id, detail: 'account inactive' });
         return send(res, 401, { error: 'Your account has been deactivated. Contact a Foundation administrator.' });
       }
 
+      // 4. If MFA is enabled, issue a challenge instead of tokens.
       if (user.mfa_enabled) {
         const challengeToken = generateOpaqueToken();
         await pool.query(
@@ -293,7 +336,7 @@ const server = http.createServer(async (req, res) => {
       });
     }
 
-    // ── Public auth: MFA challenge ────────────────────────────────────────────
+    // ── POST /api/auth/mfa/challenge ──────────────────────────────────────────
     if (parts[1] === 'auth' && parts[2] === 'mfa' && parts[3] === 'challenge' && req.method === 'POST') {
       const { challengeToken = '', code = '' } = await readBody(req);
       const { rows } = await pool.query(
@@ -301,9 +344,7 @@ const server = http.createServer(async (req, res) => {
         [hashOpaqueToken(challengeToken)]
       );
       const challenge = rows[0];
-      if (!challenge) {
-        return send(res, 401, { error: 'Challenge expired or invalid. Please sign in again.' });
-      }
+      if (!challenge) return send(res, 401, { error: 'Challenge expired or invalid. Please sign in again.' });
 
       const { rows: uRows } = await pool.query('SELECT * FROM users WHERE id = $1', [challenge.user_id]);
       const user = uRows[0];
@@ -324,7 +365,7 @@ const server = http.createServer(async (req, res) => {
       });
     }
 
-    // ── Public auth: refresh ──────────────────────────────────────────────────
+    // ── POST /api/auth/refresh ────────────────────────────────────────────────
     if (parts[1] === 'auth' && parts[2] === 'refresh' && req.method === 'POST') {
       const { refreshToken = '' } = await readBody(req);
       const { rows } = await pool.query('SELECT * FROM refresh_tokens WHERE token_hash = $1', [hashOpaqueToken(refreshToken)]);
@@ -342,7 +383,7 @@ const server = http.createServer(async (req, res) => {
       await pool.query('UPDATE refresh_tokens SET revoked_at = now() WHERE id = $1', [stored.id]);
       const { rows: uRows } = await pool.query('SELECT * FROM users WHERE id = $1', [stored.user_id]);
       const user = uRows[0];
-      if (!user || !user.is_active || user.approval_status !== 'approved') {
+      if (!user || !user.is_active || user.approval_status !== 'approved' || !user.email_verified_at) {
         return send(res, 401, { error: 'Account is no longer active' });
       }
 
@@ -351,7 +392,7 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { accessToken, refreshToken: newRT });
     }
 
-    // ── Public auth: logout ───────────────────────────────────────────────────
+    // ── POST /api/auth/logout ─────────────────────────────────────────────────
     if (parts[1] === 'auth' && parts[2] === 'logout' && req.method === 'POST') {
       const { refreshToken = '' } = await readBody(req);
       const { rows } = await pool.query(
@@ -365,7 +406,7 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { ok: true });
     }
 
-    // ── Public auth: forgot password ──────────────────────────────────────────
+    // ── POST /api/auth/password/forgot ────────────────────────────────────────
     if (parts[1] === 'auth' && parts[2] === 'password' && parts[3] === 'forgot' && req.method === 'POST') {
       const { email = '' } = await readBody(req);
       const { rows } = await pool.query('SELECT * FROM users WHERE LOWER(email) = LOWER($1) AND is_active = TRUE', [email]);
@@ -388,7 +429,7 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { ok: true, message: 'If that email exists in our system, a reset link has been sent.' });
     }
 
-    // ── Public auth: reset password ───────────────────────────────────────────
+    // ── POST /api/auth/password/reset ─────────────────────────────────────────
     if (parts[1] === 'auth' && parts[2] === 'password' && parts[3] === 'reset' && req.method === 'POST') {
       const { token = '', newPassword = '' } = await readBody(req);
 
@@ -411,7 +452,9 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { ok: true });
     }
 
-    // ── Public auth: verify email ─────────────────────────────────────────────
+    // ── POST /api/auth/email/verify ───────────────────────────────────────────
+    // Handles both signup verification and email-change confirmation. The
+    // token's `purpose` column tells us which.
     if (parts[1] === 'auth' && parts[2] === 'email' && parts[3] === 'verify' && req.method === 'POST') {
       const { token = '' } = await readBody(req);
       const { rows } = await pool.query(
@@ -420,14 +463,60 @@ const server = http.createServer(async (req, res) => {
       );
       const v = rows[0];
       if (!v) return send(res, 400, { error: 'This verification link is invalid or has expired. Please request a new one.' });
-      await pool.query('UPDATE users SET email_verified_at = now() WHERE id = $1', [v.user_id]);
+
+      const { rows: uRows } = await pool.query('SELECT * FROM users WHERE id = $1', [v.user_id]);
+      const target = uRows[0];
+      if (!target) return send(res, 400, { error: 'The account for this link no longer exists.' });
+
+      if (v.purpose === 'email_change') {
+        if (!target.pending_email) {
+          return send(res, 400, { error: 'This change request is no longer valid. Please start the email change again.' });
+        }
+        const taken = await pool.query(
+          'SELECT id FROM users WHERE LOWER(email) = LOWER($1) AND id != $2',
+          [target.pending_email, target.id]
+        );
+        if (taken.rows[0]) {
+          return send(res, 409, { error: 'That email address is now in use by another account. Please choose a different address.' });
+        }
+        await pool.query(
+          'UPDATE users SET email = $1, pending_email = NULL, email_verified_at = now() WHERE id = $2',
+          [target.pending_email, target.id]
+        );
+        await pool.query('UPDATE email_verification_tokens SET used_at = now() WHERE id = $1', [v.id]);
+        await logAction({ userId: target.id, userEmail: target.pending_email, action: 'email_changed', entity: 'user', entityId: target.id, detail: `from ${target.email}` });
+        return send(res, 200, { ok: true, message: 'Your email address has been updated.' });
+      }
+
+      // Default: signup verification.
+      await pool.query('UPDATE users SET email_verified_at = now() WHERE id = $1', [target.id]);
       await pool.query('UPDATE email_verification_tokens SET used_at = now() WHERE id = $1', [v.id]);
-      const { rows: u } = await pool.query('SELECT email FROM users WHERE id = $1', [v.user_id]);
-      await logAction({ userId: v.user_id, userEmail: u[0]?.email, action: 'email_verified', entity: 'user', entityId: v.user_id });
-      return send(res, 200, { ok: true });
+      await logAction({ userId: target.id, userEmail: target.email, action: 'email_verified', entity: 'user', entityId: target.id });
+      return send(res, 200, { ok: true, message: 'Your email has been verified.' });
     }
 
-    // ── Public website content ────────────────────────────────────────────────
+    // ── POST /api/auth/email/resend (public) ──────────────────────────────────
+    // Always returns success to avoid leaking whether an account exists.
+    if (parts[1] === 'auth' && parts[2] === 'email' && parts[3] === 'resend' && req.method === 'POST') {
+      const { email = '' } = await readBody(req);
+      if (!validateEmail(email)) {
+        return send(res, 400, { error: 'Please provide a valid email address.' });
+      }
+      const { rows } = await pool.query(
+        'SELECT id, name, email, email_verified_at FROM users WHERE LOWER(email) = LOWER($1)',
+        [email]
+      );
+      const target = rows[0];
+      if (target && !target.email_verified_at) {
+        await sendVerificationEmail(target.id, target.email, target.name, 'signup');
+      }
+      return send(res, 200, {
+        ok: true,
+        message: 'If an unverified account exists for that address, a new link has been sent.',
+      });
+    }
+
+    // ═══ PUBLIC WEBSITE CONTENT ═══════════════════════════════════════════════
     const lang = url.searchParams.get('lang') === 'sw' ? 'sw' : 'en';
 
     if (parts[1] === 'website') {
@@ -481,12 +570,9 @@ const server = http.createServer(async (req, res) => {
         if (!full_name || !email || !subject || !message) {
           return send(res, 400, { error: 'full_name, email, subject and message are required' });
         }
-        if (!validateEmail(email)) {
-          return send(res, 400, { error: 'Please provide a valid email address' });
-        }
-        if (message.length > 4000) {
-          return send(res, 400, { error: 'Message is too long (max 4000 characters)' });
-        }
+        if (!validateEmail(email)) return send(res, 400, { error: 'Please provide a valid email address' });
+        if (message.length > 4000) return send(res, 400, { error: 'Message is too long (max 4000 characters)' });
+
         const { rows } = await pool.query(
           'INSERT INTO contact_messages (full_name,email,organisation,subject,message,lang) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id',
           [full_name, email, organisation || null, subject, message, msgLang]
@@ -504,11 +590,11 @@ const server = http.createServer(async (req, res) => {
       return send(res, 404, { error: 'Not found' });
     }
 
-    // ── AUTH WALL ─────────────────────────────────────────────────────────────
+    // ═══ AUTH WALL ════════════════════════════════════════════════════════════
     const user = await getAuthUser(req);
     if (!user) return send(res, 401, { error: 'Not authenticated. Please sign in.' });
 
-    // ── Authenticated auth routes ─────────────────────────────────────────────
+    // ── GET /api/auth/me ──────────────────────────────────────────────────────
     if (parts[1] === 'auth' && parts[2] === 'me' && req.method === 'GET') {
       return send(res, 200, {
         user:        publicUser(user),
@@ -517,25 +603,90 @@ const server = http.createServer(async (req, res) => {
       });
     }
 
-    if (parts[1] === 'auth' && parts[2] === 'email' && parts[3] === 'resend' && req.method === 'POST') {
-      if (user.email_verified_at) {
-        return send(res, 400, { error: 'Your email address is already verified.' });
+    // ── PUT /api/auth/profile — update display name ───────────────────────────
+    if (parts[1] === 'auth' && parts[2] === 'profile' && req.method === 'PUT') {
+      const { name = '' } = await readBody(req);
+      const cleanName = String(name).trim();
+      if (!cleanName || cleanName.length > 120) {
+        return send(res, 400, { error: 'Please enter a name between 1 and 120 characters.' });
       }
-      const token = generateOpaqueToken();
-      await pool.query(
-        'INSERT INTO email_verification_tokens (user_id, token_hash, expires_at) VALUES ($1,$2,$3)',
-        [user.id, hashOpaqueToken(token), newExpiry(VERIFY_TOKEN_TTL_MS)]
-      );
-      await sendMail({ to: user.email, subject: 'Verify your Kabonix email address',
-        bodyText: `Hello ${user.name},\n\nPlease confirm your email address using the link below.\nThis link expires in 24 hours.`,
-        devLink: `${WEB_ORIGIN}/?verifyToken=${token}` });
-      return send(res, 200, { ok: true });
+      await pool.query('UPDATE users SET name = $1 WHERE id = $2', [cleanName, user.id]);
+      await logAction({ userId: user.id, userEmail: user.email, action: 'edit', entity: 'user', entityId: user.id, detail: 'profile name updated' });
+      const { rows: fresh } = await pool.query('SELECT * FROM users WHERE id = $1', [user.id]);
+      return send(res, 200, { user: publicUser(fresh[0]) });
     }
 
+    // ── PUT /api/auth/password — change password (requires current) ───────────
+    if (parts[1] === 'auth' && parts[2] === 'password' && req.method === 'PUT') {
+      const { currentPassword = '', newPassword = '' } = await readBody(req);
+      const pwErr = validatePassword(newPassword);
+      if (pwErr) return send(res, 400, { error: pwErr });
+
+      const { rows } = await pool.query('SELECT * FROM users WHERE id = $1', [user.id]);
+      const fresh = rows[0];
+      if (!verifyPassword(currentPassword, fresh.password_salt, fresh.password_hash)) {
+        await logAction({ userId: user.id, userEmail: user.email, action: 'password_change_failed', entity: 'user', entityId: user.id, detail: 'wrong current password' });
+        return send(res, 400, { error: 'Current password is incorrect.' });
+      }
+
+      const { hash, salt } = hashPassword(newPassword);
+      await pool.query('UPDATE users SET password_hash = $1, password_salt = $2 WHERE id = $3', [hash, salt, user.id]);
+      // Invalidate every other session. The user will need to sign back in on
+      // any device except (potentially) this one, which is the point.
+      await pool.query('UPDATE refresh_tokens SET revoked_at = now() WHERE user_id = $1 AND revoked_at IS NULL', [user.id]);
+      await logAction({ userId: user.id, userEmail: user.email, action: 'edit', entity: 'user', entityId: user.id, detail: 'password changed' });
+      return send(res, 200, { ok: true, message: 'Password updated. Other sessions have been signed out.' });
+    }
+
+    // ── POST /api/auth/email/change — request an email change ─────────────────
+    if (parts[1] === 'auth' && parts[2] === 'email' && parts[3] === 'change' && req.method === 'POST') {
+      const { newEmail = '', currentPassword = '' } = await readBody(req);
+      if (!validateEmail(newEmail)) return send(res, 400, { error: 'Please enter a valid email address.' });
+
+      const target = newEmail.toLowerCase();
+      if (target === user.email.toLowerCase()) {
+        return send(res, 400, { error: 'That is already your current email address.' });
+      }
+
+      const { rows } = await pool.query('SELECT * FROM users WHERE id = $1', [user.id]);
+      if (!verifyPassword(currentPassword, rows[0].password_salt, rows[0].password_hash)) {
+        return send(res, 400, { error: 'Current password is incorrect.' });
+      }
+
+      const taken = await pool.query(
+        'SELECT id FROM users WHERE LOWER(email) = LOWER($1) AND id != $2',
+        [target, user.id]
+      );
+      if (taken.rows[0]) return send(res, 409, { error: 'That email address is already in use by another account.' });
+
+      await pool.query('UPDATE users SET pending_email = $1 WHERE id = $2', [target, user.id]);
+      await sendVerificationEmail(user.id, target, user.name, 'email_change');
+      await logAction({ userId: user.id, userEmail: user.email, action: 'email_change_requested', entity: 'user', entityId: user.id, detail: `→ ${target}` });
+
+      return send(res, 200, {
+        ok: true,
+        message: `Verification link sent to ${target}. Click it to complete the change. Your current email stays active until then.`,
+      });
+    }
+
+    // ── POST /api/auth/mfa/setup — generate secret + QR ───────────────────────
     if (parts[1] === 'auth' && parts[2] === 'mfa' && parts[3] === 'setup' && req.method === 'POST') {
       const secret = generateBase32Secret();
       await pool.query('UPDATE users SET mfa_pending_secret = $1 WHERE id = $2', [secret, user.id]);
-      return send(res, 200, { secret, otpauthUri: otpauthUri({ secret, accountEmail: user.email }) });
+      const uri = otpauthUri({ secret, accountEmail: user.email });
+
+      // Server-side QR generation keeps the TOTP secret away from any
+      // third-party image service. Falls back gracefully if the `qrcode`
+      // package isn't installed — the frontend can still show the setup key.
+      let qrDataUrl = null;
+      try {
+        const QRCode = (await import('qrcode')).default;
+        qrDataUrl = await QRCode.toDataURL(uri, { margin: 1, width: 220, errorCorrectionLevel: 'M' });
+      } catch (err) {
+        console.warn('[mfa] qrcode package unavailable — serving text-only setup:', err.message);
+      }
+
+      return send(res, 200, { secret, otpauthUri: uri, qrDataUrl });
     }
 
     if (parts[1] === 'auth' && parts[2] === 'mfa' && parts[3] === 'enable' && req.method === 'POST') {
@@ -567,7 +718,7 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { ok: true });
     }
 
-    // ── Admin & governance ────────────────────────────────────────────────────
+    // ═══ ADMIN & GOVERNANCE ═══════════════════════════════════════════════════
     if (parts[1] === 'admin') {
       const body = (req.method !== 'GET') ? await readBody(req) : {};
       const result = await handleAdminRoute({ parts, method: req.method, body, user, url, res, send, checkPermission: checkPerm, can });
@@ -610,7 +761,7 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, rows);
     }
 
-    // ── M&E forms & submissions ───────────────────────────────────────────────
+    // ═══ M&E FORMS & SUBMISSIONS ══════════════════════════════════════════════
     if (parts[1] === 'forms' && req.method === 'GET') {
       const denied = await checkPerm(user, 'data_collection', 'view');
       if (denied) return send(res, denied.status, denied.body);
@@ -684,9 +835,7 @@ const server = http.createServer(async (req, res) => {
         if (!forceNew) {
           const { rows: dupes } = await pool.query(
             `SELECT id, full_name, village, programme, created_at
-               FROM beneficiaries
-              WHERE de_dup_hash = $1
-              ORDER BY id DESC LIMIT 1`,
+               FROM beneficiaries WHERE de_dup_hash = $1 ORDER BY id DESC LIMIT 1`,
             [dupHash]
           );
           if (dupes[0]) {
@@ -724,8 +873,7 @@ const server = http.createServer(async (req, res) => {
       if (answers.village) {
         await pool.query(
           `INSERT INTO sites (name, name_normalised, type, created_by)
-           VALUES ($1, $2, 'village', $3)
-           ON CONFLICT DO NOTHING`,
+           VALUES ($1, $2, 'village', $3) ON CONFLICT DO NOTHING`,
           [answers.village, normaliseName(answers.village), user.id]
         );
       }
@@ -845,7 +993,7 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, rows);
     }
 
-    // ── Audit log ─────────────────────────────────────────────────────────────
+    // ═══ AUDIT LOG ════════════════════════════════════════════════════════════
     if (parts[1] === 'audit-log' && req.method === 'GET') {
       const isAdmin = await can(user.id, 'admin', 'view');
       const isMeal  = await can(user.id, 'data_collection', 'approve');
