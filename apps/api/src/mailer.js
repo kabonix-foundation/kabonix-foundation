@@ -1,33 +1,63 @@
-// mailer.js — Sends email via the Resend HTTP API.
-// SMTP is not used because free hosting providers like Render block
-// outbound traffic on standard SMTP ports (25, 465, 587).
+// mailer.js — real SMTP delivery with a dev-mode fallback.
+//
+// Configured by default for the Foundation's Gmail account. Set SMTP_PASS
+// to a 16-character Google App Password and email delivery works — everything
+// else has a sensible default.
+//
+// ⚠️  WARNING: Render's free web services block outbound SMTP ports
+//     (25, 465, 587). This mailer will work locally and on paid Render
+//     instances, but on Render free tier every send will time out.
+//
+// Required:
+//   SMTP_PASS        16-character Google App Password
+//
+// Optional (defaults shown):
+//   SMTP_HOST        smtp.gmail.com
+//   SMTP_PORT        587              (STARTTLS; use 465 for implicit TLS)
+//   SMTP_SECURE      false            (auto-true when port is 465)
+//   SMTP_USER        Kabonixfoundation@gmail.com
+//   MAIL_FROM        Kabonix Foundation <Kabonixfoundation@gmail.com>
+//   MAIL_REPLY_TO    Kabonixfoundation@gmail.com
+//   ORG_NAME         Kabonix Foundation
 
-import { Resend } from 'resend';
+const SMTP_HOST     = process.env.SMTP_HOST || (process.env.SMTP_PASS ? 'smtp.gmail.com' : '');
+const SMTP_PORT     = Number(process.env.SMTP_PORT || 587);
+const SMTP_SECURE   = process.env.SMTP_SECURE === 'true' || SMTP_PORT === 465;
+const SMTP_USER     = process.env.SMTP_USER || 'Kabonixfoundation@gmail.com';
+const SMTP_PASS     = process.env.SMTP_PASS || '';
+const MAIL_FROM     = process.env.MAIL_FROM     || 'Kabonix Foundation <Kabonixfoundation@gmail.com>';
+const MAIL_REPLY_TO = process.env.MAIL_REPLY_TO || 'Kabonixfoundation@gmail.com';
+const ORG_NAME      = process.env.ORG_NAME      || 'Kabonix Foundation';
 
-// ── Configuration ─────────────────────────────────────────────────────────
-const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
-const MAIL_FROM = process.env.MAIL_FROM || 'Kabonix Foundation <onboarding@resend.dev>';
-const ORG_NAME = process.env.ORG_NAME || 'Kabonix Foundation';
+const isConfigured = !!SMTP_HOST && !!SMTP_PASS;
 
-// Check if the API key is configured
-const isConfigured = !!RESEND_API_KEY;
-
-let resend = null;
+let transporter = null;
 if (isConfigured) {
-  resend = new Resend(RESEND_API_KEY);
-  console.log(`[mailer] Resend API configured. Sending from: ${MAIL_FROM}`);
-} else {
-  console.log('[mailer] RESEND_API_KEY not set — emails will be logged, not sent.');
-  console.log('[mailer] Get a key at https://resend.com/api-keys and set the RESEND_API_KEY env var.');
+  try {
+    const nodemailer = (await import('nodemailer')).default;
+    transporter = nodemailer.createTransport({
+      host: SMTP_HOST,
+      port: SMTP_PORT,
+      secure: SMTP_SECURE,
+      auth: SMTP_USER ? { user: SMTP_USER, pass: SMTP_PASS } : undefined,
+      connectionTimeout: 10_000,
+      greetingTimeout:    8_000,
+      socketTimeout:     15_000,
+    });
+    console.log(`[mailer] SMTP configured → ${SMTP_HOST}:${SMTP_PORT}${SMTP_SECURE ? ' (TLS)' : ''} as ${SMTP_USER}`);
+  } catch (err) {
+    console.error('[mailer] SMTP is configured but nodemailer is not installed.');
+    console.error('[mailer] Run:  npm install nodemailer');
+    console.error('[mailer] Falling back to dev mode (no email will be sent).');
+  }
+} else if (!SMTP_PASS) {
+  console.log('[mailer] SMTP_PASS not set — running in dev mode (emails are logged, not sent).');
 }
 
-
-// ── Helpers (unchanged) ───────────────────────────────────────────────────
 function escapeHtml(s) {
   return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
-/** Turn a plain-text body into a minimal, brand-consistent HTML email. */
 function buildHtml({ subject, bodyText, devLink, ctaLabel }) {
   const paragraphs = String(bodyText || '')
     .split(/\n{2,}/)
@@ -70,23 +100,15 @@ function buildHtml({ subject, bodyText, devLink, ctaLabel }) {
 </body></html>`;
 }
 
-
-// ── Main send function ─────────────────────────────────────────────────────
-/**
- * Sends an email using the Resend API. Never throws: if delivery fails,
- * the caller's request should still succeed. Callers can inspect the
- * returned object if they need to report failures.
- *
- * @returns {{ ok: boolean, dev?: boolean, messageId?: string, error?: string }}
- */
 export async function sendMail({ to, cc, bcc, subject, bodyText, bodyHtml, devLink, ctaLabel, replyTo }) {
   const text = devLink ? `${bodyText}\n\n${devLink}` : bodyText;
   const html = bodyHtml || buildHtml({ subject, bodyText, devLink, ctaLabel });
 
-  // Dev mode: just log to console if not configured
-  if (!resend) {
+  if (!transporter) {
     console.log('\n----- [DEV MAILER] would send email -----');
     console.log(`To:      ${to}`);
+    if (cc)  console.log(`Cc:      ${cc}`);
+    if (bcc) console.log(`Bcc:     ${bcc}`);
     console.log(`Subject: ${subject}`);
     console.log('---');
     console.log(bodyText);
@@ -96,37 +118,30 @@ export async function sendMail({ to, cc, bcc, subject, bodyText, bodyHtml, devLi
   }
 
   try {
-    const { data, error } = await resend.emails.send({
+    const info = await transporter.sendMail({
       from: MAIL_FROM,
-      to: Array.isArray(to) ? to : [to],
-      cc: cc ? (Array.isArray(cc) ? cc : [cc]) : undefined,
-      bcc: bcc ? (Array.isArray(bcc) ? bcc : [bcc]) : undefined,
-      replyTo: replyTo || undefined,
-      subject: subject,
-      text: text,
-      html: html,
+      to, cc, bcc,
+      replyTo: replyTo || MAIL_REPLY_TO || undefined,
+      subject, text, html,
     });
-
-    if (error) {
-      console.error(`[mailer] FAILED "${subject}" → ${to}: ${error.message}`);
-      return { ok: false, error: error.message };
-    }
-
-    console.log(`[mailer] sent "${subject}" → ${to} (${data.id})`);
-    return { ok: true, messageId: data.id };
-
+    console.log(`[mailer] sent "${subject}" → ${to} (${info.messageId})`);
+    return { ok: true, messageId: info.messageId };
   } catch (err) {
     console.error(`[mailer] FAILED "${subject}" → ${to}: ${err.message}`);
     return { ok: false, error: err.message };
   }
 }
 
-/** Used by the test script and a future /health extension. */
 export function mailerStatus() {
   return {
-    configured: !!resend,
-    provider: 'resend',
+    configured: isConfigured && !!transporter,
+    provider:   'smtp',
+    host: isConfigured && transporter ? `${SMTP_HOST}:${SMTP_PORT}${SMTP_SECURE ? ' (TLS)' : ''}` : null,
+    user: isConfigured && transporter ? SMTP_USER : null,
     from: MAIL_FROM,
-    reason: !RESEND_API_KEY ? 'RESEND_API_KEY not set' : null,
+    reason: !SMTP_PASS   ? 'SMTP_PASS not set'
+          : !SMTP_HOST   ? 'SMTP_HOST not set'
+          : !transporter ? 'nodemailer not installed'
+          : null,
   };
 }
