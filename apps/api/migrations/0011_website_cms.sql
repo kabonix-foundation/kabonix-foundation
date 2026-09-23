@@ -1,4 +1,4 @@
-0011_website_cms.sql-- 0011_website_cms.sql
+-- 0011_website_cms.sql
 --
 -- Adds image_url to posts and impact_stories so the CMS can attach a photo
 -- to each item. Partners already have logo_url from migration 0001.
