@@ -1,15 +1,12 @@
 {
-  "name": "@kabonix/api",
+  "name": "kabonix-platform",
   "version": "1.0.0",
-  "description": "Kabonix Foundation API",
-  "type": "module",
-  "engines": { "node": ">=18" },
-  "scripts": {
-    "start": "node src/server.js"
-  },
-  "dependencies": {
-    "nodemailer": "^6.9.7",
-    "pg": "^8.11.3",
-    "qrcode": "^1.5.3"
-  }
+  "description": "Kabonix Foundation Digital Ecosystem Platform — monorepo",
+  "private": true,
+  "workspaces": [
+    "apps/api",
+    "apps/web",
+    "apps/website"
+  ],
+  "engines": { "node": ">=18" }
 }
