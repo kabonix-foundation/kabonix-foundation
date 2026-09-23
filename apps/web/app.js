@@ -38,8 +38,8 @@
     prefillEmail: null,
     regSuccess: null,
     emailNeedsVerification: false,
-    websiteTab: 'posts',   // posts | impact-stories | partners
-    websiteEditing: null,  // { kind, id, item } | null
+    websiteTab: 'posts',
+    websiteEditing: null,
   };
 
   window.state = state;
@@ -124,7 +124,6 @@
     return [];
   }
 
-  // ── Service banner ────────────────────────────────────────────────────────
   async function fetchAndShowBanner() {
     try {
       const res = await fetch(API + '/status');
@@ -148,7 +147,6 @@
     } catch { /* silent */ }
   }
 
-  // ── URL token handler ─────────────────────────────────────────────────────
   async function handleUrlTokens() {
     const params = new URLSearchParams(location.search);
     const resetToken  = params.get('resetToken');
@@ -218,7 +216,6 @@
     return true;
   }
 
-  // ── Session ───────────────────────────────────────────────────────────────
   async function tryRestoreSession() {
     if (!state.token) return render();
     root.innerHTML = `
@@ -1310,7 +1307,6 @@
              description_en: '', description_sw: '', display_order: 0, is_active: true };
   }
 
-  // ── Translate helper (used by posts + stories + partners) ─────────────
   async function doTranslate() {
     const btn = document.getElementById('ws-translate-btn');
     const msg = document.getElementById('ws-translate-msg');
@@ -1356,7 +1352,6 @@
     }
   }
 
-  // ── Editor form ──
   function renderWebsiteEditor() {
     const { kind, id, item } = state.websiteEditing;
     const isNew = !id;
@@ -1364,14 +1359,13 @@
       ? `New ${kind === 'posts' ? 'post' : kind === 'impact-stories' ? 'impact story' : 'partner'}`
       : `Editing ${kind === 'posts' ? 'post' : kind === 'impact-stories' ? 'story' : 'partner'} #${id}`;
 
-    // Ensure image_urls is always an array on the item
     if (kind !== 'partners' && !Array.isArray(item.image_urls)) {
       item.image_urls = item.image_url ? [item.image_url] : [];
     }
 
     const imageGalleryField = kind === 'partners' ? renderPartnerLogoField(item) : renderImageGalleryField(item);
 
-    const translateRow = (can('website','create') && kind !== 'partners' || (kind === 'partners' && can('website','create'))) ? `
+    const translateRow = can('website','create') ? `
       <div class="website-translate-row">
         <button type="button" class="btn-sm" id="ws-translate-btn">🌐 Translate English → Swahili</button>
         <span class="meta">Fills the Swahili fields from the English ones. Review before saving.</span>
@@ -1464,12 +1458,12 @@
     return `
       <div class="field website-image-field">
         <label>Images</label>
-        <p class="meta" style="margin-bottom:8px">Add up to 12 photos. The first one becomes the card cover. On the public site, the card shows them as a slideshow.</p>
+        <p class="meta" style="margin-bottom:8px">Add up to 12 photos. The first becomes the cover. You can select multiple files at once.</p>
         <div id="ws-img-grid" class="website-image-gallery">
           ${renderImageSlots(urls)}
         </div>
         <div class="website-image-add-row">
-          <input type="file" id="ws-img-file" class="website-image-file"
+          <input type="file" id="ws-img-file" class="website-image-file" multiple
                  accept="image/jpeg,image/png,image/webp,image/gif">
         </div>
         <div class="website-image-add-row">
@@ -1518,7 +1512,6 @@
   }
 
   function wireWebsiteHandlers(seq) {
-    // ── Edit / delete on list rows ──
     document.querySelectorAll('[data-ws-edit]').forEach(btn => btn.onclick = () => {
       const rowKind = btn.dataset.wsKind;
       const rowId   = Number(btn.dataset.wsEdit);
@@ -1551,7 +1544,6 @@
       } catch (e) { toast(e.message, true); }
     });
 
-    // ── Editor handlers ──
     if (!state.websiteEditing) return;
     const { kind } = state.websiteEditing;
 
@@ -1587,7 +1579,6 @@
       });
     };
 
-    // Wire any existing remove buttons
     document.querySelectorAll('#ws-img-grid [data-img-remove]').forEach(b => {
       b.onclick = () => {
         const idx = Number(b.dataset.imgRemove);
@@ -1596,47 +1587,100 @@
       };
     });
 
-    // File upload — adds to the array on success
+    // ── File upload — supports multiple files, uploads in parallel ──
     if (fileInput) fileInput.onchange = async () => {
-      const file = fileInput.files?.[0];
-      if (!file) return;
-      if (!/^image\//.test(file.type)) {
-        return setStatus('Only image files are supported.', true);
-      }
-      if (file.size > 5 * 1024 * 1024) {
-        return setStatus('Image is larger than 5 MB.', true);
-      }
-      const urls = state.websiteEditing.item.image_urls || (state.websiteEditing.item.image_urls = []);
-      if (kind !== 'partners' && urls.length >= 12) {
-        return setStatus('Maximum 12 images per item.', true);
-      }
-      setStatus('Uploading…');
-      try {
-        const { uploadUrl, publicUrl } = await api('/admin/upload-url', {
-          method: 'POST',
-          body: { fileType: file.type },
-        });
-        const res = await fetch(uploadUrl, {
-          method: 'PUT',
-          headers: { 'Content-Type': file.type },
-          body: file,
-        });
-        if (!res.ok) throw new Error(`Upload failed (${res.status})`);
-        if (kind === 'partners') {
+      const files = Array.from(fileInput.files || []);
+      if (!files.length) return;
+
+      if (kind === 'partners') {
+        // Partner logos only ever have one image.
+        const file = files[0];
+        if (!/^image\//.test(file.type)) return setStatus('Only image files are supported.', true);
+        if (file.size > 5 * 1024 * 1024) return setStatus('Logo is larger than 5 MB.', true);
+        setStatus('Uploading…');
+        try {
+          const { uploadUrl, publicUrl } = await api('/admin/upload-url', {
+            method: 'POST',
+            body: { fileType: file.type },
+          });
+          const res = await fetch(uploadUrl, {
+            method: 'PUT',
+            headers: { 'Content-Type': file.type },
+            body: file,
+          });
+          if (!res.ok) throw new Error(`Upload failed (${res.status})`);
           state.websiteEditing.item.logo_url = publicUrl;
           setStatus('<span style="color:var(--ok)">✅ Logo uploaded.</span>');
-        } else {
-          urls.push(publicUrl);
-          refreshGrid();
-          setStatus(`<span style="color:var(--ok)">✅ Uploaded. ${urls.length} image${urls.length === 1 ? '' : 's'} total.</span>`);
+          renderWebsite(++renderSeq);
+        } catch (e) {
+          setStatus(`${esc(e.message)} — you can paste a URL instead.`, true);
         }
         fileInput.value = '';
-      } catch (e) {
-        setStatus(`${esc(e.message)} — you can paste an image URL instead.`, true);
+        return;
       }
+
+      // Posts & stories — multiple images.
+      const urls = state.websiteEditing.item.image_urls || (state.websiteEditing.item.image_urls = []);
+      const remaining = 12 - urls.length;
+      if (remaining <= 0) {
+        return setStatus('Maximum 12 images per item. Remove some before adding more.', true);
+      }
+
+      // Pre-validate: reject non-images and oversized files with a named reason.
+      const valid = [];
+      const rejected = [];
+      for (const f of files) {
+        if (!/^image\//.test(f.type)) { rejected.push(`${f.name}: not an image`); continue; }
+        if (f.size > 5 * 1024 * 1024) { rejected.push(`${f.name}: over 5 MB`); continue; }
+        valid.push(f);
+      }
+
+      const toUpload = valid.slice(0, remaining);
+      if (valid.length > remaining) {
+        rejected.push(`${valid.length - remaining} file(s) skipped (limit reached)`);
+      }
+      if (!toUpload.length) {
+        return setStatus(rejected.join('; ') || 'No valid files to upload.', true);
+      }
+
+      setStatus(`Uploading ${toUpload.length} file${toUpload.length === 1 ? '' : 's'}…`);
+      const startCount = urls.length;
+
+      // Upload in parallel — each file gets its own pre-signed URL.
+      let uploaded = 0;
+      await Promise.all(toUpload.map(async file => {
+        try {
+          const { uploadUrl, publicUrl } = await api('/admin/upload-url', {
+            method: 'POST',
+            body: { fileType: file.type },
+          });
+          const res = await fetch(uploadUrl, {
+            method: 'PUT',
+            headers: { 'Content-Type': file.type },
+            body: file,
+          });
+          if (!res.ok) throw new Error(`Upload failed (${res.status})`);
+          urls.push(publicUrl);
+          uploaded++;
+        } catch (err) {
+          rejected.push(`${file.name}: ${err.message}`);
+        }
+      }));
+
+      fileInput.value = '';
+      refreshGrid();
+
+      const total = urls.length;
+      if (uploaded && !rejected.length) {
+        setStatus(`<span style="color:var(--ok)">✅ ${uploaded} uploaded. ${total} image${total === 1 ? '' : 's'} total.</span>`);
+      } else if (uploaded && rejected.length) {
+        setStatus(`${uploaded} uploaded, ${rejected.length} failed. ${total} image${total === 1 ? '' : 's'} total. ${rejected.join('; ')}`, true);
+      } else {
+        setStatus(`Upload failed. ${rejected.join('; ')}`, true);
+      }
+      void startCount; // silence unused-var lint if any
     };
 
-    // Add-by-URL
     if (addUrlBtn) addUrlBtn.onclick = () => {
       const v = (urlInput?.value || '').trim();
       if (!v) return setStatus('Paste an image URL first.', true);
@@ -1655,7 +1699,6 @@
       }
     };
 
-    // Save
     document.getElementById('ws-save')?.addEventListener('click', async () => {
       const err = document.getElementById('ws-err');
       err.textContent = '';
@@ -1724,7 +1767,6 @@
     });
   }
 
-  // ── List renderers ──
   function renderWebsitePosts(posts) {
     window.__wsData = window.__wsData || {};
     window.__wsData.posts = posts;
