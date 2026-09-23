@@ -39,7 +39,7 @@
     regSuccess: null,
     emailNeedsVerification: false,
     websiteTab: 'posts',   // posts | impact-stories | partners
-    websiteEditing: null,  // { kind: 'posts'|..., id: null|number, item: {...} } | null
+    websiteEditing: null,  // { kind, id, item } | null
   };
 
   window.state = state;
@@ -125,10 +125,6 @@
   }
 
   // ── Service banner ────────────────────────────────────────────────────────
-  // Fetches the public service banner (set by admins in System Config) and
-  // injects it at the top of the page. Called at boot — before any render —
-  // so it appears on every screen including login, register and forgot-pass.
-  // Never removed on logout, so it stays visible on the login page.
   async function fetchAndShowBanner() {
     try {
       const res = await fetch(API + '/status');
@@ -979,7 +975,7 @@
           <div class="field"><label>Action</label>
             <select id="f-action">
               <option value="">All actions</option>
-              ${['login','login_failed','login_blocked','logout','create','edit','delete','approve','register','email_verified','email_changed','email_change_requested','password_reset_requested','password_reset_completed','password_change_failed','permission_denied','mfa_enabled','mfa_disabled','token_reuse_detected']
+              ${['login','login_failed','login_blocked','logout','create','edit','delete','approve','register','email_verified','email_changed','email_change_requested','password_reset_requested','password_reset_completed','password_change_failed','permission_denied','mfa_enabled','mfa_disabled','token_reuse_detected','translate']
                 .map(a=>`<option value="${a}">${a}</option>`).join('')}
             </select>
           </div>
@@ -1239,7 +1235,6 @@
     }
     shell(pageHead('Website Content','Loading…'));
 
-    // Fetch everything at once so the tab badge counts are accurate.
     let posts = [], stories = [], partners = [];
     try {
       const [postsRes, storiesRes, partnersRes] = await Promise.all([
@@ -1258,20 +1253,16 @@
 
     const tab = state.websiteTab;
 
-    // ── Tab bar ──
     const tabBtn = (key, label, count) => {
       const active = tab === key;
-      return `<button class="btn-sm" data-website-tab="${key}"
-        style="padding:7px 14px;font-size:13px;${active
-          ? 'background:var(--forest);color:#fff;border-color:var(--forest)'
-          : ''}">${esc(label)} <span style="opacity:.7">${count}</span></button>`;
+      return `<button class="btn-sm website-tab${active ? ' active' : ''}" data-website-tab="${key}">
+        ${esc(label)} <span class="website-tab-count">${count}</span></button>`;
     };
 
-    // ── Header + tab bar ──
     const header = `
       ${pageHead('Website Content', 'Post news, events, impact stories and manage partner logos shown on the public site.')}
       <div class="card card-inner" style="margin-bottom:18px">
-        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <div class="website-tabs">
           ${tabBtn('posts', 'News & Events', posts.length)}
           ${tabBtn('impact-stories', 'Impact Stories', stories.length)}
           ${tabBtn('partners', 'Partners', partners.length)}
@@ -1280,48 +1271,89 @@
         </div>
       </div>`;
 
-    // ── Editor form (only when state.websiteEditing is set) ──
     const editor = state.websiteEditing ? renderWebsiteEditor() : '';
 
-    // ── Tab body ──
     let body = '';
-    if (tab === 'posts')            body = renderWebsitePosts(posts);
+    if (tab === 'posts')              body = renderWebsitePosts(posts);
     else if (tab === 'impact-stories') body = renderWebsiteStories(stories);
-    else                              body = renderWebsitePartners(partners);
+    else                               body = renderWebsitePartners(partners);
 
     document.getElementById('main').innerHTML = header + editor + body;
 
-    // ── Wire up tab buttons ──
     document.querySelectorAll('[data-website-tab]').forEach(btn => btn.onclick = () => {
       state.websiteTab = btn.dataset.websiteTab;
-      state.websiteEditing = null;   // close any open editor when switching tabs
+      state.websiteEditing = null;
       renderWebsite(++renderSeq);
     });
 
-    // ── Wire up "New" button ──
     const newBtn = document.getElementById('website-new-btn');
     if (newBtn) newBtn.onclick = () => {
       state.websiteEditing = { kind: tab, id: null, item: emptyItemFor(tab) };
       renderWebsite(++renderSeq);
     };
 
-    // ── Wire up edit / delete / cancel / save for the current tab ──
     wireWebsiteHandlers(seq);
   }
 
   function emptyItemFor(kind) {
     if (kind === 'posts') return {
       type: 'news', title_en: '', title_sw: '', summary_en: '', summary_sw: '',
-      body_en: '', body_sw: '', image_url: '', event_date: '', event_venue: '',
+      body_en: '', body_sw: '', image_urls: [], event_date: '', event_venue: '',
       doc_url: '', published: false,
     };
     if (kind === 'impact-stories') return {
       title_en: '', title_sw: '', body_en: '', body_sw: '',
       programme: '', location: '', metric_label: '', metric_value: '',
-      image_url: '', published: false,
+      image_urls: [], published: false,
     };
     return { name: '', type: 'partner', logo_url: '', website_url: '',
              description_en: '', description_sw: '', display_order: 0, is_active: true };
+  }
+
+  // ── Translate helper (used by posts + stories + partners) ─────────────
+  async function doTranslate() {
+    const btn = document.getElementById('ws-translate-btn');
+    const msg = document.getElementById('ws-translate-msg');
+    if (!btn) return;
+    msg.textContent = '';
+    btn.disabled = true;
+    const oldText = btn.textContent;
+    btn.textContent = '⏳ Translating…';
+
+    const { kind } = state.websiteEditing;
+    let enFields = [], targetIds = [];
+
+    if (kind === 'posts') {
+      enFields  = ['ws-p-title-en', 'ws-p-summary-en', 'ws-p-body-en'].map(id => document.getElementById(id)?.value || '');
+      targetIds = ['ws-p-title-sw', 'ws-p-summary-sw', 'ws-p-body-sw'];
+    } else if (kind === 'impact-stories') {
+      enFields  = ['ws-s-title-en', 'ws-s-body-en'].map(id => document.getElementById(id)?.value || '');
+      targetIds = ['ws-s-title-sw', 'ws-s-body-sw'];
+    } else {
+      enFields  = ['ws-pt-description-en'].map(id => document.getElementById(id)?.value || '');
+      targetIds = ['ws-pt-description-sw'];
+    }
+
+    try {
+      const res = await api('/admin/translate', {
+        method: 'POST',
+        body: { texts: enFields, from: 'en', to: 'sw' },
+      });
+      const translations = res.translations || [];
+      let filled = 0;
+      translations.forEach((t, i) => {
+        const target = document.getElementById(targetIds[i]);
+        if (target && t) { target.value = t; filled++; }
+      });
+      msg.innerHTML = filled
+        ? '<span style="color:var(--ok)">✅ Translated. Review and edit before saving.</span>'
+        : '<span class="meta">Nothing to translate — fill in the English fields first.</span>';
+    } catch (e) {
+      msg.innerHTML = `<span style="color:var(--danger)">${esc(e.message)}</span>`;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = oldText;
+    }
   }
 
   // ── Editor form ──
@@ -1332,28 +1364,19 @@
       ? `New ${kind === 'posts' ? 'post' : kind === 'impact-stories' ? 'impact story' : 'partner'}`
       : `Editing ${kind === 'posts' ? 'post' : kind === 'impact-stories' ? 'story' : 'partner'} #${id}`;
 
-    const imageField = `
-      <div class="field field-map-wide" style="grid-column:1/-1">
-        <label>Image</label>
-        <div id="ws-img-area" style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap">
-          <div id="ws-img-preview" style="
-            width:160px;height:110px;border:1px dashed var(--line);border-radius:8px;
-            background:var(--paper);display:grid;place-items:center;flex-shrink:0;overflow:hidden;
-            font-family:-apple-system,'Segoe UI',sans-serif;font-size:12px;color:var(--ink-faint)">
-            ${item.image_url || item.logo_url
-              ? `<img src="${esc(item.image_url || item.logo_url)}" alt="preview"
-                     style="width:100%;height:100%;object-fit:cover">`
-              : 'No image'}
-          </div>
-          <div style="flex:1;min-width:220px">
-            <div id="ws-img-status" class="meta" style="margin-bottom:6px"></div>
-            <input type="file" id="ws-img-file" accept="image/jpeg,image/png,image/webp,image/gif" style="margin-bottom:6px">
-            <input type="text" id="ws-img-url" placeholder="…or paste an image URL"
-                   value="${esc(item.image_url || item.logo_url || '')}"
-                   style="width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:6px;font-size:13px">
-          </div>
-        </div>
-      </div>`;
+    // Ensure image_urls is always an array on the item
+    if (kind !== 'partners' && !Array.isArray(item.image_urls)) {
+      item.image_urls = item.image_url ? [item.image_url] : [];
+    }
+
+    const imageGalleryField = kind === 'partners' ? renderPartnerLogoField(item) : renderImageGalleryField(item);
+
+    const translateRow = (can('website','create') && kind !== 'partners' || (kind === 'partners' && can('website','create'))) ? `
+      <div class="website-translate-row">
+        <button type="button" class="btn-sm" id="ws-translate-btn">🌐 Translate English → Swahili</button>
+        <span class="meta">Fills the Swahili fields from the English ones. Review before saving.</span>
+        <span id="ws-translate-msg" class="err-msg" style="margin:0;flex:1;min-height:0"></span>
+      </div>` : '';
 
     let fieldsHtml = '';
 
@@ -1375,7 +1398,7 @@
         <div class="field"><label>Event date (optional)</label><input id="ws-p-event-date" type="date" value="${esc(item.event_date || '')}"></div>
         <div class="field"><label>Event venue (optional)</label><input id="ws-p-event-venue" value="${esc(item.event_venue || '')}"></div>
         <div class="field" style="grid-column:1/-1"><label>Document URL (optional)</label><input id="ws-p-doc-url" value="${esc(item.doc_url || '')}" placeholder="https://…"></div>
-        ${imageField}
+        <div style="grid-column:1/-1">${imageGalleryField}</div>
         <div class="field" style="grid-column:1/-1">
           <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
             <input type="checkbox" id="ws-published" ${item.published ? 'checked' : ''}>
@@ -1392,7 +1415,7 @@
         <div class="field"><label>Location</label><input id="ws-s-location" value="${esc(item.location || '')}" placeholder="e.g. Kilwa, Lindi"></div>
         <div class="field"><label>Metric label</label><input id="ws-s-metric-label" value="${esc(item.metric_label || '')}" placeholder="e.g. Women trained"></div>
         <div class="field"><label>Metric value</label><input id="ws-s-metric-value" value="${esc(item.metric_value || '')}" placeholder="e.g. 340"></div>
-        ${imageField}
+        <div style="grid-column:1/-1">${imageGalleryField}</div>
         <div class="field" style="grid-column:1/-1">
           <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
             <input type="checkbox" id="ws-published" ${item.published ? 'checked' : ''}>
@@ -1418,36 +1441,99 @@
             Active
           </label>
         </div>
-        ${imageField}`;
+        <div style="grid-column:1/-1">${imageGalleryField}</div>`;
     }
 
     return `
       <div class="card card-inner" style="margin-bottom:18px;border-color:var(--leaf)">
         <h3>${esc(title)}</h3>
+        ${translateRow}
         <div class="form-grid" style="grid-template-columns:1fr 1fr;gap:0 16px">
           ${fieldsHtml}
         </div>
-        <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+        <div class="website-editor-actions">
           <button class="btn-primary" id="ws-save">${isNew ? 'Create' : 'Save changes'}</button>
-          <button class="btn-sm" id="ws-cancel" style="padding:10px 18px">Cancel</button>
+          <button class="btn-sm" id="ws-cancel">Cancel</button>
           <div id="ws-err" class="err-msg" style="flex:1;margin:0;align-self:center"></div>
         </div>
       </div>`;
   }
 
-  function wireWebsiteHandlers(seq) {
-    const { kind, id } = state.websiteEditing || { kind: null, id: null };
+  function renderImageGalleryField(item) {
+    const urls = Array.isArray(item.image_urls) ? item.image_urls : [];
+    return `
+      <div class="field website-image-field">
+        <label>Images</label>
+        <p class="meta" style="margin-bottom:8px">Add up to 12 photos. The first one becomes the card cover. On the public site, the card shows them as a slideshow.</p>
+        <div id="ws-img-grid" class="website-image-gallery">
+          ${renderImageSlots(urls)}
+        </div>
+        <div class="website-image-add-row">
+          <input type="file" id="ws-img-file" class="website-image-file"
+                 accept="image/jpeg,image/png,image/webp,image/gif">
+        </div>
+        <div class="website-image-add-row">
+          <input type="text" id="ws-img-url" placeholder="…or paste an image URL">
+          <button type="button" class="btn-sm" id="ws-img-add-url">Add URL</button>
+        </div>
+        <p class="website-image-hint" id="ws-img-status"></p>
+      </div>`;
+  }
 
-    // ── Delete buttons on the list rows ──
+  function renderImageSlots(urls) {
+    if (!urls.length) {
+      return `<div class="website-image-empty">No images yet — add one below.</div>`;
+    }
+    return urls.map((u, i) => `
+      <div class="website-image-slot">
+        <img src="${esc(u)}" alt="Image ${i+1}">
+        <span class="website-image-slot-num">${i+1}</span>
+        <button type="button" class="website-image-slot-remove"
+                data-img-remove="${i}" aria-label="Remove image ${i+1}">×</button>
+      </div>`).join('');
+  }
+
+  function renderPartnerLogoField(item) {
+    return `
+      <div class="field website-image-field">
+        <label>Logo</label>
+        <div class="website-image-gallery">
+          <div class="website-image-slot" style="width:120px;height:90px;background:#fff;display:grid;place-items:center">
+            ${item.logo_url
+              ? `<img src="${esc(item.logo_url)}" alt="Logo" style="object-fit:contain;padding:6px;box-sizing:border-box">`
+              : `<span class="meta">No logo</span>`}
+          </div>
+        </div>
+        <div class="website-image-add-row">
+          <input type="file" id="ws-img-file" class="website-image-file"
+                 accept="image/jpeg,image/png,image/webp,image/gif">
+        </div>
+        <div class="website-image-add-row">
+          <input type="text" id="ws-img-url" placeholder="…or paste a logo URL"
+                 value="${esc(item.logo_url || '')}">
+          <button type="button" class="btn-sm" id="ws-img-add-url">Use URL</button>
+        </div>
+        <p class="website-image-hint" id="ws-img-status">PNG with transparent background looks best.</p>
+      </div>`;
+  }
+
+  function wireWebsiteHandlers(seq) {
+    // ── Edit / delete on list rows ──
     document.querySelectorAll('[data-ws-edit]').forEach(btn => btn.onclick = () => {
       const rowKind = btn.dataset.wsKind;
       const rowId   = Number(btn.dataset.wsEdit);
-      const item = (rowKind === 'posts' ? window.__wsData?.posts
-                  : rowKind === 'impact-stories' ? window.__wsData?.stories
-                  : window.__wsData?.partners || [])
-                  .find(x => x.id === rowId);
+      const list = rowKind === 'posts' ? (window.__wsData?.posts || [])
+                 : rowKind === 'impact-stories' ? (window.__wsData?.stories || [])
+                 : (window.__wsData?.partners || []);
+      const item = list.find(x => x.id === rowId);
       if (!item) return;
-      state.websiteEditing = { kind: rowKind, id: rowId, item: { ...item } };
+      const copy = { ...item };
+      if (rowKind !== 'partners') {
+        if (!Array.isArray(copy.image_urls)) {
+          copy.image_urls = copy.image_url ? [copy.image_url] : [];
+        }
+      }
+      state.websiteEditing = { kind: rowKind, id: rowId, item: copy };
       renderWebsite(++renderSeq);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
@@ -1467,31 +1553,64 @@
 
     // ── Editor handlers ──
     if (!state.websiteEditing) return;
+    const { kind } = state.websiteEditing;
 
-    // Cancel
     document.getElementById('ws-cancel')?.addEventListener('click', () => {
       state.websiteEditing = null;
       renderWebsite(++renderSeq);
     });
 
-    // Image upload widget
+    document.getElementById('ws-translate-btn')?.addEventListener('click', doTranslate);
+
     const fileInput = document.getElementById('ws-img-file');
     const urlInput  = document.getElementById('ws-img-url');
-    const preview   = document.getElementById('ws-img-preview');
+    const addUrlBtn = document.getElementById('ws-img-add-url');
     const status    = document.getElementById('ws-img-status');
 
+    const setStatus = (html, isErr) => {
+      if (!status) return;
+      status.innerHTML = html;
+      status.style.color = isErr ? 'var(--danger)' : '';
+    };
+
+    const refreshGrid = () => {
+      const grid = document.getElementById('ws-img-grid');
+      if (!grid || !state.websiteEditing) return;
+      const urls = state.websiteEditing.item.image_urls || [];
+      grid.innerHTML = renderImageSlots(urls);
+      grid.querySelectorAll('[data-img-remove]').forEach(b => {
+        b.onclick = () => {
+          const idx = Number(b.dataset.imgRemove);
+          state.websiteEditing.item.image_urls.splice(idx, 1);
+          refreshGrid();
+        };
+      });
+    };
+
+    // Wire any existing remove buttons
+    document.querySelectorAll('#ws-img-grid [data-img-remove]').forEach(b => {
+      b.onclick = () => {
+        const idx = Number(b.dataset.imgRemove);
+        (state.websiteEditing.item.image_urls || []).splice(idx, 1);
+        refreshGrid();
+      };
+    });
+
+    // File upload — adds to the array on success
     if (fileInput) fileInput.onchange = async () => {
       const file = fileInput.files?.[0];
       if (!file) return;
       if (!/^image\//.test(file.type)) {
-        status.textContent = 'Only image files are supported.';
-        return;
+        return setStatus('Only image files are supported.', true);
       }
       if (file.size > 5 * 1024 * 1024) {
-        status.textContent = 'Image is larger than 5 MB.';
-        return;
+        return setStatus('Image is larger than 5 MB.', true);
       }
-      status.textContent = 'Uploading…';
+      const urls = state.websiteEditing.item.image_urls || (state.websiteEditing.item.image_urls = []);
+      if (kind !== 'partners' && urls.length >= 12) {
+        return setStatus('Maximum 12 images per item.', true);
+      }
+      setStatus('Uploading…');
       try {
         const { uploadUrl, publicUrl } = await api('/admin/upload-url', {
           method: 'POST',
@@ -1503,28 +1622,44 @@
           body: file,
         });
         if (!res.ok) throw new Error(`Upload failed (${res.status})`);
-        urlInput.value = publicUrl;
-        preview.innerHTML = `<img src="${esc(publicUrl)}" alt="preview" style="width:100%;height:100%;object-fit:cover">`;
-        status.innerHTML = '<span style="color:var(--ok)">✅ Uploaded</span>';
+        if (kind === 'partners') {
+          state.websiteEditing.item.logo_url = publicUrl;
+          setStatus('<span style="color:var(--ok)">✅ Logo uploaded.</span>');
+        } else {
+          urls.push(publicUrl);
+          refreshGrid();
+          setStatus(`<span style="color:var(--ok)">✅ Uploaded. ${urls.length} image${urls.length === 1 ? '' : 's'} total.</span>`);
+        }
+        fileInput.value = '';
       } catch (e) {
-        status.innerHTML = `<span style="color:var(--danger)">${esc(e.message)}</span>`;
-        status.innerHTML += ' <span class="meta">— paste a URL manually instead.</span>';
+        setStatus(`${esc(e.message)} — you can paste an image URL instead.`, true);
       }
     };
 
-    if (urlInput) urlInput.oninput = () => {
-      const v = urlInput.value.trim();
-      preview.innerHTML = v
-        ? `<img src="${esc(v)}" alt="preview" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.textContent='Invalid image URL'">`
-        : 'No image';
+    // Add-by-URL
+    if (addUrlBtn) addUrlBtn.onclick = () => {
+      const v = (urlInput?.value || '').trim();
+      if (!v) return setStatus('Paste an image URL first.', true);
+      if (!/^https?:\/\//i.test(v)) return setStatus('URL must start with http:// or https://', true);
+      if (kind === 'partners') {
+        state.websiteEditing.item.logo_url = v;
+        renderWebsite(++renderSeq);
+      } else {
+        const urls = state.websiteEditing.item.image_urls || (state.websiteEditing.item.image_urls = []);
+        if (urls.length >= 12) return setStatus('Maximum 12 images per item.', true);
+        if (urls.includes(v)) return setStatus('That URL is already in the list.', true);
+        urls.push(v);
+        urlInput.value = '';
+        refreshGrid();
+        setStatus(`<span style="color:var(--ok)">✅ Added. ${urls.length} image${urls.length === 1 ? '' : 's'} total.</span>`);
+      }
     };
 
     // Save
     document.getElementById('ws-save')?.addEventListener('click', async () => {
       const err = document.getElementById('ws-err');
       err.textContent = '';
-
-      const imageUrl = urlInput?.value.trim() || '';
+      const item = state.websiteEditing.item;
 
       try {
         if (kind === 'posts') {
@@ -1539,14 +1674,14 @@
             event_date:  document.getElementById('ws-p-event-date').value || null,
             event_venue: document.getElementById('ws-p-event-venue').value.trim() || null,
             doc_url:     document.getElementById('ws-p-doc-url').value.trim() || null,
-            image_url:   imageUrl || null,
+            image_urls:  Array.isArray(item.image_urls) ? item.image_urls : [],
             published:   document.getElementById('ws-published').checked,
           };
           if (!payload.title_en || !payload.title_sw || !payload.summary_en || !payload.summary_sw) {
             return err.textContent = 'Titles and summaries in both languages are required.';
           }
-          if (id) await api(`/admin/website/posts/${id}`, { method: 'PUT',  body: payload });
-          else    await api(`/admin/website/posts`,         { method: 'POST', body: payload });
+          if (state.websiteEditing.id) await api(`/admin/website/posts/${state.websiteEditing.id}`, { method: 'PUT',  body: payload });
+          else                          await api(`/admin/website/posts`, { method: 'POST', body: payload });
         } else if (kind === 'impact-stories') {
           const payload = {
             title_en:     document.getElementById('ws-s-title-en').value.trim(),
@@ -1557,14 +1692,14 @@
             location:     document.getElementById('ws-s-location').value.trim() || null,
             metric_label: document.getElementById('ws-s-metric-label').value.trim() || null,
             metric_value: document.getElementById('ws-s-metric-value').value.trim() || null,
-            image_url:    imageUrl || null,
+            image_urls:   Array.isArray(item.image_urls) ? item.image_urls : [],
             published:    document.getElementById('ws-published').checked,
           };
           if (!payload.title_en || !payload.title_sw || !payload.body_en || !payload.body_sw) {
             return err.textContent = 'Titles and bodies in both languages are required.';
           }
-          if (id) await api(`/admin/website/impact-stories/${id}`, { method: 'PUT',  body: payload });
-          else    await api(`/admin/website/impact-stories`,         { method: 'POST', body: payload });
+          if (state.websiteEditing.id) await api(`/admin/website/impact-stories/${state.websiteEditing.id}`, { method: 'PUT',  body: payload });
+          else                          await api(`/admin/website/impact-stories`, { method: 'POST', body: payload });
         } else {
           const payload = {
             name:           document.getElementById('ws-pt-name').value.trim(),
@@ -1572,15 +1707,15 @@
             website_url:    document.getElementById('ws-pt-website-url').value.trim() || null,
             description_en: document.getElementById('ws-pt-description-en').value.trim() || null,
             description_sw: document.getElementById('ws-pt-description-sw').value.trim() || null,
-            logo_url:       imageUrl || null,
+            logo_url:       document.getElementById('ws-img-url').value.trim() || item.logo_url || null,
             display_order:  Number(document.getElementById('ws-pt-display-order').value) || 0,
             is_active:      document.getElementById('ws-pt-is-active').checked,
           };
           if (!payload.name) return err.textContent = 'Name is required.';
-          if (id) await api(`/admin/website/partners/${id}`, { method: 'PUT',  body: payload });
-          else    await api(`/admin/website/partners`,         { method: 'POST', body: payload });
+          if (state.websiteEditing.id) await api(`/admin/website/partners/${state.websiteEditing.id}`, { method: 'PUT',  body: payload });
+          else                          await api(`/admin/website/partners`, { method: 'POST', body: payload });
         }
-        toast(id ? 'Saved.' : 'Created.');
+        toast(state.websiteEditing.id ? 'Saved.' : 'Created.');
         state.websiteEditing = null;
         renderWebsite(++renderSeq);
       } catch (e) {
@@ -1589,6 +1724,7 @@
     });
   }
 
+  // ── List renderers ──
   function renderWebsitePosts(posts) {
     window.__wsData = window.__wsData || {};
     window.__wsData.posts = posts;
@@ -1599,14 +1735,21 @@
     return `
       <div class="card card-table">
         <table>
-          <thead><tr><th>Image</th><th>Type</th><th>Title (EN)</th><th>Status</th><th>Published</th><th>Actions</th></tr></thead>
+          <thead><tr><th>Cover</th><th>Type</th><th>Title (EN)</th><th>Status</th><th>Published</th><th>Actions</th></tr></thead>
           <tbody>
-            ${posts.map(p => `
+            ${posts.map(p => {
+              const urls = Array.isArray(p.image_urls) && p.image_urls.length
+                ? p.image_urls
+                : (p.image_url ? [p.image_url] : []);
+              const first = urls[0];
+              const extra = urls.length - 1;
+              return `
               <tr>
-                <td style="width:80px">
-                  ${p.image_url
-                    ? `<img src="${esc(p.image_url)}" alt="" style="width:64px;height:44px;object-fit:cover;border-radius:6px;display:block">`
-                    : `<div style="width:64px;height:44px;background:var(--paper);border:1px dashed var(--line);border-radius:6px"></div>`}
+                <td style="width:80px;position:relative">
+                  ${first
+                    ? `<img src="${esc(first)}" alt="" class="table-thumb">
+                       ${extra > 0 ? `<span class="table-thumb-count">+${extra}</span>` : ''}`
+                    : `<div class="table-thumb-empty"></div>`}
                 </td>
                 <td><span class="badge">${esc(p.type)}</span></td>
                 <td><strong>${esc(p.title_en)}</strong><br><span class="meta">${esc((p.summary_en||'').slice(0,80))}${(p.summary_en||'').length>80?'…':''}</span></td>
@@ -1616,7 +1759,8 @@
                   ${can('website','edit')    ? `<button class="btn-sm" data-ws-edit="${p.id}" data-ws-kind="posts">Edit</button>` : ''}
                   ${can('website','approve') ? `<button class="btn-sm btn-danger" data-ws-delete="${p.id}" data-ws-kind="posts" data-ws-label="${esc(p.title_en)}">Delete</button>` : ''}
                 </td>
-              </tr>`).join('')}
+              </tr>`;
+            }).join('')}
           </tbody>
         </table>
       </div>`;
@@ -1632,14 +1776,21 @@
     return `
       <div class="card card-table">
         <table>
-          <thead><tr><th>Image</th><th>Title (EN)</th><th>Programme</th><th>Location</th><th>Metric</th><th>Status</th><th>Actions</th></tr></thead>
+          <thead><tr><th>Cover</th><th>Title (EN)</th><th>Programme</th><th>Location</th><th>Metric</th><th>Status</th><th>Actions</th></tr></thead>
           <tbody>
-            ${stories.map(s => `
+            ${stories.map(s => {
+              const urls = Array.isArray(s.image_urls) && s.image_urls.length
+                ? s.image_urls
+                : (s.image_url ? [s.image_url] : []);
+              const first = urls[0];
+              const extra = urls.length - 1;
+              return `
               <tr>
-                <td style="width:80px">
-                  ${s.image_url
-                    ? `<img src="${esc(s.image_url)}" alt="" style="width:64px;height:44px;object-fit:cover;border-radius:6px;display:block">`
-                    : `<div style="width:64px;height:44px;background:var(--paper);border:1px dashed var(--line);border-radius:6px"></div>`}
+                <td style="width:80px;position:relative">
+                  ${first
+                    ? `<img src="${esc(first)}" alt="" class="table-thumb">
+                       ${extra > 0 ? `<span class="table-thumb-count">+${extra}</span>` : ''}`
+                    : `<div class="table-thumb-empty"></div>`}
                 </td>
                 <td><strong>${esc(s.title_en)}</strong></td>
                 <td class="meta">${esc(s.programme || '—')}</td>
@@ -1650,7 +1801,8 @@
                   ${can('website','edit')    ? `<button class="btn-sm" data-ws-edit="${s.id}" data-ws-kind="impact-stories">Edit</button>` : ''}
                   ${can('website','approve') ? `<button class="btn-sm btn-danger" data-ws-delete="${s.id}" data-ws-kind="impact-stories" data-ws-label="${esc(s.title_en)}">Delete</button>` : ''}
                 </td>
-              </tr>`).join('')}
+              </tr>`;
+            }).join('')}
           </tbody>
         </table>
       </div>`;
@@ -1672,8 +1824,8 @@
               <tr>
                 <td style="width:80px">
                   ${p.logo_url
-                    ? `<img src="${esc(p.logo_url)}" alt="" style="width:64px;height:44px;object-fit:contain;background:#fff;border:1px solid var(--line);border-radius:6px;display:block">`
-                    : `<div style="width:64px;height:44px;background:var(--paper);border:1px dashed var(--line);border-radius:6px"></div>`}
+                    ? `<img src="${esc(p.logo_url)}" alt="" class="table-thumb-contain">`
+                    : `<div class="table-thumb-empty"></div>`}
                 </td>
                 <td><strong>${esc(p.name)}</strong></td>
                 <td><span class="badge">${esc(p.type)}</span></td>
@@ -1888,11 +2040,7 @@
 
   (async () => {
     try {
-      // Fire-and-forget: fetch the service banner immediately so it appears
-      // on every screen — including login, register and forgot-password —
-      // before the rest of the boot sequence runs.
       fetchAndShowBanner();
-
       const handled = await handleUrlTokens();
       if (handled) return;
       await tryRestoreSession();
