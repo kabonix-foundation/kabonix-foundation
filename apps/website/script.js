@@ -139,7 +139,6 @@ function esc(s) {
 }
 
 function pickImages(item) {
-  // Prefer the array; fall back to the legacy single URL.
   if (Array.isArray(item.image_urls) && item.image_urls.length) return item.image_urls;
   if (item.image_url) return [item.image_url];
   return [];
@@ -191,7 +190,6 @@ function setLanguage(lang) {
   const backLink = document.querySelector('.back-link');
   if (backLink) backLink.href = withLang('/');
 
-  // Reload content in the new language from the API.
   loadWebsiteContent();
 }
 
@@ -204,8 +202,6 @@ function updatePortalLinks() {
 }
 
 // ── Slideshow ────────────────────────────────────────────────────────────
-// Attaches slide behaviour to any element with class="slideshow".
-// Dots navigate; auto-advance every 4.5s; pauses on hover.
 function initSlideshow(root) {
   const slides = root.querySelectorAll('.slide');
   if (slides.length < 2) return;
@@ -232,7 +228,7 @@ function initSlideshow(root) {
       e.preventDefault();
       e.stopPropagation();
       show(k);
-      start();   // reset timer after manual navigation
+      start();
     });
   });
 
@@ -326,7 +322,6 @@ async function loadWebsiteContent() {
   const impactGrid   = document.getElementById('impact-grid');
   const partnersGrid = document.getElementById('partners-grid');
 
-  // ── News & Events ──
   if (newsGrid) {
     try {
       const posts = await fetchJson(`/api/website/posts?lang=${currentLang}`);
@@ -341,7 +336,6 @@ async function loadWebsiteContent() {
     }
   }
 
-  // ── Impact stories ──
   if (impactGrid) {
     try {
       const stories = await fetchJson(`/api/website/impact-stories?lang=${currentLang}`);
@@ -356,7 +350,6 @@ async function loadWebsiteContent() {
     }
   }
 
-  // ── Partners ──
   if (partnersGrid) {
     try {
       const partners = await fetchJson(`/api/website/partners?lang=${currentLang}`);
@@ -370,7 +363,6 @@ async function loadWebsiteContent() {
     }
   }
 
-  // Re-run scroll reveal so newly-added cards appear correctly.
   attachScrollReveal();
 }
 
