@@ -38,6 +38,8 @@
     prefillEmail: null,
     regSuccess: null,
     emailNeedsVerification: false,
+    websiteTab: 'posts',   // posts | impact-stories | partners
+    websiteEditing: null,  // { kind: 'posts'|..., id: null|number, item: {...} } | null
   };
 
   window.state = state;
@@ -124,7 +126,9 @@
 
   // ── Service banner ────────────────────────────────────────────────────────
   // Fetches the public service banner (set by admins in System Config) and
-  // injects it at the top of the page. Called on boot and after login.
+  // injects it at the top of the page. Called at boot — before any render —
+  // so it appears on every screen including login, register and forgot-pass.
+  // Never removed on logout, so it stays visible on the login page.
   async function fetchAndShowBanner() {
     try {
       const res = await fetch(API + '/status');
@@ -235,7 +239,6 @@
       state.token = null; lsDel('kabonix_token');
     }
     render();
-    fetchAndShowBanner();
   }
 
   async function login(email, password) {
@@ -258,7 +261,6 @@
   function logout() {
     state.token=null; state.user=null; state.roles=[]; state.permissions=[];
     lsDel('kabonix_token');
-    document.getElementById('service-banner')?.remove();
     render();
   }
 
@@ -271,7 +273,7 @@
     const views = {
       dashboard: renderDashboard, users: renderUsers, roles: renderRoles,
       config: renderConfig, audit: renderAudit, forms: renderForms,
-      messages: renderMessages, profile: renderProfile,
+      messages: renderMessages, profile: renderProfile, website: renderWebsite,
       ...extraViews,
     };
     (views[state.route]||renderDashboard)(seq);
@@ -483,6 +485,7 @@
     const items = [
       { key:'dashboard', icon:'◉', label:'Dashboard' },
       can('data_collection','view') && { key:'forms', icon:'📋', label:'M&E Collection' },
+      can('website','view') && { key:'website', icon:'🌐', label:'Website Content' },
       can('admin','view') && { key:'users', icon:'👥', label:'Staff & Users' },
       can('admin','view') && { key:'roles', icon:'🔐', label:'Roles & Permissions' },
       can('admin','view') && { key:'config', icon:'⚙️', label:'System Config' },
@@ -559,6 +562,7 @@
         ${card(`<h3>Quick actions</h3>
           <div class="quick-actions">
             ${can('data_collection','create') ? `<button class="qa-btn" onclick="nav('forms')">📋 Submit M&E form</button>` : ''}
+            ${can('website','create')         ? `<button class="qa-btn" onclick="nav('website')">🌐 Post to the website</button>` : ''}
             ${can('admin','create')           ? `<button class="qa-btn" onclick="nav('users')">➕ Invite staff member</button>` : ''}
             ${can('admin','view')             ? `<button class="qa-btn" onclick="nav('messages')">✉️ View contact messages</button>` : ''}
             ${can('admin','view')||can('data_collection','approve') ? `<button class="qa-btn" onclick="nav('audit')">📜 View audit log</button>` : ''}
@@ -897,7 +901,6 @@
         try {
           await api(`/admin/config/${key}`,{method:'PATCH',body:{value}});
           toast(`${key} saved.`);
-          // If the banner message changed, refresh it right away.
           if (key === 'service_banner_message') fetchAndShowBanner();
         } catch(e) { toast(e.message, true); }
       });
@@ -1225,6 +1228,471 @@
     });
   }
 
+  // ═════════════════════════════════════════════════════════════════════════
+  // WEBSITE CONTENT — admin CMS for the public site
+  // ═════════════════════════════════════════════════════════════════════════
+
+  async function renderWebsite(seq) {
+    if (!can('website','view')) {
+      shell(pageHead('Website Content'));
+      return document.getElementById('main').insertAdjacentHTML('beforeend', forbidden());
+    }
+    shell(pageHead('Website Content','Loading…'));
+
+    // Fetch everything at once so the tab badge counts are accurate.
+    let posts = [], stories = [], partners = [];
+    try {
+      const [postsRes, storiesRes, partnersRes] = await Promise.all([
+        api('/admin/website/posts'),
+        api('/admin/website/impact-stories'),
+        api('/admin/website/partners'),
+      ]);
+      posts    = asArray(postsRes,    'posts');
+      stories  = asArray(storiesRes,  'stories');
+      partners = asArray(partnersRes, 'partners');
+    } catch (e) {
+      if (isStale(seq)) return;
+      return document.getElementById('main').insertAdjacentHTML('beforeend', errBox(e.message));
+    }
+    if (isStale(seq)) return;
+
+    const tab = state.websiteTab;
+
+    // ── Tab bar ──
+    const tabBtn = (key, label, count) => {
+      const active = tab === key;
+      return `<button class="btn-sm" data-website-tab="${key}"
+        style="padding:7px 14px;font-size:13px;${active
+          ? 'background:var(--forest);color:#fff;border-color:var(--forest)'
+          : ''}">${esc(label)} <span style="opacity:.7">${count}</span></button>`;
+    };
+
+    // ── Header + tab bar ──
+    const header = `
+      ${pageHead('Website Content', 'Post news, events, impact stories and manage partner logos shown on the public site.')}
+      <div class="card card-inner" style="margin-bottom:18px">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          ${tabBtn('posts', 'News & Events', posts.length)}
+          ${tabBtn('impact-stories', 'Impact Stories', stories.length)}
+          ${tabBtn('partners', 'Partners', partners.length)}
+          <div style="flex:1"></div>
+          ${can('website','create') ? `<button class="btn-primary" id="website-new-btn">+ New ${tab === 'posts' ? 'post' : tab === 'impact-stories' ? 'story' : 'partner'}</button>` : ''}
+        </div>
+      </div>`;
+
+    // ── Editor form (only when state.websiteEditing is set) ──
+    const editor = state.websiteEditing ? renderWebsiteEditor() : '';
+
+    // ── Tab body ──
+    let body = '';
+    if (tab === 'posts')            body = renderWebsitePosts(posts);
+    else if (tab === 'impact-stories') body = renderWebsiteStories(stories);
+    else                              body = renderWebsitePartners(partners);
+
+    document.getElementById('main').innerHTML = header + editor + body;
+
+    // ── Wire up tab buttons ──
+    document.querySelectorAll('[data-website-tab]').forEach(btn => btn.onclick = () => {
+      state.websiteTab = btn.dataset.websiteTab;
+      state.websiteEditing = null;   // close any open editor when switching tabs
+      renderWebsite(++renderSeq);
+    });
+
+    // ── Wire up "New" button ──
+    const newBtn = document.getElementById('website-new-btn');
+    if (newBtn) newBtn.onclick = () => {
+      state.websiteEditing = { kind: tab, id: null, item: emptyItemFor(tab) };
+      renderWebsite(++renderSeq);
+    };
+
+    // ── Wire up edit / delete / cancel / save for the current tab ──
+    wireWebsiteHandlers(seq);
+  }
+
+  function emptyItemFor(kind) {
+    if (kind === 'posts') return {
+      type: 'news', title_en: '', title_sw: '', summary_en: '', summary_sw: '',
+      body_en: '', body_sw: '', image_url: '', event_date: '', event_venue: '',
+      doc_url: '', published: false,
+    };
+    if (kind === 'impact-stories') return {
+      title_en: '', title_sw: '', body_en: '', body_sw: '',
+      programme: '', location: '', metric_label: '', metric_value: '',
+      image_url: '', published: false,
+    };
+    return { name: '', type: 'partner', logo_url: '', website_url: '',
+             description_en: '', description_sw: '', display_order: 0, is_active: true };
+  }
+
+  // ── Editor form ──
+  function renderWebsiteEditor() {
+    const { kind, id, item } = state.websiteEditing;
+    const isNew = !id;
+    const title = isNew
+      ? `New ${kind === 'posts' ? 'post' : kind === 'impact-stories' ? 'impact story' : 'partner'}`
+      : `Editing ${kind === 'posts' ? 'post' : kind === 'impact-stories' ? 'story' : 'partner'} #${id}`;
+
+    const imageField = `
+      <div class="field field-map-wide" style="grid-column:1/-1">
+        <label>Image</label>
+        <div id="ws-img-area" style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap">
+          <div id="ws-img-preview" style="
+            width:160px;height:110px;border:1px dashed var(--line);border-radius:8px;
+            background:var(--paper);display:grid;place-items:center;flex-shrink:0;overflow:hidden;
+            font-family:-apple-system,'Segoe UI',sans-serif;font-size:12px;color:var(--ink-faint)">
+            ${item.image_url || item.logo_url
+              ? `<img src="${esc(item.image_url || item.logo_url)}" alt="preview"
+                     style="width:100%;height:100%;object-fit:cover">`
+              : 'No image'}
+          </div>
+          <div style="flex:1;min-width:220px">
+            <div id="ws-img-status" class="meta" style="margin-bottom:6px"></div>
+            <input type="file" id="ws-img-file" accept="image/jpeg,image/png,image/webp,image/gif" style="margin-bottom:6px">
+            <input type="text" id="ws-img-url" placeholder="…or paste an image URL"
+                   value="${esc(item.image_url || item.logo_url || '')}"
+                   style="width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:6px;font-size:13px">
+          </div>
+        </div>
+      </div>`;
+
+    let fieldsHtml = '';
+
+    if (kind === 'posts') {
+      fieldsHtml = `
+        <div class="field" style="grid-column:1/-1">
+          <label>Type</label>
+          <select id="ws-p-type">
+            ${['news','event','publication'].map(t =>
+              `<option value="${t}" ${item.type === t ? 'selected' : ''}>${t}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field"><label>Title (English) *</label><input id="ws-p-title-en" value="${esc(item.title_en)}"></div>
+        <div class="field"><label>Title (Swahili) *</label><input id="ws-p-title-sw" value="${esc(item.title_sw)}"></div>
+        <div class="field" style="grid-column:1/-1"><label>Summary (English) *</label><textarea id="ws-p-summary-en" rows="2">${esc(item.summary_en)}</textarea></div>
+        <div class="field" style="grid-column:1/-1"><label>Summary (Swahili) *</label><textarea id="ws-p-summary-sw" rows="2">${esc(item.summary_sw)}</textarea></div>
+        <div class="field" style="grid-column:1/-1"><label>Body (English)</label><textarea id="ws-p-body-en" rows="4">${esc(item.body_en || '')}</textarea></div>
+        <div class="field" style="grid-column:1/-1"><label>Body (Swahili)</label><textarea id="ws-p-body-sw" rows="4">${esc(item.body_sw || '')}</textarea></div>
+        <div class="field"><label>Event date (optional)</label><input id="ws-p-event-date" type="date" value="${esc(item.event_date || '')}"></div>
+        <div class="field"><label>Event venue (optional)</label><input id="ws-p-event-venue" value="${esc(item.event_venue || '')}"></div>
+        <div class="field" style="grid-column:1/-1"><label>Document URL (optional)</label><input id="ws-p-doc-url" value="${esc(item.doc_url || '')}" placeholder="https://…"></div>
+        ${imageField}
+        <div class="field" style="grid-column:1/-1">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+            <input type="checkbox" id="ws-published" ${item.published ? 'checked' : ''}>
+            Published (visible on the public site)
+          </label>
+        </div>`;
+    } else if (kind === 'impact-stories') {
+      fieldsHtml = `
+        <div class="field"><label>Title (English) *</label><input id="ws-s-title-en" value="${esc(item.title_en)}"></div>
+        <div class="field"><label>Title (Swahili) *</label><input id="ws-s-title-sw" value="${esc(item.title_sw)}"></div>
+        <div class="field" style="grid-column:1/-1"><label>Body (English) *</label><textarea id="ws-s-body-en" rows="4">${esc(item.body_en)}</textarea></div>
+        <div class="field" style="grid-column:1/-1"><label>Body (Swahili) *</label><textarea id="ws-s-body-sw" rows="4">${esc(item.body_sw)}</textarea></div>
+        <div class="field"><label>Programme</label><input id="ws-s-programme" value="${esc(item.programme || '')}" placeholder="e.g. Blue Economy"></div>
+        <div class="field"><label>Location</label><input id="ws-s-location" value="${esc(item.location || '')}" placeholder="e.g. Kilwa, Lindi"></div>
+        <div class="field"><label>Metric label</label><input id="ws-s-metric-label" value="${esc(item.metric_label || '')}" placeholder="e.g. Women trained"></div>
+        <div class="field"><label>Metric value</label><input id="ws-s-metric-value" value="${esc(item.metric_value || '')}" placeholder="e.g. 340"></div>
+        ${imageField}
+        <div class="field" style="grid-column:1/-1">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+            <input type="checkbox" id="ws-published" ${item.published ? 'checked' : ''}>
+            Published (visible on the public site)
+          </label>
+        </div>`;
+    } else {
+      fieldsHtml = `
+        <div class="field"><label>Name *</label><input id="ws-pt-name" value="${esc(item.name)}"></div>
+        <div class="field"><label>Type</label>
+          <select id="ws-pt-type">
+            ${['partner','donor','government'].map(t =>
+              `<option value="${t}" ${item.type === t ? 'selected' : ''}>${t}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field" style="grid-column:1/-1"><label>Website URL</label><input id="ws-pt-website-url" value="${esc(item.website_url || '')}" placeholder="https://…"></div>
+        <div class="field" style="grid-column:1/-1"><label>Description (English)</label><textarea id="ws-pt-description-en" rows="2">${esc(item.description_en || '')}</textarea></div>
+        <div class="field" style="grid-column:1/-1"><label>Description (Swahili)</label><textarea id="ws-pt-description-sw" rows="2">${esc(item.description_sw || '')}</textarea></div>
+        <div class="field"><label>Display order</label><input id="ws-pt-display-order" type="number" value="${esc(item.display_order || 0)}"></div>
+        <div class="field">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:24px">
+            <input type="checkbox" id="ws-pt-is-active" ${item.is_active !== false ? 'checked' : ''}>
+            Active
+          </label>
+        </div>
+        ${imageField}`;
+    }
+
+    return `
+      <div class="card card-inner" style="margin-bottom:18px;border-color:var(--leaf)">
+        <h3>${esc(title)}</h3>
+        <div class="form-grid" style="grid-template-columns:1fr 1fr;gap:0 16px">
+          ${fieldsHtml}
+        </div>
+        <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn-primary" id="ws-save">${isNew ? 'Create' : 'Save changes'}</button>
+          <button class="btn-sm" id="ws-cancel" style="padding:10px 18px">Cancel</button>
+          <div id="ws-err" class="err-msg" style="flex:1;margin:0;align-self:center"></div>
+        </div>
+      </div>`;
+  }
+
+  function wireWebsiteHandlers(seq) {
+    const { kind, id } = state.websiteEditing || { kind: null, id: null };
+
+    // ── Delete buttons on the list rows ──
+    document.querySelectorAll('[data-ws-edit]').forEach(btn => btn.onclick = () => {
+      const rowKind = btn.dataset.wsKind;
+      const rowId   = Number(btn.dataset.wsEdit);
+      const item = (rowKind === 'posts' ? window.__wsData?.posts
+                  : rowKind === 'impact-stories' ? window.__wsData?.stories
+                  : window.__wsData?.partners || [])
+                  .find(x => x.id === rowId);
+      if (!item) return;
+      state.websiteEditing = { kind: rowKind, id: rowId, item: { ...item } };
+      renderWebsite(++renderSeq);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    document.querySelectorAll('[data-ws-delete]').forEach(btn => btn.onclick = async () => {
+      const rowKind = btn.dataset.wsKind;
+      const rowId   = Number(btn.dataset.wsDelete);
+      const label   = btn.dataset.wsLabel || `#${rowId}`;
+      if (!confirm(`Delete ${label}? This cannot be undone.`)) return;
+      try {
+        await api(`/admin/website/${rowKind}/${rowId}`, { method: 'DELETE' });
+        toast('Deleted.');
+        state.websiteEditing = null;
+        renderWebsite(++renderSeq);
+      } catch (e) { toast(e.message, true); }
+    });
+
+    // ── Editor handlers ──
+    if (!state.websiteEditing) return;
+
+    // Cancel
+    document.getElementById('ws-cancel')?.addEventListener('click', () => {
+      state.websiteEditing = null;
+      renderWebsite(++renderSeq);
+    });
+
+    // Image upload widget
+    const fileInput = document.getElementById('ws-img-file');
+    const urlInput  = document.getElementById('ws-img-url');
+    const preview   = document.getElementById('ws-img-preview');
+    const status    = document.getElementById('ws-img-status');
+
+    if (fileInput) fileInput.onchange = async () => {
+      const file = fileInput.files?.[0];
+      if (!file) return;
+      if (!/^image\//.test(file.type)) {
+        status.textContent = 'Only image files are supported.';
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        status.textContent = 'Image is larger than 5 MB.';
+        return;
+      }
+      status.textContent = 'Uploading…';
+      try {
+        const { uploadUrl, publicUrl } = await api('/admin/upload-url', {
+          method: 'POST',
+          body: { fileType: file.type },
+        });
+        const res = await fetch(uploadUrl, {
+          method: 'PUT',
+          headers: { 'Content-Type': file.type },
+          body: file,
+        });
+        if (!res.ok) throw new Error(`Upload failed (${res.status})`);
+        urlInput.value = publicUrl;
+        preview.innerHTML = `<img src="${esc(publicUrl)}" alt="preview" style="width:100%;height:100%;object-fit:cover">`;
+        status.innerHTML = '<span style="color:var(--ok)">✅ Uploaded</span>';
+      } catch (e) {
+        status.innerHTML = `<span style="color:var(--danger)">${esc(e.message)}</span>`;
+        status.innerHTML += ' <span class="meta">— paste a URL manually instead.</span>';
+      }
+    };
+
+    if (urlInput) urlInput.oninput = () => {
+      const v = urlInput.value.trim();
+      preview.innerHTML = v
+        ? `<img src="${esc(v)}" alt="preview" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.textContent='Invalid image URL'">`
+        : 'No image';
+    };
+
+    // Save
+    document.getElementById('ws-save')?.addEventListener('click', async () => {
+      const err = document.getElementById('ws-err');
+      err.textContent = '';
+
+      const imageUrl = urlInput?.value.trim() || '';
+
+      try {
+        if (kind === 'posts') {
+          const payload = {
+            type:        document.getElementById('ws-p-type').value,
+            title_en:    document.getElementById('ws-p-title-en').value.trim(),
+            title_sw:    document.getElementById('ws-p-title-sw').value.trim(),
+            summary_en:  document.getElementById('ws-p-summary-en').value.trim(),
+            summary_sw:  document.getElementById('ws-p-summary-sw').value.trim(),
+            body_en:     document.getElementById('ws-p-body-en').value,
+            body_sw:     document.getElementById('ws-p-body-sw').value,
+            event_date:  document.getElementById('ws-p-event-date').value || null,
+            event_venue: document.getElementById('ws-p-event-venue').value.trim() || null,
+            doc_url:     document.getElementById('ws-p-doc-url').value.trim() || null,
+            image_url:   imageUrl || null,
+            published:   document.getElementById('ws-published').checked,
+          };
+          if (!payload.title_en || !payload.title_sw || !payload.summary_en || !payload.summary_sw) {
+            return err.textContent = 'Titles and summaries in both languages are required.';
+          }
+          if (id) await api(`/admin/website/posts/${id}`, { method: 'PUT',  body: payload });
+          else    await api(`/admin/website/posts`,         { method: 'POST', body: payload });
+        } else if (kind === 'impact-stories') {
+          const payload = {
+            title_en:     document.getElementById('ws-s-title-en').value.trim(),
+            title_sw:     document.getElementById('ws-s-title-sw').value.trim(),
+            body_en:      document.getElementById('ws-s-body-en').value,
+            body_sw:      document.getElementById('ws-s-body-sw').value,
+            programme:    document.getElementById('ws-s-programme').value.trim() || null,
+            location:     document.getElementById('ws-s-location').value.trim() || null,
+            metric_label: document.getElementById('ws-s-metric-label').value.trim() || null,
+            metric_value: document.getElementById('ws-s-metric-value').value.trim() || null,
+            image_url:    imageUrl || null,
+            published:    document.getElementById('ws-published').checked,
+          };
+          if (!payload.title_en || !payload.title_sw || !payload.body_en || !payload.body_sw) {
+            return err.textContent = 'Titles and bodies in both languages are required.';
+          }
+          if (id) await api(`/admin/website/impact-stories/${id}`, { method: 'PUT',  body: payload });
+          else    await api(`/admin/website/impact-stories`,         { method: 'POST', body: payload });
+        } else {
+          const payload = {
+            name:           document.getElementById('ws-pt-name').value.trim(),
+            type:           document.getElementById('ws-pt-type').value,
+            website_url:    document.getElementById('ws-pt-website-url').value.trim() || null,
+            description_en: document.getElementById('ws-pt-description-en').value.trim() || null,
+            description_sw: document.getElementById('ws-pt-description-sw').value.trim() || null,
+            logo_url:       imageUrl || null,
+            display_order:  Number(document.getElementById('ws-pt-display-order').value) || 0,
+            is_active:      document.getElementById('ws-pt-is-active').checked,
+          };
+          if (!payload.name) return err.textContent = 'Name is required.';
+          if (id) await api(`/admin/website/partners/${id}`, { method: 'PUT',  body: payload });
+          else    await api(`/admin/website/partners`,         { method: 'POST', body: payload });
+        }
+        toast(id ? 'Saved.' : 'Created.');
+        state.websiteEditing = null;
+        renderWebsite(++renderSeq);
+      } catch (e) {
+        err.textContent = e.message;
+      }
+    });
+  }
+
+  function renderWebsitePosts(posts) {
+    window.__wsData = window.__wsData || {};
+    window.__wsData.posts = posts;
+
+    if (!posts.length) {
+      return `<div class="card card-inner"><p class="meta">No posts yet. Click "+ New post" to create the first one.</p></div>`;
+    }
+    return `
+      <div class="card card-table">
+        <table>
+          <thead><tr><th>Image</th><th>Type</th><th>Title (EN)</th><th>Status</th><th>Published</th><th>Actions</th></tr></thead>
+          <tbody>
+            ${posts.map(p => `
+              <tr>
+                <td style="width:80px">
+                  ${p.image_url
+                    ? `<img src="${esc(p.image_url)}" alt="" style="width:64px;height:44px;object-fit:cover;border-radius:6px;display:block">`
+                    : `<div style="width:64px;height:44px;background:var(--paper);border:1px dashed var(--line);border-radius:6px"></div>`}
+                </td>
+                <td><span class="badge">${esc(p.type)}</span></td>
+                <td><strong>${esc(p.title_en)}</strong><br><span class="meta">${esc((p.summary_en||'').slice(0,80))}${(p.summary_en||'').length>80?'…':''}</span></td>
+                <td>${p.published ? '<span class="badge badge-ok">Published</span>' : '<span class="badge" style="background:#f3f5f1;color:#7a5610">Draft</span>'}</td>
+                <td class="meta">${p.published_at ? ago(p.published_at) : '—'}</td>
+                <td class="action-cell">
+                  ${can('website','edit')    ? `<button class="btn-sm" data-ws-edit="${p.id}" data-ws-kind="posts">Edit</button>` : ''}
+                  ${can('website','approve') ? `<button class="btn-sm btn-danger" data-ws-delete="${p.id}" data-ws-kind="posts" data-ws-label="${esc(p.title_en)}">Delete</button>` : ''}
+                </td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  }
+
+  function renderWebsiteStories(stories) {
+    window.__wsData = window.__wsData || {};
+    window.__wsData.stories = stories;
+
+    if (!stories.length) {
+      return `<div class="card card-inner"><p class="meta">No impact stories yet. Click "+ New story" to create the first one.</p></div>`;
+    }
+    return `
+      <div class="card card-table">
+        <table>
+          <thead><tr><th>Image</th><th>Title (EN)</th><th>Programme</th><th>Location</th><th>Metric</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody>
+            ${stories.map(s => `
+              <tr>
+                <td style="width:80px">
+                  ${s.image_url
+                    ? `<img src="${esc(s.image_url)}" alt="" style="width:64px;height:44px;object-fit:cover;border-radius:6px;display:block">`
+                    : `<div style="width:64px;height:44px;background:var(--paper);border:1px dashed var(--line);border-radius:6px"></div>`}
+                </td>
+                <td><strong>${esc(s.title_en)}</strong></td>
+                <td class="meta">${esc(s.programme || '—')}</td>
+                <td class="meta">${esc(s.location || '—')}</td>
+                <td class="meta">${s.metric_value ? `${esc(s.metric_value)} ${esc(s.metric_label || '')}` : '—'}</td>
+                <td>${s.published ? '<span class="badge badge-ok">Published</span>' : '<span class="badge" style="background:#f3f5f1;color:#7a5610">Draft</span>'}</td>
+                <td class="action-cell">
+                  ${can('website','edit')    ? `<button class="btn-sm" data-ws-edit="${s.id}" data-ws-kind="impact-stories">Edit</button>` : ''}
+                  ${can('website','approve') ? `<button class="btn-sm btn-danger" data-ws-delete="${s.id}" data-ws-kind="impact-stories" data-ws-label="${esc(s.title_en)}">Delete</button>` : ''}
+                </td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  }
+
+  function renderWebsitePartners(partners) {
+    window.__wsData = window.__wsData || {};
+    window.__wsData.partners = partners;
+
+    if (!partners.length) {
+      return `<div class="card card-inner"><p class="meta">No partners yet. Click "+ New partner" to add the first one.</p></div>`;
+    }
+    return `
+      <div class="card card-table">
+        <table>
+          <thead><tr><th>Logo</th><th>Name</th><th>Type</th><th>Order</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody>
+            ${partners.map(p => `
+              <tr>
+                <td style="width:80px">
+                  ${p.logo_url
+                    ? `<img src="${esc(p.logo_url)}" alt="" style="width:64px;height:44px;object-fit:contain;background:#fff;border:1px solid var(--line);border-radius:6px;display:block">`
+                    : `<div style="width:64px;height:44px;background:var(--paper);border:1px dashed var(--line);border-radius:6px"></div>`}
+                </td>
+                <td><strong>${esc(p.name)}</strong></td>
+                <td><span class="badge">${esc(p.type)}</span></td>
+                <td class="meta">${esc(String(p.display_order ?? 0))}</td>
+                <td>${p.is_active ? '<span class="badge badge-ok">Active</span>' : '<span class="badge" style="background:#f3f5f1;color:#7a5610">Hidden</span>'}</td>
+                <td class="action-cell">
+                  ${can('website','edit')    ? `<button class="btn-sm" data-ws-edit="${p.id}" data-ws-kind="partners">Edit</button>` : ''}
+                  ${can('website','approve') ? `<button class="btn-sm btn-danger" data-ws-delete="${p.id}" data-ws-kind="partners" data-ws-label="${esc(p.name)}">Delete</button>` : ''}
+                </td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  }
+
+  // ═════════════════════════════════════════════════════════════════════════
+  // PROFILE
+  // ═════════════════════════════════════════════════════════════════════════
+
   async function renderProfile(seq) {
     shell(pageHead('My Profile','Loading…'));
 
@@ -1420,6 +1888,11 @@
 
   (async () => {
     try {
+      // Fire-and-forget: fetch the service banner immediately so it appears
+      // on every screen — including login, register and forgot-password —
+      // before the rest of the boot sequence runs.
+      fetchAndShowBanner();
+
       const handled = await handleUrlTokens();
       if (handled) return;
       await tryRestoreSession();
