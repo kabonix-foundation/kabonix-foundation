@@ -57,7 +57,7 @@
 
   <main id="home">
 
-    <!-- HERO SECTION -->
+    <!-- HERO -->
     <section class="hero">
       <div class="container hero-grid">
         <div class="reveal">
@@ -94,7 +94,7 @@
       </div>
     </section>
 
-    <!-- ABOUT / FOCUS AREAS SECTION -->
+    <!-- ABOUT -->
     <section id="about" class="section-bg">
       <div class="container">
         <div class="heading reveal">
@@ -110,7 +110,6 @@
               <p data-i18n="card_climate_desc">Implementing projects that mitigate climate change and build resilient ecosystems.</p>
             </div>
           </article>
-
           <article class="card card-blue-economy reveal reveal-delay-1">
             <div class="card-content">
               <div class="icon">🐟</div>
@@ -123,7 +122,6 @@
               <div class="fish fish-3"></div>
             </div>
           </article>
-
           <article class="card reveal reveal-delay-2">
             <div class="card-content">
               <div class="icon">🏛️</div>
@@ -135,7 +133,7 @@
       </div>
     </section>
 
-    <!-- IMPACT STORIES SECTION -->
+    <!-- IMPACT STORIES -->
     <section id="impact" class="impact-section">
       <div class="container">
         <div class="heading reveal" style="color:#fff;">
@@ -143,27 +141,13 @@
           <h2 style="color:#fff;" data-i18n="impact_title">Results Highlights</h2>
           <p style="color:#b8d8c8;" data-i18n="impact_sub">Real numbers. Real change. See how your support translates into measurable impact.</p>
         </div>
-        <div class="impact-grid">
-          <article class="impact-card reveal">
-            <div class="metric">1.2k</div>
-            <h3 data-i18n="impact_1_title">Households Empowered</h3>
-            <p data-i18n="impact_1_desc">Tracked across community and livelihood improvement programmes.</p>
-          </article>
-          <article class="impact-card reveal reveal-delay-1">
-            <div class="metric">48k</div>
-            <h3 data-i18n="impact_2_title">CO₂e Tonnes Reduced</h3>
-            <p data-i18n="impact_2_desc">Carbon and ecosystem impact measured through monitored project reporting.</p>
-          </article>
-          <article class="impact-card reveal reveal-delay-2">
-            <div class="metric">28</div>
-            <h3 data-i18n="impact_3_title">Project Sites</h3>
-            <p data-i18n="impact_3_desc">Mapped and managed through integrated site-level monitoring workflows.</p>
-          </article>
+        <div class="impact-grid" id="impact-grid">
+          <!-- Populated by script.js from /api/website/impact-stories -->
         </div>
       </div>
     </section>
 
-    <!-- NEWS & EVENTS SECTION -->
+    <!-- NEWS & EVENTS -->
     <section id="news" class="section-bg">
       <div class="container">
         <div class="heading reveal">
@@ -171,36 +155,13 @@
           <h2 data-i18n="news_title">Latest Updates & Publications</h2>
           <p data-i18n="news_sub">Stay informed about our latest projects, upcoming events, and published reports.</p>
         </div>
-        <div class="projects-grid">
-          <div class="project-card reveal">
-            <img src="https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&q=80" alt="News" class="project-img">
-            <div class="project-content">
-              <span class="project-tag" data-i18n="news_tag_1">Press Release</span>
-              <h3 data-i18n="news_1_title">Kabonix Launches New Blue Economy Initiative</h3>
-              <div class="project-loc" data-i18n="news_1_date">📅 October 2026</div>
-            </div>
-          </div>
-          <div class="project-card reveal reveal-delay-1">
-            <img src="https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&q=80" alt="Event" class="project-img">
-            <div class="project-content">
-              <span class="project-tag" data-i18n="news_tag_2">Upcoming Event</span>
-              <h3 data-i18n="news_2_title">Annual Donor & Partner Appreciation Gala</h3>
-              <div class="project-loc" data-i18n="news_2_date">📅 November 15, 2026</div>
-            </div>
-          </div>
-          <div class="project-card reveal reveal-delay-2">
-            <img src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&q=80" alt="Publication" class="project-img">
-            <div class="project-content">
-              <span class="project-tag" data-i18n="news_tag_3">Publication</span>
-              <h3 data-i18n="news_3_title">2025 Annual Impact & Transparency Report</h3>
-              <div class="project-loc" data-i18n="news_3_date">📄 Download PDF</div>
-            </div>
-          </div>
+        <div class="projects-grid" id="news-grid">
+          <!-- Populated by script.js from /api/website/posts -->
         </div>
       </div>
     </section>
 
-    <!-- PARTNERS & DONORS SECTION -->
+    <!-- PARTNERS -->
     <section id="partners" style="background: var(--cream);">
       <div class="container">
         <div class="heading reveal" style="text-align: center; margin: 0 auto 50px;">
@@ -208,19 +169,8 @@
           <h2 data-i18n="partners_title">Recognition & Collaboration</h2>
           <p data-i18n="partners_sub">We are grateful for the support of our partners and donors who make our work possible.</p>
         </div>
-        <div class="partners-grid">
-          <div class="partner-logo reveal">
-            <span data-i18n="partner_1">🌍 Global Climate Fund</span>
-          </div>
-          <div class="partner-logo reveal reveal-delay-1">
-            <span data-i18n="partner_2">🏛️ Ministry of Environment</span>
-          </div>
-          <div class="partner-logo reveal reveal-delay-2">
-            <span data-i18n="partner_3">🌊 Blue Ocean Alliance</span>
-          </div>
-          <div class="partner-logo reveal reveal-delay-3">
-            <span data-i18n="partner_4">🤝 Community Trust</span>
-          </div>
+        <div class="partners-grid" id="partners-grid">
+          <!-- Populated by script.js from /api/website/partners -->
         </div>
       </div>
     </section>
