@@ -1,11 +1,11 @@
-// Translation Dictionary
+// script.js — Public website: language toggle, dynamic content, slideshows.
+
+// ── Translation dictionary ────────────────────────────────────────────────
 const translations = {
   en: {
     top_identity: "Public Identity & Transparency",
     top_partner: "Partner With Us →",
-    nav_about: "About",
     nav_about_us: "About Us",
-    nav_programmes: "Programmes",
     nav_news: "News & Events",
     nav_impact: "Impact",
     nav_partners: "Partners",
@@ -28,44 +28,21 @@ const translations = {
     about_sub: "Kabonix Foundation is dedicated to climate resilience and the sustainable blue economy. We work hand-in-hand with communities to create lasting impact.",
     card_climate_title: "Climate Action",
     card_climate_desc: "Implementing projects that mitigate climate change and build resilient ecosystems.",
-    card_climate_link: "Explore Programmes →",
     card_blue_title: "Blue Economy",
     card_blue_desc: "Promoting sustainable use of ocean resources for economic growth and improved livelihoods.",
-    card_blue_link: "Explore Programmes →",
     card_gov_title: "Governance & Transparency",
     card_gov_desc: "Ensuring accountability to our donors, partners, and the communities we serve.",
-    card_gov_link: "View Our Impact →",
     impact_kicker: "Impact Stories",
     impact_title: "Results Highlights",
     impact_sub: "Real numbers. Real change. See how your support translates into measurable impact.",
-    impact_1_title: "Households Empowered",
-    impact_1_desc: "Tracked across community and livelihood improvement programmes.",
-    impact_2_title: "CO₂e Tonnes Reduced",
-    impact_2_desc: "Carbon and ecosystem impact measured through monitored project reporting.",
-    impact_3_title: "Project Sites",
-    impact_3_desc: "Mapped and managed through integrated site-level monitoring workflows.",
     news_kicker: "News & Events",
     news_title: "Latest Updates & Publications",
     news_sub: "Stay informed about our latest projects, upcoming events, and published reports.",
-    news_tag_1: "Press Release",
-    news_1_title: "Kabonix Launches New Blue Economy Initiative",
-    news_1_date: "📅 October 2026",
-    news_tag_2: "Upcoming Event",
-    news_2_title: "Annual Donor & Partner Appreciation Gala",
-    news_2_date: "📅 November 15, 2026",
-    news_tag_3: "Publication",
-    news_3_title: "2025 Annual Impact & Transparency Report",
-    news_3_date: "📄 Download PDF",
     partners_kicker: "Partners & Donors",
     partners_title: "Recognition & Collaboration",
     partners_sub: "We are grateful for the support of our partners and donors who make our work possible.",
-    partner_1: "🌍 Global Climate Fund",
-    partner_2: "🏛️ Ministry of Environment",
-    partner_3: "🌊 Blue Ocean Alliance",
-    partner_4: "🤝 Community Trust",
     cta_title: "Partner with Kabonix Foundation.",
     cta_sub: "Contact us to discuss how we can work together for a sustainable future.",
-    cta_btn: "Contact Us",
     contact_via_email: "Email us",
     contact_via_whatsapp: "WhatsApp",
     footer_desc: "The Foundation's public identity and transparency window — visited by donors, partners, government and the communities it serves.",
@@ -79,23 +56,14 @@ const translations = {
     footer_privacy: "Privacy Policy",
     footer_terms: "Terms & Conditions",
     footer_transparency: "Transparency Report",
-    programmes_back: "← Back",
-    programmes_title: "Our Programme Areas",
-    programmes_sub: "Programmes the Kabonix Foundation works on.",
-    programmes_blue_title: "Blue Economy & Climate",
-    programmes_blue_desc: "Blue carbon, mangrove restoration, sustainable fisheries and aquaculture.",
-    programmes_carbon_title: "Carbon & Environmental Data",
-    programmes_carbon_desc: "Carbon project registry, GIS plot mapping, MRV workflows and carbon accounting.",
-    programmes_agri_title: "Climate-smart Agriculture",
-    programmes_agri_desc: "Supporting smallholder farmers with climate-adaptive practices and soil health monitoring.",
-    language_label: "Language"
+    empty_news: "No news yet — check back soon.",
+    empty_impact: "No impact stories yet.",
+    empty_partners: "No partners listed yet."
   },
   sw: {
     top_identity: "Utambulisho wa Umma na Uwazi",
     top_partner: "Shirikiana Nasi →",
-    nav_about: "Kuhusu",
     nav_about_us: "Kuhusu Sisi",
-    nav_programmes: "Programu",
     nav_news: "Habari na Matukio",
     nav_impact: "Athari",
     nav_partners: "Washirika",
@@ -118,44 +86,21 @@ const translations = {
     about_sub: "Kabonix Foundation imejitolea kwa ustahimilivu wa hali ya hewa na uchumi endelevu wa bluu. Tunafanya kazi bega kwa bega na jamii kuunda athari ya kudumu.",
     card_climate_title: "Hatua za Hali ya Hewa",
     card_climate_desc: "Kutekeleza miradi inayopunguza mabadiliko ya hali ya hewa na kujenga mifumo ikolojia imara.",
-    card_climate_link: "Chunguza Programu →",
     card_blue_title: "Uchumi wa Bluu",
     card_blue_desc: "Kukuza matumizi endelevu ya rasilimali za bahari kwa ukuaji wa uchumi na maisha bora.",
-    card_blue_link: "Chunguza Programu →",
     card_gov_title: "Utawala na Uwazi",
     card_gov_desc: "Kuhakikisha uwajibikaji kwa wafadhili wetu, washirika, na jamii tunazohudumia.",
-    card_gov_link: "Tazama Athari Zetu →",
     impact_kicker: "Hadithi za Athari",
     impact_title: "Mambo Muhimu ya Matokeo",
     impact_sub: "Nambari halisi. Mabadiliko halisi. Tazama jinsi msaada wako unavyogeuka kuwa athari inayoweza kupimwa.",
-    impact_1_title: "Kaya Zilizowezeshwa",
-    impact_1_desc: "Inafuatiliwa katika programu za uboreshaji wa jamii na maisha.",
-    impact_2_title: "Tani za CO₂e Zilizopunguzwa",
-    impact_2_desc: "Athari za kaboni na mifumo ikolojia hupimwa kupitia ripoti za miradi inayofuatiliwa.",
-    impact_3_title: "Maeneo ya Miradi",
-    impact_3_desc: "Yamechorwa na kusimamiwa kupitia mitiririko jumuishi ya ufuatiliaji wa maeneo.",
     news_kicker: "Habari na Matukio",
     news_title: "Habari na Machapisho ya Hivi Karibuni",
     news_sub: "Kaa na habari kuhusu miradi yetu ya hivi karibuni, matukio yajayo, na ripoti zilizochapishwa.",
-    news_tag_1: "Tangazo la Vyombo vya Habari",
-    news_1_title: "Kabonix Yazindua Mpango Mpya wa Uchumi wa Bluu",
-    news_1_date: "📅 Oktoba 2026",
-    news_tag_2: "Tukio Linalokuja",
-    news_2_title: "Gala ya Kila Mwaka ya Kuwathamini Wafadhili na Washirika",
-    news_2_date: "📅 Novemba 15, 2026",
-    news_tag_3: "Chapisho",
-    news_3_title: "Ripoti ya Athari na Uwazi ya Mwaka 2025",
-    news_3_date: "📄 Pakua PDF",
     partners_kicker: "Washirika na Wafadhili",
     partners_title: "Utambuzi na Ushirikiano",
     partners_sub: "Tunashukuru kwa msaada wa washirika na wafadhili wetu ambao hufanya kazi yetu iwezekane.",
-    partner_1: "🌍 Mfuko wa Kimataifa wa Hali ya Hewa",
-    partner_2: "🏛️ Wizara ya Mazingira",
-    partner_3: "🌊 Muungano wa Bahari ya Bluu",
-    partner_4: "🤝 Trust ya Jamii",
     cta_title: "Shirikiana na Kabonix Foundation.",
     cta_sub: "Wasiliana nasi ili kujadili jinsi tunaweza kufanya kazi pamoja kwa mustakabali endelevu.",
-    cta_btn: "Wasiliana Nasi",
     contact_via_email: "Tutumie barua pepe",
     contact_via_whatsapp: "WhatsApp",
     footer_desc: "Dirisha la utambulisho wa umma na uwazi wa Foundation — linatembelewa na wafadhili, washirika, serikali na jamii inayohudumia.",
@@ -169,21 +114,42 @@ const translations = {
     footer_privacy: "Sera ya Faragha",
     footer_terms: "Masharti na Vigezo",
     footer_transparency: "Ripoti ya Uwazi",
-    programmes_back: "← Rudi",
-    programmes_title: "Maeneo ya Programu Zetu",
-    programmes_sub: "Programu ambazo Kabonix Foundation inatekeleza.",
-    programmes_blue_title: "Uchumi wa Bluu na Hali ya Hewa",
-    programmes_blue_desc: "Kaboni ya bluu, urejeshaji wa mikoko, uvuvi endelevu na ufugaji wa viumbe vya majini.",
-    programmes_carbon_title: "Data za Kaboni na Mazingira",
-    programmes_carbon_desc: "Usajili wa miradi ya kaboni, uchoraji wa maeneo kwa GIS, mitiririko ya MRV na uhasibu wa kaboni.",
-    programmes_agri_title: "Kilimo Kinachozingatia Hali ya Hewa",
-    programmes_agri_desc: "Kuwasaidia wakulima wadogo kwa mbinu zinazokabiliana na mabadiliko ya hali ya hewa na ufuatiliaji wa afya ya udongo.",
-    language_label: "Lugha"
+    empty_news: "Bado hakuna habari — angalia tena hivi karibuni.",
+    empty_impact: "Bado hakuna hadithi za athari.",
+    empty_partners: "Bado hakuna washirika walioorodheshwa."
   }
 };
 
+// ── Language state ───────────────────────────────────────────────────────
+const STORAGE_KEY = 'kabonix_lang';
 const queryLang = new URLSearchParams(window.location.search).get('lang');
-let currentLang = (queryLang === 'sw' || queryLang === 'en') ? queryLang : (localStorage.getItem('kabonix_lang') || 'en');
+let currentLang = (queryLang === 'sw' || queryLang === 'en')
+  ? queryLang
+  : (localStorage.getItem(STORAGE_KEY) || 'en');
+
+// ── API URL from meta tag (injected by serve.js) ─────────────────────────
+const API_URL = (document.querySelector('meta[name="api-url"]')?.content || '').replace(/\/$/, '');
+
+// ── Helpers ──────────────────────────────────────────────────────────────
+function esc(s) {
+  if (s == null) return '';
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+
+function pickImages(item) {
+  // Prefer the array; fall back to the legacy single URL.
+  if (Array.isArray(item.image_urls) && item.image_urls.length) return item.image_urls;
+  if (item.image_url) return [item.image_url];
+  return [];
+}
+
+function formatDate(ts) {
+  if (!ts) return '';
+  const locale = currentLang === 'sw' ? 'sw-TZ' : 'en-GB';
+  return new Date(ts).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' });
+}
 
 function withLang(href, lang = currentLang) {
   try {
@@ -191,26 +157,16 @@ function withLang(href, lang = currentLang) {
     url.searchParams.set('lang', lang === 'sw' ? 'sw' : 'en');
     return url.href;
   } catch {
-    const separator = href.includes('?') ? '&' : '?';
-    return `${href}${separator}lang=${encodeURIComponent(lang)}`;
+    const sep = href.includes('?') ? '&' : '?';
+    return `${href}${sep}lang=${encodeURIComponent(lang)}`;
   }
 }
 
-function updatePortalLinks() {
-  const configuredPortal = document.querySelector('meta[name="portal-url"]')?.content;
-  if (!configuredPortal) return;
-  document.querySelectorAll('.portal-link').forEach(link => {
-    link.href = withLang(configuredPortal);
-  });
-}
-
+// ── Language application ─────────────────────────────────────────────────
 function setLanguage(lang) {
   currentLang = (lang === 'sw') ? 'sw' : 'en';
-  localStorage.setItem('kabonix_lang', currentLang);
+  try { localStorage.setItem(STORAGE_KEY, currentLang); } catch {}
   document.documentElement.lang = currentLang;
-
-  const titleNode = document.querySelector('title[data-i18n]');
-  if (titleNode) titleNode.textContent = translations[currentLang]?.[titleNode.dataset.i18n] || titleNode.textContent;
 
   const url = new URL(window.location.href);
   url.searchParams.set('lang', currentLang);
@@ -234,19 +190,211 @@ function setLanguage(lang) {
   updatePortalLinks();
   const backLink = document.querySelector('.back-link');
   if (backLink) backLink.href = withLang('/');
+
+  // Reload content in the new language from the API.
+  loadWebsiteContent();
 }
 
-// Fetch the service-status banner from the API and show it at the very top
-// of the page. The API URL comes from the <meta name="api-url"> tag that
-// serve.js injects at runtime.
+function updatePortalLinks() {
+  const configuredPortal = document.querySelector('meta[name="portal-url"]')?.content;
+  if (!configuredPortal) return;
+  document.querySelectorAll('.portal-link').forEach(link => {
+    link.href = withLang(configuredPortal);
+  });
+}
+
+// ── Slideshow ────────────────────────────────────────────────────────────
+// Attaches slide behaviour to any element with class="slideshow".
+// Dots navigate; auto-advance every 4.5s; pauses on hover.
+function initSlideshow(root) {
+  const slides = root.querySelectorAll('.slide');
+  if (slides.length < 2) return;
+  const dots = root.querySelectorAll('.slide-dot');
+  let idx = 0;
+  let timer = null;
+
+  function show(i) {
+    idx = (i + slides.length) % slides.length;
+    slides.forEach((s, k) => s.classList.toggle('active', k === idx));
+    dots.forEach((d, k) => d.classList.toggle('active', k === idx));
+  }
+
+  function start() {
+    stop();
+    timer = setInterval(() => show(idx + 1), 4500);
+  }
+  function stop() {
+    if (timer) { clearInterval(timer); timer = null; }
+  }
+
+  dots.forEach((dot, k) => {
+    dot.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      show(k);
+      start();   // reset timer after manual navigation
+    });
+  });
+
+  root.addEventListener('mouseenter', stop);
+  root.addEventListener('mouseleave', start);
+
+  show(0);
+  start();
+}
+
+// ── Card renderers ───────────────────────────────────────────────────────
+function renderSlideshow(images, altText) {
+  if (!images.length) {
+    return `<div class="card-slideshow-empty" aria-hidden="true"></div>`;
+  }
+  const slides = images.map((u, i) =>
+    `<img class="slide${i === 0 ? ' active' : ''}" src="${esc(u)}" alt="${esc(altText)}" loading="${i === 0 ? 'eager' : 'lazy'}">`
+  ).join('');
+  const dots = images.length > 1
+    ? `<div class="slide-dots">${images.map((_, i) =>
+        `<button class="slide-dot${i === 0 ? ' active' : ''}" type="button" aria-label="Image ${i+1}"></button>`
+      ).join('')}</div>`
+    : '';
+  return `<div class="slideshow" data-slideshow>${slides}${dots}</div>`;
+}
+
+function renderNewsCard(post) {
+  const images = pickImages(post);
+  const altText = post.title || 'Post image';
+  const tag = post.type === 'event' ? 'Upcoming Event'
+            : post.type === 'publication' ? 'Publication'
+            : 'Press Release';
+  const meta = post.event_date ? `📅 ${formatDate(post.event_date)}`
+             : post.doc_url ? '📄 Download PDF'
+             : post.published_at ? formatDate(post.published_at)
+             : '';
+  return `
+    <div class="project-card reveal">
+      ${renderSlideshow(images, altText)}
+      <div class="project-content">
+        <span class="project-tag">${esc(tag)}</span>
+        <h3>${esc(post.title || '')}</h3>
+        <p class="meta" style="margin: 6px 0 8px">${esc(post.summary || '')}</p>
+        ${meta ? `<div class="project-loc">${esc(meta)}</div>` : ''}
+      </div>
+    </div>`;
+}
+
+function renderImpactCard(story) {
+  const images = pickImages(story);
+  const altText = story.title || 'Impact story';
+  const metric = story.metric_value
+    ? `<div class="metric">${esc(story.metric_value)}</div>`
+    : '';
+  return `
+    <article class="impact-card reveal">
+      ${images.length ? `<div class="impact-thumb">${renderSlideshow(images, altText)}</div>` : ''}
+      ${metric}
+      <h3>${esc(story.title || '')}</h3>
+      <p>${esc(story.body || '')}</p>
+      ${story.location ? `<p class="meta" style="margin-top:8px">📍 ${esc(story.location)}</p>` : ''}
+    </article>`;
+}
+
+function renderPartnerCard(partner) {
+  const logo = partner.logo_url
+    ? `<img src="${esc(partner.logo_url)}" alt="${esc(partner.name)}" class="partner-logo-img">`
+    : `<span aria-hidden="true">🤝</span>`;
+  return `
+    <div class="partner-logo reveal">
+      ${logo}
+      <span>${esc(partner.name)}</span>
+    </div>`;
+}
+
+function renderEmpty(msgKey, container) {
+  const msg = translations[currentLang][msgKey] || '';
+  container.innerHTML = `<p class="meta" style="grid-column:1/-1;text-align:center;padding:24px 0">${esc(msg)}</p>`;
+}
+
+// ── API loading ──────────────────────────────────────────────────────────
+async function fetchJson(path) {
+  if (!API_URL) throw new Error('API URL not configured');
+  const res = await fetch(API_URL + path);
+  if (!res.ok) throw new Error(`Request failed (${res.status})`);
+  return res.json();
+}
+
+async function loadWebsiteContent() {
+  const newsGrid     = document.getElementById('news-grid');
+  const impactGrid   = document.getElementById('impact-grid');
+  const partnersGrid = document.getElementById('partners-grid');
+
+  // ── News & Events ──
+  if (newsGrid) {
+    try {
+      const posts = await fetchJson(`/api/website/posts?lang=${currentLang}`);
+      if (Array.isArray(posts) && posts.length) {
+        newsGrid.innerHTML = posts.map(renderNewsCard).join('');
+        newsGrid.querySelectorAll('[data-slideshow]').forEach(initSlideshow);
+      } else {
+        renderEmpty('empty_news', newsGrid);
+      }
+    } catch {
+      renderEmpty('empty_news', newsGrid);
+    }
+  }
+
+  // ── Impact stories ──
+  if (impactGrid) {
+    try {
+      const stories = await fetchJson(`/api/website/impact-stories?lang=${currentLang}`);
+      if (Array.isArray(stories) && stories.length) {
+        impactGrid.innerHTML = stories.map(renderImpactCard).join('');
+        impactGrid.querySelectorAll('[data-slideshow]').forEach(initSlideshow);
+      } else {
+        renderEmpty('empty_impact', impactGrid);
+      }
+    } catch {
+      renderEmpty('empty_impact', impactGrid);
+    }
+  }
+
+  // ── Partners ──
+  if (partnersGrid) {
+    try {
+      const partners = await fetchJson(`/api/website/partners?lang=${currentLang}`);
+      if (Array.isArray(partners) && partners.length) {
+        partnersGrid.innerHTML = partners.map(renderPartnerCard).join('');
+      } else {
+        renderEmpty('empty_partners', partnersGrid);
+      }
+    } catch {
+      renderEmpty('empty_partners', partnersGrid);
+    }
+  }
+
+  // Re-run scroll reveal so newly-added cards appear correctly.
+  attachScrollReveal();
+}
+
+// ── Scroll reveal ────────────────────────────────────────────────────────
+function attachScrollReveal() {
+  const reveals = document.querySelectorAll('.reveal:not(.visible)');
+  if (!reveals.length) return;
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) entry.target.classList.add('visible');
+    });
+  }, { threshold: 0.1, rootMargin: "0px 0px -50px 0px" });
+  reveals.forEach(el => observer.observe(el));
+}
+
+// ── Service banner ───────────────────────────────────────────────────────
 async function fetchAndShowBanner() {
-  const apiUrl = document.querySelector('meta[name="api-url"]')?.content;
-  if (!apiUrl) return;
+  if (!API_URL) return;
   try {
-    const res = await fetch(apiUrl.replace(/\/$/, '') + '/api/status');
+    const res = await fetch(API_URL + '/api/status');
     if (!res.ok) return;
     const data = await res.json();
     const msg = data?.banner?.message?.trim();
+    document.getElementById('service-banner')?.remove();
     if (!msg) return;
     const el = document.createElement('div');
     el.id = 'service-banner';
@@ -262,21 +410,12 @@ async function fetchAndShowBanner() {
   } catch { /* silent */ }
 }
 
+// ── Boot ─────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   setLanguage(currentLang);
 
-  const reveals = document.querySelectorAll('.reveal');
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) entry.target.classList.add('visible');
-    });
-  }, { threshold: 0.1, rootMargin: "0px 0px -50px 0px" });
-
-  reveals.forEach(reveal => observer.observe(reveal));
-
   const toggleBtn = document.getElementById('portal-toggle');
   const menu = document.getElementById('portal-menu');
-
   if (toggleBtn && menu) {
     toggleBtn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -291,4 +430,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
   updatePortalLinks();
   fetchAndShowBanner();
+  attachScrollReveal();
 });
