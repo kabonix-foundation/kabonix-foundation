@@ -1,4 +1,20 @@
 {
+  "name": "@kabonix/api",
+  "version": "1.0.0",
+  "description": "Kabonix Foundation API",
+  "type": "module",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.658.0",
+    "@aws-sdk/s3-request-presigner": "^3.658.0",
+    "nodemailer": "^6.9.7",
+    "pg": "^8.11.3",
+    "qrcode": "^1.5.3"
+  }
+}{
   "name": "kabonix-platform",
   "version": "1.0.0",
   "description": "Kabonix Foundation Digital Ecosystem Platform — monorepo",
