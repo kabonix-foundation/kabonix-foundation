@@ -18,6 +18,7 @@ import { can, loadPermissions, loadRoles, requirePermission } from './rbac.js';
 import { logAction }     from './audit.js';
 import { handleAdminRoute } from './admin-routes.js';
 import { isConfigured as s3Configured, createUploadUrl, s3Status } from './s3.js';
+import { translateTexts, providerName as translateProviderName, isConfigured as translateConfigured } from './translate.js';
 
 const PORT        = process.env.PORT        || 4000;
 const WEB_ORIGIN  = process.env.WEB_ORIGIN  || 'http://localhost:3001';
@@ -207,6 +208,7 @@ const server = http.createServer(async (req, res) => {
         ok: true, service: 'kabonix-api', db: 'postgres+postgis',
         time: new Date().toISOString(),
         s3: s3Status(),
+        translate: { provider: translateProviderName(), configured: translateConfigured() },
       });
     }
 
@@ -252,6 +254,17 @@ const server = http.createServer(async (req, res) => {
         return send(res, 200, { status, result });
       } catch (err) {
         return send(res, 500, { status, error: err.message });
+      }
+    }
+
+    // ── Translate diagnostic (temporary — remove before production) ──────────
+    if (parts[1] === '_translatetest' && req.method === 'GET') {
+      const text = url.searchParams.get('text') || 'Hello, this is a test.';
+      try {
+        const [out] = await translateTexts([text], 'en', 'sw');
+        return send(res, 200, { provider: translateProviderName(), input: text, output: out });
+      } catch (err) {
+        return send(res, 500, { provider: translateProviderName(), error: err.message });
       }
     }
 
@@ -566,6 +579,9 @@ const server = http.createServer(async (req, res) => {
     }
 
     // ═══ PUBLIC WEBSITE CONTENT ═══════════════════════════════════════════════
+    // Returns `image_urls` (array) for posts and impact stories so the public
+    // site can render a slide preview. `image_url` is still returned as a
+    // convenience field (first image or null) for older callers.
     const lang = url.searchParams.get('lang') === 'sw' ? 'sw' : 'en';
 
     if (parts[1] === 'website') {
@@ -575,7 +591,7 @@ const server = http.createServer(async (req, res) => {
           `SELECT id, type, slug,
                   title_${lang}   AS title,
                   summary_${lang} AS summary,
-                  image_url,
+                  image_url, image_urls,
                   event_date, event_venue, doc_url, published_at
            FROM posts WHERE published = TRUE ${type ? 'AND type = $1' : ''} ORDER BY published_at DESC`,
           type ? [type] : []
@@ -589,7 +605,7 @@ const server = http.createServer(async (req, res) => {
                   title_${lang}   AS title,
                   summary_${lang} AS summary,
                   body_${lang}    AS body,
-                  image_url,
+                  image_url, image_urls,
                   event_date, event_venue, doc_url, published_at
            FROM posts WHERE slug = $1 AND published = TRUE`,
           [parts[3]]
@@ -601,7 +617,8 @@ const server = http.createServer(async (req, res) => {
       if (parts[2] === 'impact-stories' && !parts[3] && req.method === 'GET') {
         const { rows } = await pool.query(
           `SELECT id, slug, title_${lang} AS title, body_${lang} AS body,
-                  programme, location, metric_label, metric_value, image_url
+                  programme, location, metric_label, metric_value,
+                  image_url, image_urls
            FROM impact_stories WHERE published = TRUE ORDER BY id DESC`
         );
         return send(res, 200, rows);
@@ -784,6 +801,33 @@ const server = http.createServer(async (req, res) => {
         return send(res, 200, result);
       } catch (err) {
         return send(res, 400, { error: err.message });
+      }
+    }
+
+    // ── POST /api/admin/translate ─────────────────────────────────────────────
+    if (parts[1] === 'admin' && parts[2] === 'translate' && req.method === 'POST') {
+      const denied = await checkPerm(user, 'website', 'create');
+      if (denied) return send(res, denied.status, denied.body);
+
+      if (!translateConfigured()) {
+        return send(res, 503, { error: 'Translation is not configured on this server.' });
+      }
+
+      const { texts, from = 'en', to = 'sw' } = await readBody(req);
+      if (!Array.isArray(texts)) return send(res, 400, { error: 'texts must be an array' });
+      if (texts.length > 20)     return send(res, 400, { error: 'Too many texts in one request (max 20)' });
+      if (from === to)           return send(res, 400, { error: 'Source and target languages must differ' });
+
+      try {
+        const translations = await translateTexts(texts, from, to);
+        await logAction({
+          userId: user.id, userEmail: user.email,
+          action: 'translate', entity: 'website_content',
+          detail: `${from}→${to}, ${texts.filter(t => String(t||'').trim()).length} field(s)`,
+        });
+        return send(res, 200, { translations, provider: translateProviderName() });
+      } catch (err) {
+        return send(res, 502, { error: `Translation failed: ${err.message}`, provider: translateProviderName() });
       }
     }
 
@@ -1091,7 +1135,8 @@ async function start() {
     console.log(`\nKabonix API ready → http://localhost:${PORT}`);
     console.log(`Health check     → http://localhost:${PORT}/health\n`);
     console.log(`Contact / registration notifications: ${CONTACT_INBOX}`);
-    console.log(`S3 uploads: ${s3Configured() ? 'enabled' : 'disabled'}\n`);
+    console.log(`S3 uploads:  ${s3Configured() ? 'enabled' : 'disabled'}`);
+    console.log(`Translation: ${translateProviderName()} (${translateConfigured() ? 'enabled' : 'disabled'})\n`);
   });
 }
 
