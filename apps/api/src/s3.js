@@ -1,48 +1,47 @@
-// s3.js — Pre-signed URL generator for direct browser-to-S3 uploads.
+// s3.js — S3 access via the EC2 instance role.
 //
-// The browser requests an upload URL from the API, then PUTs the file
-// straight to S3. The API never sees the file bytes — this keeps uploads
-// fast and the server memory footprint small.
+// The browser never talks to S3 directly. Uploads go browser → API → S3,
+// which avoids CORS entirely and works reliably on EC2.
 //
 // Required env vars:
-//   AWS_REGION              e.g. us-east-1
-//   AWS_ACCESS_KEY_ID       from the IAM user's .csv
-//   AWS_SECRET_ACCESS_KEY   from the same .csv
-//   S3_BUCKET_NAME          the bucket to upload into
+//   AWS_REGION        e.g. ap-south-1
+//   S3_BUCKET_NAME    e.g. kabonix-foundation-assets
 //
-// If any is missing, isConfigured() returns false and the CMS falls back to
-// a plain "paste an image URL" field.
+// Optional (local dev only — do NOT set on EC2):
+//   AWS_ACCESS_KEY_ID
+//   AWS_SECRET_ACCESS_KEY
 
 import crypto from 'node:crypto';
 
-const AWS_REGION            = process.env.AWS_REGION || '';
-const AWS_ACCESS_KEY_ID     = process.env.AWS_ACCESS_KEY_ID || '';
-const AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY || '';
-const S3_BUCKET_NAME        = process.env.S3_BUCKET_NAME || '';
+const AWS_REGION     = process.env.AWS_REGION || '';
+const S3_BUCKET_NAME = process.env.S3_BUCKET_NAME || '';
 
-const configured = !!(AWS_REGION && AWS_ACCESS_KEY_ID && AWS_SECRET_ACCESS_KEY && S3_BUCKET_NAME);
+const hasStaticKeys = !!(process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY);
+const credentialSource = hasStaticKeys ? 'static env vars' : 'EC2 instance role (IMDS)';
+
+const configured = !!(AWS_REGION && S3_BUCKET_NAME);
 
 let s3Client = null;
 let PutObjectCommand = null;
-let getSignedUrl = null;
+let DeleteObjectCommand = null;
 
 if (configured) {
   try {
-    const clientMod  = await import('@aws-sdk/client-s3');
-    const presignMod = await import('@aws-sdk/s3-request-presigner');
-    PutObjectCommand = clientMod.PutObjectCommand;
-    getSignedUrl     = presignMod.getSignedUrl;
-    s3Client = new clientMod.S3Client({
-      region: AWS_REGION,
-      credentials: {
-        accessKeyId:     AWS_ACCESS_KEY_ID,
-        secretAccessKey: AWS_SECRET_ACCESS_KEY,
-      },
-    });
+    const clientMod = await import('@aws-sdk/client-s3');
+    PutObjectCommand    = clientMod.PutObjectCommand;
+    DeleteObjectCommand = clientMod.DeleteObjectCommand;
+
+    s3Client = new clientMod.S3Client({ region: AWS_REGION });
+
     console.log(`[s3] S3 uploads enabled → bucket ${S3_BUCKET_NAME} in ${AWS_REGION}`);
+    console.log(`[s3] Credential source: ${credentialSource}`);
+    if (hasStaticKeys) {
+      console.warn('[s3] ⚠️  Static AWS keys detected. Remove AWS_ACCESS_KEY_ID');
+      console.warn('[s3]     and AWS_SECRET_ACCESS_KEY from .env — use the EC2 role.');
+    }
   } catch (err) {
     console.error('[s3] AWS SDK not installed — uploads disabled.');
-    console.error('[s3] Run:  npm install @aws-sdk/client-s3 @aws-sdk/s3-request-presigner');
+    console.error('[s3] Error:', err.message);
   }
 } else {
   console.log('[s3] S3 uploads disabled (env vars not set). CMS will use URL-only mode.');
@@ -58,15 +57,15 @@ const ALLOWED_IMAGE_TYPES = new Map([
 ]);
 
 /**
- * Create a pre-signed PUT URL the browser can upload to directly.
- * Returns { uploadUrl, publicUrl, key }.
+ * Upload raw bytes to S3 directly from the server. The browser never talks
+ * to S3 directly, so no CORS is involved.
  */
-export async function createUploadUrl({ fileType, folder = 'uploads' }) {
+export async function uploadBuffer({ buffer, contentType, folder = 'uploads' }) {
   if (!isConfigured()) throw new Error('S3 uploads are not configured');
 
-  const ext = ALLOWED_IMAGE_TYPES.get(fileType);
+  const ext = ALLOWED_IMAGE_TYPES.get(contentType);
   if (!ext) {
-    throw new Error(`Unsupported file type: ${fileType}. Allowed: ${[...ALLOWED_IMAGE_TYPES.keys()].join(', ')}`);
+    throw new Error(`Unsupported file type: ${contentType}. Allowed: ${[...ALLOWED_IMAGE_TYPES.keys()].join(', ')}`);
   }
 
   const key = `${folder}/${crypto.randomUUID()}.${ext}`;
@@ -74,18 +73,35 @@ export async function createUploadUrl({ fileType, folder = 'uploads' }) {
   const command = new PutObjectCommand({
     Bucket:      S3_BUCKET_NAME,
     Key:         key,
-    ContentType: fileType,
+    ContentType: contentType,
+    Body:        buffer,
   });
 
-  // Upload URL expires in 5 minutes — plenty of time for a browser to PUT
-  // an image, and short enough that a leaked URL is useless quickly.
-  const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn: 300 });
+  await s3Client.send(command);
 
-  // Public URL. This requires the bucket to allow public GET on `uploads/*`,
-  // which you set up via the bucket policy step in the AWS walkthrough.
   const publicUrl = `https://${S3_BUCKET_NAME}.s3.${AWS_REGION}.amazonaws.com/${key}`;
+  return { publicUrl, key };
+}
 
-  return { uploadUrl, publicUrl, key };
+/**
+ * Sanity check: can we actually reach S3 and write to the bucket?
+ * Writes a small file, deletes it, returns ok/failure.
+ */
+export async function verifyConnection() {
+  if (!isConfigured()) return { ok: false, reason: 'not configured' };
+  try {
+    const testKey = `uploads/_healthcheck-${Date.now()}.txt`;
+    await s3Client.send(new PutObjectCommand({
+      Bucket:      S3_BUCKET_NAME,
+      Key:         testKey,
+      ContentType: 'text/plain',
+      Body:        Buffer.from('ok'),
+    }));
+    await s3Client.send(new DeleteObjectCommand({ Bucket: S3_BUCKET_NAME, Key: testKey }));
+    return { ok: true, credentialSource };
+  } catch (err) {
+    return { ok: false, reason: err.message, name: err.name };
+  }
 }
 
 export function s3Status() {
@@ -93,11 +109,10 @@ export function s3Status() {
     configured: isConfigured(),
     bucket:     S3_BUCKET_NAME || null,
     region:     AWS_REGION || null,
-    reason: !AWS_REGION            ? 'AWS_REGION not set'
-          : !AWS_ACCESS_KEY_ID     ? 'AWS_ACCESS_KEY_ID not set'
-          : !AWS_SECRET_ACCESS_KEY ? 'AWS_SECRET_ACCESS_KEY not set'
-          : !S3_BUCKET_NAME        ? 'S3_BUCKET_NAME not set'
-          : !s3Client              ? 'AWS SDK not installed'
+    credentialSource,
+    reason: !AWS_REGION     ? 'AWS_REGION not set'
+          : !S3_BUCKET_NAME ? 'S3_BUCKET_NAME not set'
+          : !s3Client       ? 'AWS SDK not installed'
           : null,
   };
 }

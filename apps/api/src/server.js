@@ -17,7 +17,7 @@ import { sendMail, mailerStatus } from './mailer.js';
 import { can, loadPermissions, loadRoles, requirePermission } from './rbac.js';
 import { logAction }     from './audit.js';
 import { handleAdminRoute } from './admin-routes.js';
-import { isConfigured as s3Configured, createUploadUrl, s3Status } from './s3.js';
+import { isConfigured as s3Configured, uploadBuffer, verifyConnection, s3Status } from './s3.js';
 import { translateTexts, providerName as translateProviderName, isConfigured as translateConfigured } from './translate.js';
 
 const PORT        = process.env.PORT        || 4000;
@@ -227,7 +227,7 @@ const server = http.createServer(async (req, res) => {
       }
     }
 
-    // ── SMTP diagnostic (temporary — remove before production) ────────────────
+    // ── SMTP diagnostic ───────────────────────────────────────────────────────
     if (parts[1] === '_mailtest' && req.method === 'GET') {
       const status = mailerStatus();
       const to = url.searchParams.get('to');
@@ -242,22 +242,19 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { status, sendResult: result });
     }
 
-    // ── S3 diagnostic (temporary — remove before production) ──────────────────
+    // ── S3 diagnostic ─────────────────────────────────────────────────────────
+    //   GET /api/_s3test              → status only
+    //   GET /api/_s3test?verify=1     → real write+delete roundtrip
     if (parts[1] === '_s3test' && req.method === 'GET') {
       const status = s3Status();
-      const type = url.searchParams.get('type') || 'image/jpeg';
-      if (url.searchParams.get('upload') !== '1') {
-        return send(res, 200, { status, hint: 'Add ?upload=1&type=image/jpeg to get a real pre-signed URL.' });
+      if (url.searchParams.get('verify') === '1') {
+        const result = await verifyConnection();
+        return send(res, result.ok ? 200 : 500, { status, verify: result });
       }
-      try {
-        const result = await createUploadUrl({ fileType: type });
-        return send(res, 200, { status, result });
-      } catch (err) {
-        return send(res, 500, { status, error: err.message });
-      }
+      return send(res, 200, { status, hint: 'Add ?verify=1 to test the real connection.' });
     }
 
-    // ── Translate diagnostic (temporary — remove before production) ──────────
+    // ── Translate diagnostic ──────────────────────────────────────────────────
     if (parts[1] === '_translatetest' && req.method === 'GET') {
       const text = url.searchParams.get('text') || 'Hello, this is a test.';
       try {
@@ -579,9 +576,6 @@ const server = http.createServer(async (req, res) => {
     }
 
     // ═══ PUBLIC WEBSITE CONTENT ═══════════════════════════════════════════════
-    // Returns `image_urls` (array) for posts and impact stories so the public
-    // site can render a slide preview. `image_url` is still returned as a
-    // convenience field (first image or null) for older callers.
     const lang = url.searchParams.get('lang') === 'sw' ? 'sw' : 'en';
 
     if (parts[1] === 'website') {
@@ -781,26 +775,47 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { ok: true });
     }
 
-    // ── POST /api/admin/upload-url ────────────────────────────────────────────
-    if (parts[1] === 'admin' && parts[2] === 'upload-url' && req.method === 'POST') {
+    // ── POST /api/admin/upload ────────────────────────────────────────────────
+    // Raw image body → API → S3. No CORS, no pre-signed URLs.
+    if (parts[1] === 'admin' && parts[2] === 'upload' && req.method === 'POST') {
       const denied = await checkPerm(user, 'website', 'create');
       if (denied) return send(res, denied.status, denied.body);
 
       if (!s3Configured()) {
-        return send(res, 503, {
-          error: 'Image uploads are not configured on this server. Paste an image URL instead.',
-          s3: s3Status(),
-        });
+        return send(res, 503, { error: 'Image uploads are not configured on this server.' });
       }
 
-      const { fileType } = await readBody(req);
-      if (!fileType) return send(res, 400, { error: 'fileType is required (e.g. image/jpeg)' });
+      const contentType = String(req.headers['content-type'] || '').split(';')[0].trim();
+      if (!/^image\//.test(contentType)) {
+        return send(res, 400, { error: 'Only image uploads are supported.' });
+      }
+
+      const chunks = [];
+      let total = 0;
+      const MAX = 5 * 1024 * 1024;
+      try {
+        for await (const chunk of req) {
+          total += chunk.length;
+          if (total > MAX) return send(res, 413, { error: 'File is larger than 5 MB.' });
+          chunks.push(chunk);
+        }
+      } catch {
+        return send(res, 400, { error: 'Could not read upload body.' });
+      }
+
+      const buffer = Buffer.concat(chunks);
+      if (!buffer.length) return send(res, 400, { error: 'Empty file.' });
 
       try {
-        const result = await createUploadUrl({ fileType });
-        return send(res, 200, result);
+        const { publicUrl, key } = await uploadBuffer({ buffer, contentType });
+        await logAction({
+          userId: user.id, userEmail: user.email,
+          action: 'create', entity: 's3_upload',
+          detail: `uploaded ${key} (${buffer.length} bytes)`,
+        });
+        return send(res, 200, { publicUrl, key });
       } catch (err) {
-        return send(res, 400, { error: err.message });
+        return send(res, 500, { error: err.message });
       }
     }
 

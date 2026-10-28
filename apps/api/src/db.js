@@ -13,7 +13,7 @@ import pg from 'pg';
 const { Pool } = pg;
 
 const connectionString =
-  process.env.DATABASE_URL || 'postgresql://kabonix:ChangeMe123!@localhost:5432/kabonix_db';
+  process.env.DATABASE_URL || 'postgresql://kabonix:calluskabonix@localhost:5432/kabonix_db';
 
 export const pool = new Pool({ connectionString });
 

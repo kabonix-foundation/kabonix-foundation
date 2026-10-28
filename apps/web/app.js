@@ -1587,28 +1587,34 @@
       };
     });
 
-    // ── File upload — supports multiple files, uploads in parallel ──
+    // ── File upload — goes through our API, which pushes to S3 ──────────────
     if (fileInput) fileInput.onchange = async () => {
       const files = Array.from(fileInput.files || []);
       if (!files.length) return;
 
+      // Helper: upload a single File via the API, returns the public URL.
+      const uploadOne = async (file) => {
+        const res = await fetch(API + '/admin/upload', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + state.token,
+            'Content-Type': file.type,
+          },
+          body: file,
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || `Upload failed (${res.status})`);
+        return data.publicUrl;
+      };
+
+      // Partner logos: single image.
       if (kind === 'partners') {
-        // Partner logos only ever have one image.
         const file = files[0];
         if (!/^image\//.test(file.type)) return setStatus('Only image files are supported.', true);
         if (file.size > 5 * 1024 * 1024) return setStatus('Logo is larger than 5 MB.', true);
         setStatus('Uploading…');
         try {
-          const { uploadUrl, publicUrl } = await api('/admin/upload-url', {
-            method: 'POST',
-            body: { fileType: file.type },
-          });
-          const res = await fetch(uploadUrl, {
-            method: 'PUT',
-            headers: { 'Content-Type': file.type },
-            body: file,
-          });
-          if (!res.ok) throw new Error(`Upload failed (${res.status})`);
+          const publicUrl = await uploadOne(file);
           state.websiteEditing.item.logo_url = publicUrl;
           setStatus('<span style="color:var(--ok)">✅ Logo uploaded.</span>');
           renderWebsite(++renderSeq);
@@ -1619,16 +1625,14 @@
         return;
       }
 
-      // Posts & stories — multiple images.
+      // Posts & stories: multiple images.
       const urls = state.websiteEditing.item.image_urls || (state.websiteEditing.item.image_urls = []);
       const remaining = 12 - urls.length;
       if (remaining <= 0) {
         return setStatus('Maximum 12 images per item. Remove some before adding more.', true);
       }
 
-      // Pre-validate: reject non-images and oversized files with a named reason.
-      const valid = [];
-      const rejected = [];
+      const valid = [], rejected = [];
       for (const f of files) {
         if (!/^image\//.test(f.type)) { rejected.push(`${f.name}: not an image`); continue; }
         if (f.size > 5 * 1024 * 1024) { rejected.push(`${f.name}: over 5 MB`); continue; }
@@ -1644,22 +1648,11 @@
       }
 
       setStatus(`Uploading ${toUpload.length} file${toUpload.length === 1 ? '' : 's'}…`);
-      const startCount = urls.length;
 
-      // Upload in parallel — each file gets its own pre-signed URL.
       let uploaded = 0;
       await Promise.all(toUpload.map(async file => {
         try {
-          const { uploadUrl, publicUrl } = await api('/admin/upload-url', {
-            method: 'POST',
-            body: { fileType: file.type },
-          });
-          const res = await fetch(uploadUrl, {
-            method: 'PUT',
-            headers: { 'Content-Type': file.type },
-            body: file,
-          });
-          if (!res.ok) throw new Error(`Upload failed (${res.status})`);
+          const publicUrl = await uploadOne(file);
           urls.push(publicUrl);
           uploaded++;
         } catch (err) {
@@ -1678,7 +1671,6 @@
       } else {
         setStatus(`Upload failed. ${rejected.join('; ')}`, true);
       }
-      void startCount; // silence unused-var lint if any
     };
 
     if (addUrlBtn) addUrlBtn.onclick = () => {
